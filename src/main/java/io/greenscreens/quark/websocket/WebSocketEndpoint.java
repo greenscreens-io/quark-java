@@ -41,7 +41,7 @@ import io.greenscreens.quark.websocket.data.IWebSocketResponse;
 import io.greenscreens.quark.websocket.data.WebSocketInstruction;
 import io.greenscreens.quark.websocket.data.WebSocketRequest;
 import io.greenscreens.quark.websocket.data.WebSocketResponse;
-import io.greenscreens.quark.websocket.data.WebSocketResponseBinary;
+import io.greenscreens.quark.websocket.data.WebSocketResponseFactory;
 
 /**
  * Internal CDI injectable object used by WebSocket endpoint instance. Used to
@@ -287,7 +287,7 @@ public class WebSocketEndpoint {
 	private IWebSocketResponse getErrorResponse(final Exception exception, final boolean isBinary, final boolean isCompression) {
 
 		final ExtJSResponse response = new ExtJSResponse(exception, exception.getMessage());
-		final IWebSocketResponse wsResponse = newResponse(WebSocketInstruction.ERR, isBinary, isCompression);
+		final IWebSocketResponse wsResponse = WebSocketResponseFactory.createAsError(isBinary, isCompression);
 		wsResponse.setData(response);
 		wsResponse.setErrMsg(exception.getMessage());
 		return wsResponse;
@@ -322,8 +322,8 @@ public class WebSocketEndpoint {
 			sendAPI(session);
 		}
 
-		final boolean isCompression = session.get(QuarkConstants.WEBSOCKET_COMPRESSION);
-		final IWebSocketResponse response = newResponse(cmd, message.isBinary(), isCompression);
+		final boolean isCompression = session.get(QuarkConstants.WEBSOCKET_COMPRESSION);		
+		final IWebSocketResponse response = WebSocketResponseFactory.create(cmd, message.isBinary(), isCompression);
 		session.sendResponse(response, true);	
 
 	}
@@ -342,19 +342,12 @@ public class WebSocketEndpoint {
 		}
 
 		final boolean isCompression = session.get(QuarkConstants.WEBSOCKET_COMPRESSION);		
-		final IWebSocketResponse wsResponse = newResponse(WebSocketInstruction.DATA, wsMessage.isBinary(), isCompression);	
+		final IWebSocketResponse wsResponse = WebSocketResponseFactory.createAsData(wsMessage.isBinary(), isCompression);	
 		wsResponse.setData(responseList);
 		session.sendResponse(wsResponse, true);
 		
 	}
 	
-	private IWebSocketResponse newResponse(final WebSocketInstruction instruction, final boolean isBinary, final boolean isCompression) {
-		if (isBinary) {
-			return new WebSocketResponseBinary(instruction, isCompression);
-		}
-		return new WebSocketResponse(instruction);
-	}
-
 	private void processRequest(final boolean encrypted, final WebSocketSession session,
 			final ExtJSDirectRequest<JsonNode> request, final String wsPath,
 			final List<ExtJSDirectResponse<?>> responseList) throws IOException, EncodeException {
