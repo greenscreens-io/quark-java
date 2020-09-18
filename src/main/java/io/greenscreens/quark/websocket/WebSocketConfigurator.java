@@ -1,8 +1,8 @@
 /*
  * Copyright (C) 2015, 2020  Green Screens Ltd.
- * 
+ *
  * https://www.greenscreens.io
- * 
+ *
  */
 package io.greenscreens.quark.websocket;
 
@@ -36,7 +36,7 @@ public class WebSocketConfigurator extends ServerEndpointConfig.Configurator {
 
 	/**
 	 * Find query parameter q, which contains request challenge
-	 * 
+	 *
 	 * @param request
 	 * @return
 	 */
@@ -50,7 +50,7 @@ public class WebSocketConfigurator extends ServerEndpointConfig.Configurator {
 
 	/**
 	 * Find session link token based on custom pairing
-	 * 
+	 *
 	 * @param request
 	 * @return
 	 */
@@ -69,7 +69,7 @@ public class WebSocketConfigurator extends ServerEndpointConfig.Configurator {
 
 	/**
 	 * Find http session attached to websocket
-	 * 
+	 *
 	 * @param request
 	 * @return
 	 */
@@ -87,12 +87,12 @@ public class WebSocketConfigurator extends ServerEndpointConfig.Configurator {
 
 	/**
 	 * Store data to websocket user data
-	 * 
+	 *
 	 * @param sec
 	 * @param key
 	 * @param value
 	 */
-	void store(final ServerEndpointConfig sec, final String key, final Object value) {
+	public void store(final ServerEndpointConfig sec, final String key, final Object value) {
 		if (key != null && value != null) {
 			sec.getUserProperties().put(key, value);
 		}
@@ -119,7 +119,7 @@ public class WebSocketConfigurator extends ServerEndpointConfig.Configurator {
 		final String compression = findCompression(request);
 		final Locale locale = WebsocketUtil.getLocale(request);
 		final boolean isCompression = "true".equalsIgnoreCase(compression);
-		
+
 		store(sec, QuarkConstants.WEBSOCKET_PATH, sec.getPath());
 		store(sec, QuarkConstants.WEBSOCKET_CHALLENGE, challenge);
 		store(sec, QuarkConstants.WEBSOCKET_COMPRESSION, isCompression);
