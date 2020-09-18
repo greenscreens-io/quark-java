@@ -44,6 +44,10 @@ public class WebSocketConfigurator extends ServerEndpointConfig.Configurator {
 		return WebsocketUtil.findQuery(request, "q");
 	}
 
+	String findCompression(final HandshakeRequest request) {
+		return WebsocketUtil.findQuery(request, "c");
+	}
+
 	/**
 	 * Find session link token based on custom pairing
 	 * 
@@ -69,7 +73,7 @@ public class WebSocketConfigurator extends ServerEndpointConfig.Configurator {
 	 * @param request
 	 * @return
 	 */
-	public HttpSession findSession(final HandshakeRequest request) {
+	HttpSession findSession(final HandshakeRequest request) {
 
 		HttpSession httpSession = (HttpSession) request.getHttpSession();
 
@@ -88,7 +92,7 @@ public class WebSocketConfigurator extends ServerEndpointConfig.Configurator {
 	 * @param key
 	 * @param value
 	 */
-	public void store(final ServerEndpointConfig sec, final String key, final Object value) {
+	void store(final ServerEndpointConfig sec, final String key, final Object value) {
 		if (key != null && value != null) {
 			sec.getUserProperties().put(key, value);
 		}
@@ -112,10 +116,13 @@ public class WebSocketConfigurator extends ServerEndpointConfig.Configurator {
 
 		final HttpSession httpSession = findSession(request);
 		final String challenge = findChallenge(request);
+		final String compression = findCompression(request);
 		final Locale locale = WebsocketUtil.getLocale(request);
-
+		final boolean isCompression = "true".equalsIgnoreCase(compression);
+		
 		store(sec, QuarkConstants.WEBSOCKET_PATH, sec.getPath());
 		store(sec, QuarkConstants.WEBSOCKET_CHALLENGE, challenge);
+		store(sec, QuarkConstants.WEBSOCKET_COMPRESSION, isCompression);
 		store(sec, Locale.class.getCanonicalName(), locale);
 		store(sec, HttpSession.class.getCanonicalName(), httpSession);
 	}

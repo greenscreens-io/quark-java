@@ -7,6 +7,7 @@
 package io.greenscreens.quark.websocket;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 
 import javax.websocket.EncodeException;
 import javax.websocket.Encoder;
@@ -45,8 +46,12 @@ public class WebsocketEncoderBinary implements Encoder.Binary<WebSocketResponseB
 		if (msg != null && msg.length() > 0) {
 			
 			try {
-				final byte bytes[] = Util.gzip(msg);
-				buff = ByteBuffer.wrap(bytes);
+				if (data.isCompression()) {
+					final byte bytes[] = Util.gzip(msg);
+					buff = ByteBuffer.wrap(bytes);					
+				} else {
+					buff = ByteBuffer.wrap(msg.getBytes(StandardCharsets.UTF_8));
+				}
 			} catch (Exception e) {
 				LOG.error(e.getMessage());
 				LOG.debug(e.getMessage(), e);

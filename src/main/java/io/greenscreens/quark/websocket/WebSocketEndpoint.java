@@ -71,7 +71,7 @@ public class WebSocketEndpoint {
 	}
 
 	@Produces
-	private WebSocketSession sessionProducer() {
+	public WebSocketSession sessionProducer() {
 		return websocketContextThreadLocal.get();
 	}
 
@@ -158,7 +158,8 @@ public class WebSocketEndpoint {
 			LOG.debug(e.getMessage(), e);
 
 			if (wsession != null) {
-				wsession.sendResponse(getErrorResponse(e, message.isBinary()), true);
+				final boolean isCompression = wsession.get(QuarkConstants.WEBSOCKET_COMPRESSION);
+				wsession.sendResponse(getErrorResponse(e, message.isBinary(), isCompression), true);
 			}
 
 		} finally {
@@ -172,23 +173,22 @@ public class WebSocketEndpoint {
 		try {
 			LOG.trace("Openning new WebSocket connection : {} ", session);
 
-			final Map<String, Object> sessProps = session.getUserProperties();
 			final Map<String, Object> endpProps = config.getUserProperties();
+			final HttpSession httpSession = (HttpSession) endpProps.get(HttpSession.class.getName());
+			final WebSocketSession wsession = new WebSocketSession(session, httpSession);
 
 			boolean requireSession = false;
 
-			if (sessProps.containsKey(QuarkConstants.WEBSOCKET_SESSION)) {
-				requireSession = (boolean) sessProps.get(QuarkConstants.WEBSOCKET_SESSION);
+			if (wsession.contains(QuarkConstants.WEBSOCKET_SESSION)) {
+				requireSession = wsession.get(QuarkConstants.WEBSOCKET_SESSION);
 			}
-
-			final HttpSession httpSession = (HttpSession) endpProps.get(HttpSession.class.getName());
-			final WebSocketSession wsession = new WebSocketSession(session, httpSession);
 
 			// disable websocket session timeout due to inactivity
 			// session.setMaxIdleTimeout(MINUTE * 30);
 			session.setMaxIdleTimeout(0);
 
-			sessProps.put(QuarkConstants.WEBSOCKET_PATH, endpProps.get(QuarkConstants.WEBSOCKET_PATH));
+			final Object path = endpProps.get(QuarkConstants.WEBSOCKET_PATH);
+			wsession.set(QuarkConstants.WEBSOCKET_PATH, path);
 
 			websocketContextThreadLocal.set(wsession);
 
@@ -219,7 +219,7 @@ public class WebSocketEndpoint {
 
 			updateSessions(wsession);
 
-			if (session.getUserProperties().containsKey(QuarkConstants.WEBSOCKET_CHALLENGE)) {
+			if (wsession.contains(QuarkConstants.WEBSOCKET_CHALLENGE)) {
 				sendAPI(wsession);	
 			}
 			
@@ -250,6 +250,7 @@ public class WebSocketEndpoint {
 			updateSessions(wsession);
 
 		}
+
 	}
 
 	public void onError(final Session session, final Throwable throwable) {
@@ -283,10 +284,10 @@ public class WebSocketEndpoint {
 		}
 	}
 
-	private IWebSocketResponse getErrorResponse(final Exception exception, final boolean isBinary) {
+	private IWebSocketResponse getErrorResponse(final Exception exception, final boolean isBinary, final boolean isCompression) {
 
 		final ExtJSResponse response = new ExtJSResponse(exception, exception.getMessage());
-		final IWebSocketResponse wsResponse = newResponse(WebSocketInstruction.ERR, isBinary);
+		final IWebSocketResponse wsResponse = newResponse(WebSocketInstruction.ERR, isBinary, isCompression);
 		wsResponse.setData(response);
 		wsResponse.setErrMsg(exception.getMessage());
 		return wsResponse;
@@ -295,12 +296,13 @@ public class WebSocketEndpoint {
 	private boolean sendAPI(final WebSocketSession session) {
 		
 		if (BM == null) return false;
+
 		
-		if (!session.getUserProperties().containsKey(QuarkConstants.WEBSOCKET_CHALLENGE)) {
+		if (!session.contains(QuarkConstants.WEBSOCKET_CHALLENGE)) {
 			return false;
 		}
 		
-		final String challenge = (String) session.getUserProperties().get(QuarkConstants.WEBSOCKET_CHALLENGE);
+		final String challenge = session.get(QuarkConstants.WEBSOCKET_CHALLENGE);
 		final WebSocketResponse wsResposne = new WebSocketResponse(WebSocketInstruction.API);		
 		
 		final ArrayNode api = BM.getAPI();
@@ -319,8 +321,9 @@ public class WebSocketEndpoint {
 		if (WebSocketInstruction.API == cmd && BM != null) {
 			sendAPI(session);
 		}
-		
-		final IWebSocketResponse response = newResponse(cmd, message.isBinary());
+
+		final boolean isCompression = session.get(QuarkConstants.WEBSOCKET_COMPRESSION);
+		final IWebSocketResponse response = newResponse(cmd, message.isBinary(), isCompression);
 		session.sendResponse(response, true);	
 
 	}
@@ -331,23 +334,23 @@ public class WebSocketEndpoint {
 		LOG.trace("processData");
 
 		final List<ExtJSDirectResponse<?>> responseList = new ArrayList<ExtJSDirectResponse<?>>();
-		final Map<String, Object> map = session.getUserProperties();
-		final String wsPath = (String) map.get(QuarkConstants.WEBSOCKET_PATH);
+		final String wsPath = session.get(QuarkConstants.WEBSOCKET_PATH);
 		final List<ExtJSDirectRequest<JsonNode>> requests = wsMessage.getData();
 
 		for (final ExtJSDirectRequest<JsonNode> request : requests) {
 			processRequest(encrypted, session, request, wsPath, responseList);
 		}
 
-		final IWebSocketResponse wsResponse = newResponse(WebSocketInstruction.DATA, wsMessage.isBinary());	
+		final boolean isCompression = session.get(QuarkConstants.WEBSOCKET_COMPRESSION);		
+		final IWebSocketResponse wsResponse = newResponse(WebSocketInstruction.DATA, wsMessage.isBinary(), isCompression);	
 		wsResponse.setData(responseList);
 		session.sendResponse(wsResponse, true);
 		
 	}
 	
-	private IWebSocketResponse newResponse(final WebSocketInstruction instruction, final boolean isBinary) {
+	private IWebSocketResponse newResponse(final WebSocketInstruction instruction, final boolean isBinary, final boolean isCompression) {
 		if (isBinary) {
-			return new WebSocketResponseBinary(instruction);
+			return new WebSocketResponseBinary(instruction, isCompression);
 		}
 		return new WebSocketResponse(instruction);
 	}
@@ -381,5 +384,4 @@ public class WebSocketEndpoint {
 	public static WebSocketSession get() {
 		return websocketContextThreadLocal.get();
 	}
-	
 }

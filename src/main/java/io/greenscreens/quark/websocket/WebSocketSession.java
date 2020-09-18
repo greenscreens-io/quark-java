@@ -57,7 +57,7 @@ public class WebSocketSession implements Session {
 		this.session = session;
 
 		if (httpSession != null) {
-			session.getUserProperties().put(HttpSession.class.getCanonicalName(), httpSession);
+			WebSocketStorage.store(session, httpSession);
 		}
 	}
 
@@ -114,12 +114,8 @@ public class WebSocketSession implements Session {
 		boolean success = true;
 
 		try {
-			
-			final Map<String, Object> props = session.getUserProperties();
-			if (props.containsKey( QuarkConstants.HTTP_SEESION_ENCRYPT )) {
-				final IAesKey aes = (IAesKey) props.get(QuarkConstants.HTTP_SEESION_ENCRYPT);
-				wsResponse.setKey(aes);	
-			}
+			final IAesKey aes = WebSocketStorage.get(session, QuarkConstants.HTTP_SEESION_ENCRYPT);
+			wsResponse.setKey(aes);	
 			
 			if (async) {
 				session.getAsyncRemote().sendObject(wsResponse);
@@ -250,9 +246,39 @@ public class WebSocketSession implements Session {
 	public final void setMaxTextMessageBufferSize(final int arg0) {
 		session.setMaxTextMessageBufferSize(arg0);
 	}
+	
+	/**
+	 * Check if socket storage has data by key
+	 * @param key
+	 * @return
+	 */
+	public final boolean contains(final String key) {
+		return WebSocketStorage.contains(this, key);
+	}
 
+	/**
+	 * Get data from socket storage
+	 * @param <T>
+	 * @param key
+	 * @return
+	 */
+	public final <T> T get(final String key) {
+		return WebSocketStorage.get(this, key);
+	}
+
+	/**
+	 * Set data to socket storage
+	 * @param <T>
+	 * @param key
+	 * @param value
+	 * @return
+	 */
+	public final <T> T set(final String key, T value) {
+		return WebSocketStorage.store(this, key, value);
+	}
+	
 	public final HttpSession getHttpSession() {
-		return (HttpSession) session.getUserProperties().get(HttpSession.class.getCanonicalName());
+		return (HttpSession) WebSocketStorage.get(this, HttpSession.class);
 	}
 
 	public final boolean isValidHttpSession() {

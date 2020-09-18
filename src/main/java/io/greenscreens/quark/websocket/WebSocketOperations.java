@@ -83,12 +83,12 @@ public final class WebSocketOperations<T> {
 	 */
 	private String decryptData(final WebSocketSession session, final ExtEncrypt encrypt) throws Exception {
 
-		IAesKey crypt = (IAesKey) session.getUserProperties().get(QuarkConstants.HTTP_SEESION_ENCRYPT);
+		IAesKey crypt = session.get(QuarkConstants.HTTP_SEESION_ENCRYPT);
 		String data = null;
 
 		if (crypt == null) {
 			crypt = Security.initAESfromRSA(encrypt.getK());
-			session.getUserProperties().put(QuarkConstants.HTTP_SEESION_ENCRYPT, crypt);
+			session.set(QuarkConstants.HTTP_SEESION_ENCRYPT, crypt);
 			data = crypt.decrypt(encrypt.getD());
 		} else {
 			data = Security.decodeRequest(encrypt.getD(), encrypt.getK(), crypt);

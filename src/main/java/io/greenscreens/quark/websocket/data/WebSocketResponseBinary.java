@@ -28,8 +28,16 @@ public class WebSocketResponseBinary implements IWebSocketResponse {
 	@JsonIgnore
 	private transient IAesKey key;
 
+	@JsonIgnore
+	private transient boolean compression;
+	
 	public WebSocketResponseBinary(final WebSocketInstruction cmd) {
 		this.cmd = cmd;
+	}
+
+	public WebSocketResponseBinary(final WebSocketInstruction cmd, final boolean compression) {
+		this.cmd = cmd;
+		this.compression = compression;
 	}
 
 	@Override
@@ -85,6 +93,14 @@ public class WebSocketResponseBinary implements IWebSocketResponse {
 	@Override
 	public void setKey(final IAesKey key) {
 		this.key = key;
+	}
+	
+	public boolean isCompression() {
+		return compression;
+	}
+
+	public void setCompression(boolean compression) {
+		this.compression = compression;
 	}
 
 	@Override
