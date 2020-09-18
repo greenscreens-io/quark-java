@@ -1,8 +1,8 @@
 /*
  * Copyright (C) 2015, 2020  Green Screens Ltd.
- *
+ * 
  * https://www.greenscreens.io
- *
+ * 
  */
 package io.greenscreens.quark.web;
 
@@ -66,7 +66,7 @@ public class APIServlet extends HttpServlet {
 		try {
 
 			final ArrayNode api = BM.getAPI();
-			final ObjectNode root = Util.buildAPI(api, challenge);
+			final ObjectNode root = Util.buildAPI(api, challenge); 
 			json = JsonDecoder.stringify(root);
 
 		} catch (Exception e) {
@@ -119,16 +119,26 @@ public class APIServlet extends HttpServlet {
 
 	}
 
+	@Override
+	protected void doDelete(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+
+		final HttpSession session =  request.getSession(false);
+		if(session != null) {
+			session.removeAttribute(QuarkConstants.HTTP_SEESION_ENCRYPT);
+		}
+		response.getWriter().append("{}");
+	}
+	
 	/**
 	 * Decrypt received encrypted request
-	 *
+	 * 
 	 * @param request
 	 * @param node
 	 * @return
 	 * @throws Exception
 	 */
-	private ExtJSDirectRequest<JsonNode> decrypt(final HttpServletRequest request,
-	 		final ObjectNode node)
+	private ExtJSDirectRequest<JsonNode> decrypt(final HttpServletRequest request, final ObjectNode node)
 			throws Exception {
 
 		String data = null;
@@ -156,18 +166,15 @@ public class APIServlet extends HttpServlet {
 
 	/**
 	 * Encrypt response JSON into encrypted JSON format
-	 *
+	 * 
 	 * @param request
 	 * @param data
 	 * @return
 	 * @throws Exception
 	 */
-	private final String encrypt(final HttpServletRequest request,
-			final String data) throws Exception {
+	private final String encrypt(final HttpServletRequest request, final String data) throws Exception {
 
-		final IAesKey crypt = (IAesKey) request.getSession()
-			.getAttribute(QuarkConstants.HTTP_SEESION_ENCRYPT);
-
+		final IAesKey crypt = (IAesKey) request.getSession().getAttribute(QuarkConstants.HTTP_SEESION_ENCRYPT);
 		if (crypt == null) {
 			return data;
 		}
@@ -184,7 +191,7 @@ public class APIServlet extends HttpServlet {
 
 	/**
 	 * Decode JSON request into engine data format
-	 *
+	 * 
 	 * @param json
 	 * @return
 	 * @throws IOException
