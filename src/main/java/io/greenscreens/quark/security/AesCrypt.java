@@ -6,78 +6,115 @@
  */
 package io.greenscreens.quark.security;
 
+import java.io.IOException;
 import java.nio.charset.Charset;
-import java.security.GeneralSecurityException;
+import java.nio.charset.StandardCharsets;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.util.Collections;
 
+import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.greenscreens.quark.Util;
+import io.greenscreens.quark.IQuarkKey;
+import io.greenscreens.quark.QuarkUtil;
+
 
 /**
  * AEC encryption & Decryption utility
  */
-final class AesCrypt implements IAesKey {
+ class AesCrypt implements IQuarkKey {
 
 	private static final Logger LOG = LoggerFactory.getLogger(AesCrypt.class);
 
-	final private static Charset ASCII = Charset.forName("ASCII");
-	final private static Charset UTF8 = Charset.forName("UTF-8");
-
-	private static Cipher cipher;
+	private static final Charset ASCII = StandardCharsets.US_ASCII;
+	private static final Charset UTF8 = StandardCharsets.UTF_8;
+	private static final String TRANSFORMATION = "AES/CTR/NoPadding";
+	
+	private Cipher cipher;
 
 	private IvParameterSpec ivspec;
 	private SecretKeySpec keyspec;
+	private int size;
+	
+	public AesCrypt(final String secretKey, final String vector) throws IOException {
+		init(secretKey, vector);
+	}
+		
+	public AesCrypt(final String secretKey) throws IOException {
+		init(secretKey, secretKey);
+	}
 
-	static {
+	public AesCrypt(final byte[] secretKey) throws IOException {
+		init(secretKey, secretKey);
+	}
+
+	public AesCrypt(final byte[] secretKey, final byte[] vector) throws IOException {
+		init(secretKey, vector);
+	}
+	
+	void init(final String secretKey, final String vector) throws IOException {
+		setSecretKey(secretKey);
+		setIv(vector);
+		initSize();
+	}
+
+	void init(final byte[] secretKey, final byte[] vector) throws IOException {
+		setSecretKey(secretKey);
+		setIv(vector);
+		initSize();
+	}
+
+	private void initSize() {
 		try {
-			// cipher = Cipher.getInstance("AES/OFB/NoPadding");
-			cipher = Cipher.getInstance("AES/CTR/NoPadding");
-		} catch (GeneralSecurityException e) {
-			LOG.error(e.getMessage(), e);
+			cipher = Cipher.getInstance(TRANSFORMATION);
+			size = cipher.getBlockSize();
+		} catch (Exception e) {
+			final String msg = QuarkUtil.toMessage(e);
+			LOG.error(msg);
+			LOG.debug(msg, e);
 		}
 	}
-
-	public AesCrypt(final String secretKey) {
-		super();
-		setSecretKey(secretKey);
-	}
-
-	public AesCrypt(final byte[] secretKey) {
-		super();
-		setSecretKey(secretKey);
+	
+	@Override
+	public boolean isValid() {
+		return size > 0 && keyspec != null && ivspec != null;
 	}
 
 	/**
-	 * Set key used to encrypt data, length must be 16 characters
+	 * Set key used to encrypt data
 	 * 
 	 * @param secretKey
+	 * @throws IOException 
 	 */
 	@Override
-	public void setSecretKey(final String secretKey) {
+	public void setSecretKey(final String secretKey) throws IOException {
 		if (secretKey == null || secretKey.length() != 16) {
-			throw new RuntimeException("Invalid AES key length");
+			throw new IOException("Invalid AES key length");
 		}
 		keyspec = new SecretKeySpec(secretKey.getBytes(ASCII), "AES");
 	}
 
 	/**
 	 * Set key used to encrypt data, length must be 16 bytes
-	 * 
+	 *
 	 * @param secretKey
+	 * @throws IOException 
 	 */
 	@Override
-	public void setSecretKey(final byte[] secretKey) {
+	public void setSecretKey(final byte[] secretKey) throws IOException {
 		if (secretKey == null || secretKey.length != 16) {
-			throw new RuntimeException("Invalid AES key length");
+			throw new IOException("Invalid AES key length");
 		}
 		keyspec = new SecretKeySpec(secretKey, "AES");
 	}
-
+	
 	/**
 	 * Set Initialization vector to encrypt data to prevent same hash for same
 	 * passwords
@@ -108,34 +145,28 @@ final class AesCrypt implements IAesKey {
 	 * @throws Exception
 	 */
 	@Override
-	public byte[] encryptData(final String text) throws Exception {
+	public byte[] encryptData(final String text) throws IOException {
 		return encryptData(text, ivspec);
 	}
 
 	@Override
-	public byte[] encryptData(final String text, final byte[] iv) throws Exception {
+	public byte[] encryptData(final String text, final byte[] iv) throws IOException {
 		return encryptData(text, new IvParameterSpec(iv));
 	}
 
 	@Override
-	public byte[] encryptData(final String text, final IvParameterSpec iv) throws Exception {
+	public byte[] encryptData(final String text, final IvParameterSpec iv) throws IOException {
 
 		if (text == null || text.length() == 0) {
-			throw new Exception("Empty string");
+			throw new IOException("Empty string");
 		}
-
-		byte[] encrypted = null;
 
 		try {
 			cipher.init(Cipher.ENCRYPT_MODE, keyspec, iv);
-			encrypted = cipher.doFinal(padString(text).getBytes(UTF8));
-		} catch (Exception e) {
-			LOG.error(e.getMessage());
-			LOG.debug(e.getMessage(), e);
-			throw e;
+			return cipher.doFinal(padString(text).getBytes(UTF8));
+		} catch (InvalidKeyException | InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException e) {
+			throw new IOException(e);
 		}
-
-		return encrypted;
 	}
 
 	/**
@@ -146,86 +177,75 @@ final class AesCrypt implements IAesKey {
 	 * @throws Exception
 	 */
 	@Override
-	public byte[] decryptData(final String code) throws Exception {
+	public byte[] decryptData(final String code) throws IOException {
 		return decryptData(code, ivspec);
 	}
 
 	@Override
-	public byte[] decryptData(final String code, final String iv) throws Exception {
+	public byte[] decryptData(final String code, final String iv) throws IOException {
 		return decryptData(code, iv.getBytes());
 	}
 
 	@Override
-	public byte[] decryptData(final String code, final byte[] iv) throws Exception {
+	public byte[] decryptData(final String code, final byte[] iv) throws IOException {
 		return decryptData(code, new IvParameterSpec(iv));
 	}
 
 	@Override
-	public byte[] decryptData(final String code, final IvParameterSpec iv) throws Exception {
+	public byte[] decryptData(final String code, final IvParameterSpec iv) throws IOException {
 
 		if (code == null || code.length() == 0) {
-			throw new Exception("Empty string");
+			throw new IOException("Empty string");
 		}
-
-		byte[] decrypted = {};
 
 		try {
 			cipher.init(Cipher.DECRYPT_MODE, keyspec, iv);
-			decrypted = cipher.doFinal(Security.hexToBytes(code));
-		} catch (Exception e) {
-			LOG.error(e.getMessage());
-			LOG.debug(e.getMessage(), e);
-			throw new Exception("[decrypt] " + e.getMessage());
+			return cipher.doFinal(QuarkUtil.hexStringToByteArray(code));
+		} catch (InvalidKeyException | InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException e) {
+			throw new IOException(e);
 		}
-		return decrypted;
+		
 	}
 
 	@Override
-	public byte[] decryptData(final byte[] data, final byte[] iv) throws Exception {
+	public byte[] decryptData(final byte[] data, final byte[] iv) throws IOException {
 		return decryptData(data, new IvParameterSpec(iv));
-
 	}
 
 	@Override
-	public byte[] decryptData(final byte[] data, final IvParameterSpec iv) throws Exception {
-
-		byte[] decrypted = {};
+	public byte[] decryptData(final byte[] data, final IvParameterSpec iv) throws IOException {
 
 		try {
 			cipher.init(Cipher.DECRYPT_MODE, keyspec, iv);
-
-			decrypted = cipher.doFinal(data);
-		} catch (Exception e) {
-			LOG.error(e.getMessage());
-			LOG.debug(e.getMessage(), e);
-			throw new Exception("[decrypt] " + e.getMessage());
+			return cipher.doFinal(data);
+		} catch (InvalidKeyException | InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException e) {
+			throw new IOException(e);
 		}
-		return decrypted;
 	}
 
 	/**
 	 * Encrypts string to hex string
 	 */
 	@Override
-	public String encrypt(final String text) throws Exception {
-		return Security.bytesToHex(encryptData(text));
+	public String encrypt(final String text) throws IOException {
+		return QuarkUtil.bytesToHex(encryptData(text));
 	}
 
 	@Override
-	public String encrypt(final String text, final byte[] iv) throws Exception {
-		return Security.bytesToHex(encryptData(text, new IvParameterSpec(iv)));
+	public String encrypt(final String text, final byte[] iv) throws IOException {
+		return QuarkUtil.bytesToHex(encryptData(text, new IvParameterSpec(iv)));
 	}
 
 	@Override
-	public String encrypt(final String text, IvParameterSpec iv) throws Exception {
-		return Security.bytesToHex(encryptData(text, iv));
+	public String encrypt(final String text, IvParameterSpec iv) throws IOException {
+		return QuarkUtil.bytesToHex(encryptData(text, iv));
 	}
 
 	/**
 	 * Decrypts hex string to string value
 	 */
 	@Override
-	public String decrypt(final String text) throws Exception {
+	public String decrypt(final String text) throws IOException {
 		return new String(decryptData(text), UTF8);
 	}
 
@@ -236,35 +256,38 @@ final class AesCrypt implements IAesKey {
 	 * @return
 	 */
 	private String padString(final String source) {
-		return Util.padString(source, 16);
+		return QuarkUtil.padString(source, 16);
 	}
 
 	@Override
-	public byte[] decrypt(final byte[] data) throws Exception {
+	public byte[] decrypt(final byte[] data) throws IOException {
 		return decryptData(data, ivspec);
 	}
 
 	@Override
-	public byte[] encrypt(final byte[] data) throws Exception {
-
-		byte[] encrypted = null;
+	public byte[] encrypt(final byte[] data) throws IOException {
 
 		try {
 			cipher.init(Cipher.ENCRYPT_MODE, keyspec, ivspec);
-			encrypted = cipher.doFinal(data);
-		} catch (Exception e) {
-			LOG.error(e.getMessage());
-			LOG.debug(e.getMessage(), e);
-			throw e;
+			return cipher.doFinal(data);
+		} catch (IllegalBlockSizeException | BadPaddingException | InvalidKeyException | InvalidAlgorithmParameterException e) {
+			throw new IOException(e);
 		}
 
-		return encrypted;
+	}
 
+	@Override
+	public int getBlockSize() {
+		return size;
 	}
 
 	@Override
 	public Cipher getCipher() {
 		return cipher;
+	}
+
+	static final void pro() {
+		Collections.emptyList().stream().filter(s -> s.equals("")).findFirst();
 	}
 
 }

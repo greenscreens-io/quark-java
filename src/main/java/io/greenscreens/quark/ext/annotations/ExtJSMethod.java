@@ -5,6 +5,7 @@
 package io.greenscreens.quark.ext.annotations;
 
 import static java.lang.annotation.ElementType.METHOD;
+
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
@@ -29,5 +30,8 @@ public @interface ExtJSMethod {
 
 	@Nonbinding
 	boolean validate() default false;
+
+	@Nonbinding
+	boolean async() default false;
 
 }

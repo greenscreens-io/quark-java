@@ -6,7 +6,8 @@
  */
 package io.greenscreens.quark.websocket.data;
 
-import java.util.ArrayList;
+import java.util.List;
+
 import com.fasterxml.jackson.databind.JsonNode;
 
 import io.greenscreens.quark.ext.ExtJSDirectRequest;
@@ -26,7 +27,7 @@ public class WebSocketRequest {
 	private int errId;
 
 	// list of commands - batch
-	private ArrayList<ExtJSDirectRequest<JsonNode>> data;
+	private List<ExtJSDirectRequest<JsonNode>> data;
 
 	private boolean binary = false;
 	
@@ -66,11 +67,11 @@ public class WebSocketRequest {
 		return type;
 	}
 
-	public final ArrayList<ExtJSDirectRequest<JsonNode>> getData() {
+	public final List<ExtJSDirectRequest<JsonNode>> getData() {
 		return data;
 	}
 
-	public final void setData(final ArrayList<ExtJSDirectRequest<JsonNode>> data) {
+	public final void setData(final List<ExtJSDirectRequest<JsonNode>> data) {
 		this.data = data;
 	}
 

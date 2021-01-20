@@ -16,8 +16,6 @@ import java.util.List;
  */
 public class ExtJSDirectRequest<T> {
 
-	// {"action":"DemoForm","method":"submit","data":[{"id":"0","username":"asfsa","password":"asdfv","email":"sadfv","rank":"345"}],"type":"rpc","tid":1}
-
 	private String action;
 	private String method;
 	private String namespace;

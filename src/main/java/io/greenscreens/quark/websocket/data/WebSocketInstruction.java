@@ -20,7 +20,8 @@ public enum WebSocketInstruction {
     DATA("data"),
     ENC("enc"),
     INS("ins"), // internal instruction
-    ECHO("echo")
+    ECHO("echo"),
+    PING("ping")
 	;
 
 	private final String text;
@@ -39,4 +40,8 @@ public enum WebSocketInstruction {
 		return text;
 	}
 
+	// fix for eclipse compiler - switch issue
+	public boolean isSimple() {
+		return this == WELCO || this == API || this == ECHO || this == PING || this == BYE;
+	}
 }

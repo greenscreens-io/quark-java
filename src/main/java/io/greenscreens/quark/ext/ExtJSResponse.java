@@ -7,6 +7,7 @@
 package io.greenscreens.quark.ext;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 /**
  * ExtJs standard response structure used by other extended response classes
@@ -17,11 +18,11 @@ public class ExtJSResponse implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 
-	public static boolean EXPOSE_ERROR = false;
+	public static final boolean EXPOSE_ERROR = false;
 
 	public enum Type {
-		INFO, WAR, ERROR, NOTIFY
-	};
+		INFO, WARN, ERROR, NOTIFY
+	}
 
 	private boolean success;
 	private String msg;
@@ -86,16 +87,16 @@ public class ExtJSResponse implements Serializable {
 
 			if (exception instanceof RuntimeException && exception.getCause() != null) {
 				this.exception = exception.getCause();
-			} else {
-				this.exception = exception;
-			}
+			} 
 		}
 
 	}
 
 	public final void setError(final Throwable exception, final String message) {
-		success = false;
-		msg = message;
+		if (Objects.nonNull(message)) {
+			success = false;
+			msg = message;
+		}
 		// setException(exception);
 	}
 
@@ -132,8 +133,6 @@ public class ExtJSResponse implements Serializable {
 		private String code;
 		private Throwable exception;
 		private Type type = Type.INFO;
-
-        public Builder() {}
         
         public Builder setStatus(final boolean status) {
         	this.success = status;
@@ -154,9 +153,7 @@ public class ExtJSResponse implements Serializable {
         	final ExtJSResponse resp = new ExtJSResponse(success, msg);
         	resp.setCode(code);
         	resp.setType(type);
-        	if (exception != null) {
-        		resp.setError(exception, msg);
-        	}
+        	resp.setError(exception, msg);
         	return resp;
         }
 

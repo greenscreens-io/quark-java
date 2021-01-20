@@ -20,7 +20,7 @@ import javax.servlet.http.HttpSessionListener;
 @WebListener
 public class SessionCollector implements HttpSessionListener, HttpSessionActivationListener {
 
-	private static final Map<Integer, HttpSession> sessions = new ConcurrentHashMap<Integer, HttpSession>();
+	private static final Map<Integer, HttpSession> sessions = new ConcurrentHashMap<>();
 
 	@Override
 	public void sessionCreated(final HttpSessionEvent event) {

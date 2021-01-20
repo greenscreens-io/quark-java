@@ -10,8 +10,6 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.Optional;
 
-import javax.enterprise.inject.Instance;
-import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 import javax.websocket.CloseReason;
 import javax.websocket.EndpointConfig;
@@ -25,6 +23,8 @@ import javax.websocket.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.greenscreens.quark.QuarkEngine;
+import io.greenscreens.quark.QuarkUtil;
 import io.greenscreens.quark.websocket.data.IWebSocketResponse;
 import io.greenscreens.quark.websocket.data.WebSocketRequest;
 
@@ -42,7 +42,7 @@ public class WebSocketService {
 
 	// getopensessions does not work across different endpoints
 	public void broadcast(final IWebSocketResponse data) {
-		endpoint.broadcast(data);
+		WebSocketEndpoint.broadcast(data);
 	}
 
 	@OnMessage
@@ -53,7 +53,7 @@ public class WebSocketService {
 	@OnOpen
 	public void onOpen(final Session session, final EndpointConfig config) {
 
-		endpoint = Optional.ofNullable(endpoint).orElse(getBean(WebSocketEndpoint.class));
+		endpoint = Optional.ofNullable(endpoint).orElse(QuarkEngine.getBean(WebSocketEndpoint.class));
 
 		if (endpoint == null) {
 			LOG.warn("WebSocketEndpoint not injected. If running in servlet only container, CDI framework is needed.");
@@ -76,9 +76,7 @@ public class WebSocketService {
 
 	@OnMessage
 	public void onPongMessage(final PongMessage pong, final Session session) {
-		/*
-		 * final ByteBuffer bb = pong.getApplicationData(); System.out.println(bb);
-		 */
+		// not used
 	}
 
 	private void close(Closeable closeable) {
@@ -89,22 +87,11 @@ public class WebSocketService {
 		try {
 			closeable.close();
 		} catch (IOException e) {
-			LOG.error(e.getMessage(), e);
+			final String msg = QuarkUtil.toMessage(e);
+			LOG.error(msg);
+			LOG.debug(msg, e);
 		}
 
-	}
-
-	public <T> T getBean(Class<T> cls) {
-
-		final CDI<Object> cdi = CDI.current();
-		if (cdi != null) {
-			final Instance<T> inst = cdi.select(cls);
-			if (inst != null) {
-				return inst.get();
-			}
-		}
-
-		return null;
 	}
 
 }

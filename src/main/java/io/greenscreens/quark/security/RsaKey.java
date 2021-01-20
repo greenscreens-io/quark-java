@@ -6,11 +6,17 @@
  */
 package io.greenscreens.quark.security;
 
+import java.io.IOException;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.Signature;
+import java.security.SignatureException;
 import java.util.Base64;
 import java.util.Base64.Decoder;
 import java.util.Base64.Encoder;
@@ -19,6 +25,8 @@ import org.bouncycastle.jce.ECNamedCurveTable;
 import org.bouncycastle.jce.spec.ECNamedCurveParameterSpec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import io.greenscreens.quark.QuarkUtil;
 
 /**
  * Helper class for handling RSA keys Support for Web Crypto API
@@ -29,7 +37,7 @@ enum RsaKey {
 	private static final Logger LOG = LoggerFactory.getLogger(RsaKey.class);
 
 	// 2048 not supported in legacy mode
-	private static int KEY_SIZE = 1024; // 2048;
+	private static final int KEY_SIZE = 1024;
 
 	private static KeyPair keyPairENCDEC = null;
 	private static KeyPair keyPairVERSGN = null;
@@ -38,25 +46,32 @@ enum RsaKey {
 	private static String pemPrivENCDEC = null;
 
 	private static final String WEB_MODE = "SHA384withECDSA";
+	private static final String LEGACY_MODE = "SHA1withRSA";
 
 	/**
 	 * Initialize RSA key
 	 */
-	public static void initialize() {
+	static void initialize() {
 		try {
 			init();
 		} catch (Exception e) {
-			LOG.error(e.getMessage());
-			LOG.debug(e.getMessage(), e);
+			final String msg = QuarkUtil.toMessage(e);
+			LOG.error(msg);
+			LOG.debug(msg, e);
 		}
 	}
 
 	/**
 	 * Internal init
 	 * 
+	 * @throws NoSuchProviderException
+	 * @throws NoSuchAlgorithmException
+	 * @throws IOException
+	 * @throws InvalidAlgorithmParameterException
 	 * @throws Exception
 	 */
-	static void init() throws Exception {
+	static void init()
+			throws NoSuchAlgorithmException, NoSuchProviderException, IOException, InvalidAlgorithmParameterException {
 
 		KeyPairGenerator gen = null;
 
@@ -70,7 +85,9 @@ enum RsaKey {
 		pemPrivENCDEC = RsaUtil.toPrivatePem(keyPairENCDEC);
 	}
 
-	static void initVerificator() throws Exception {
+	static void initVerificator()
+			throws NoSuchAlgorithmException, NoSuchProviderException, InvalidAlgorithmParameterException, IOException {
+
 		if (keyPairVERSGN == null) {
 			final ECNamedCurveParameterSpec spec = ECNamedCurveTable.getParameterSpec("P-384");
 			final KeyPairGenerator gen = KeyPairGenerator.getInstance("ECDSA", "BC");
@@ -86,7 +103,7 @@ enum RsaKey {
 	 * @param pubKey
 	 * @param privKey
 	 */
-	public static void setKeys(final PublicKey pubKey, final PrivateKey privKey) {
+	static void setKeys(final PublicKey pubKey, final PrivateKey privKey) {
 
 		try {
 			keyPairENCDEC = new KeyPair(pubKey, privKey);
@@ -94,8 +111,9 @@ enum RsaKey {
 			pemPrivENCDEC = RsaUtil.toPrivatePem(keyPairENCDEC);
 			initVerificator();
 		} catch (Exception e) {
-			LOG.error(e.getMessage());
-			LOG.debug(e.getMessage(), e);
+			final String msg = QuarkUtil.toMessage(e);
+			LOG.error(msg);
+			LOG.debug(msg, e);
 		}
 	}
 
@@ -104,7 +122,7 @@ enum RsaKey {
 	 * 
 	 * @return
 	 */
-	public static PrivateKey getPrivateKey() {
+	static PrivateKey getPrivateKey() {
 		return keyPairENCDEC.getPrivate();
 	}
 
@@ -113,7 +131,7 @@ enum RsaKey {
 	 * 
 	 * @return
 	 */
-	public static PublicKey getPublicKey() {
+	static PublicKey getPublicKey() {
 		return keyPairENCDEC.getPublic();
 	}
 
@@ -123,7 +141,7 @@ enum RsaKey {
 	 * @param flat
 	 * @return
 	 */
-	public static String getPublicEncoder(final boolean flat) {
+	static String getPublicEncoder(final boolean flat) {
 		if (flat) {
 			return RsaUtil.flatten(pemENCDEC);
 		}
@@ -136,7 +154,7 @@ enum RsaKey {
 	 * @param flat
 	 * @return
 	 */
-	public static String getPrivateEncoder(final boolean flat) {
+	static String getPrivateEncoder(final boolean flat) {
 		if (flat) {
 			return RsaUtil.flatten(pemPrivENCDEC);
 		}
@@ -149,7 +167,7 @@ enum RsaKey {
 	 * @param flat
 	 * @return
 	 */
-	public static String getPublicVerifier(final boolean flat) {
+	static String getPublicVerifier(final boolean flat) {
 		if (flat) {
 			return RsaUtil.flatten(pemVERSGN);
 		}
@@ -161,12 +179,32 @@ enum RsaKey {
 	 * 
 	 * @param signedData
 	 * @return
+	 * @throws IOException 
 	 * @throws Exception
 	 */
-	static byte[] signConvert(byte[] signedData) throws Exception {
+	static byte[] signConvert(byte[] signedData) throws IOException {
 		int len = Transcoder.getSignatureByteArrayLength(384);
-		final byte[] signEC = Transcoder.transcodeSignatureToConcat(signedData, len);
-		return signEC;
+		return Transcoder.transcodeSignatureToConcat(signedData, len);
+	}
+
+	/**
+	 * Get signature instance based on support type
+	 * 
+	 * @param webCryptoAPI
+	 * @return
+	 * @throws NoSuchAlgorithmException
+	 */
+	static Signature getSignature(final boolean webCryptoAPI) throws NoSuchAlgorithmException {
+
+		Signature signature = null;
+
+		if (webCryptoAPI) {
+			signature = Signature.getInstance(WEB_MODE);
+		} else {
+			signature = Signature.getInstance(LEGACY_MODE);
+		}
+
+		return signature;
 	}
 
 	/**
@@ -175,11 +213,15 @@ enum RsaKey {
 	 * @param challenge
 	 * @param webCryptoAPI
 	 * @return
+	 * @throws NoSuchAlgorithmException 
+	 * @throws SignatureException 
+	 * @throws InvalidKeyException 
+	 * @throws IOException 
 	 * @throws Exception
 	 */
-	public static byte[] signChallenge(final byte[] challenge, final boolean webCryptoAPI) throws Exception {
+	static byte[] signChallenge(final byte[] challenge, final boolean webCryptoAPI) throws NoSuchAlgorithmException, SignatureException, InvalidKeyException, IOException {
 
-		final Signature signature = Signature.getInstance(WEB_MODE);
+		final Signature signature = getSignature(webCryptoAPI);
 		signature.initSign(keyPairVERSGN.getPrivate());
 		signature.update(challenge);
 
@@ -207,10 +249,13 @@ enum RsaKey {
 	 * @param isHex
 	 * @param flat
 	 * @return
+	 * @throws IOException 
+	 * @throws SignatureException 
+	 * @throws NoSuchAlgorithmException 
+	 * @throws InvalidKeyException 
 	 * @throws Exception
 	 */
-	public static String signChallenge(final String data, final boolean isHex, final boolean webCryptoAPI)
-			throws Exception {
+	static String signChallenge(final String data, final boolean isHex, final boolean webCryptoAPI) throws InvalidKeyException, NoSuchAlgorithmException, SignatureException, IOException {
 		if (isHex) {
 			return signHexChallenge(data, webCryptoAPI);
 		} else {
@@ -224,11 +269,15 @@ enum RsaKey {
 	 * @param data
 	 * @param flat
 	 * @return
+	 * @throws IOException 
+	 * @throws SignatureException 
+	 * @throws NoSuchAlgorithmException 
+	 * @throws InvalidKeyException 
 	 * @throws Exception
 	 */
-	public static String signHexChallenge(final String data, final boolean webCryptoAPI) throws Exception {
+	static String signHexChallenge(final String data, final boolean webCryptoAPI) throws InvalidKeyException, NoSuchAlgorithmException, SignatureException, IOException {
 		final byte[] signature = signChallenge(data.getBytes(), webCryptoAPI);
-		return Security.bytesToHex(signature);
+		return QuarkUtil.bytesToHex(signature);
 	}
 
 	/**
@@ -237,9 +286,13 @@ enum RsaKey {
 	 * @param data
 	 * @param flat
 	 * @return
+	 * @throws IOException 
+	 * @throws SignatureException 
+	 * @throws NoSuchAlgorithmException 
+	 * @throws InvalidKeyException 
 	 * @throws Exception
 	 */
-	public static String signBase64Challenge(final String data, final boolean webCryptoAPI) throws Exception {
+	static String signBase64Challenge(final String data, final boolean webCryptoAPI) throws InvalidKeyException, NoSuchAlgorithmException, SignatureException, IOException  {
 		final Encoder base64 = Base64.getEncoder();
 		final byte[] signature = signChallenge(data.getBytes(), webCryptoAPI);
 		return base64.encodeToString(signature);
@@ -251,12 +304,22 @@ enum RsaKey {
 	 * @param data
 	 * @param webCryptoAPI
 	 * @return
+	 * @throws InvalidKeyException 
+	 * @throws NoSuchAlgorithmException 
+	 * @throws SignatureException 
+	 * @throws IOException 
 	 * @throws Exception
 	 */
-	public static byte[] sign(final String data, final boolean webCryptoAPI) throws Exception {
+	static byte[] sign(final String data, final boolean webCryptoAPI) throws InvalidKeyException, NoSuchAlgorithmException, SignatureException, IOException  {
 
-		final Signature signature = Signature.getInstance(WEB_MODE);
-		signature.initSign(keyPairVERSGN.getPrivate());
+		final Signature signature = getSignature(webCryptoAPI);
+
+		if (webCryptoAPI) {
+			signature.initSign(keyPairVERSGN.getPrivate());
+		} else {
+			signature.initSign(keyPairENCDEC.getPrivate());
+		}
+
 		signature.update(data.getBytes());
 
 		final byte[] signedData = signature.sign();
@@ -275,9 +338,13 @@ enum RsaKey {
 	 * @param isHex
 	 * @param flat
 	 * @return
+	 * @throws IOException 
+	 * @throws SignatureException 
+	 * @throws NoSuchAlgorithmException 
+	 * @throws InvalidKeyException 
 	 * @throws Exception
 	 */
-	public static String sign(final String data, final boolean isHex, final boolean webCryptoAPI) throws Exception {
+	static String sign(final String data, final boolean isHex, final boolean webCryptoAPI) throws InvalidKeyException, NoSuchAlgorithmException, SignatureException, IOException {
 		if (isHex) {
 			return signHex(data, webCryptoAPI);
 		} else {
@@ -291,11 +358,15 @@ enum RsaKey {
 	 * @param data
 	 * @param flat
 	 * @return
+	 * @throws IOException 
+	 * @throws SignatureException 
+	 * @throws NoSuchAlgorithmException 
+	 * @throws InvalidKeyException 
 	 * @throws Exception
 	 */
-	public static String signHex(final String data, final boolean webCryptoAPI) throws Exception {
+	static String signHex(final String data, final boolean webCryptoAPI) throws InvalidKeyException, NoSuchAlgorithmException, SignatureException, IOException {
 		final byte[] signature = sign(data, webCryptoAPI);
-		return Security.bytesToHex(signature);
+		return QuarkUtil.bytesToHex(signature);
 	}
 
 	/**
@@ -304,9 +375,13 @@ enum RsaKey {
 	 * @param data
 	 * @param flat
 	 * @return
+	 * @throws IOException 
+	 * @throws SignatureException 
+	 * @throws NoSuchAlgorithmException 
+	 * @throws InvalidKeyException 
 	 * @throws Exception
 	 */
-	public static String signBase64(final String data, final boolean webCryptoAPI) throws Exception {
+	static String signBase64(final String data, final boolean webCryptoAPI) throws InvalidKeyException, NoSuchAlgorithmException, SignatureException, IOException  {
 		final Encoder base64 = Base64.getEncoder();
 		final byte[] signature = sign(data, webCryptoAPI);
 		return base64.encodeToString(signature);
@@ -320,13 +395,17 @@ enum RsaKey {
 	 * @param isHex
 	 * @param webCryptoAPI
 	 * @return
+	 * @throws SignatureException
+	 * @throws NoSuchAlgorithmException
+	 * @throws InvalidKeyException
 	 * @throws Exception
 	 */
-	public static boolean verify(final String data, final String signature, final boolean isHex) throws Exception {
+	static boolean verify(final String data, final String signature, final boolean isHex, final boolean webCryptoAPI)
+			throws InvalidKeyException, NoSuchAlgorithmException, SignatureException {
 		if (isHex) {
-			return verifyHex(data, signature);
+			return verifyHex(data, signature, webCryptoAPI);
 		} else {
-			return verifyBase64(data, signature);
+			return verifyBase64(data, signature, webCryptoAPI);
 		}
 	}
 
@@ -337,12 +416,16 @@ enum RsaKey {
 	 * @param signature
 	 * @param webCryptoAPI
 	 * @return
+	 * @throws SignatureException
+	 * @throws NoSuchAlgorithmException
+	 * @throws InvalidKeyException
 	 * @throws Exception
 	 */
-	public static boolean verifyHex(final String data, final String signature) throws Exception {
+	static boolean verifyHex(final String data, final String signature, final boolean webCryptoAPI)
+			throws InvalidKeyException, NoSuchAlgorithmException, SignatureException {
 		final byte[] dataBin = data.getBytes();
-		final byte[] signatureBin = Security.hexToBytes(signature);
-		return verify(dataBin, signatureBin);
+		final byte[] signatureBin = QuarkUtil.hexStringToByteArray(signature);
+		return verify(dataBin, signatureBin, webCryptoAPI);
 	}
 
 	/**
@@ -352,13 +435,17 @@ enum RsaKey {
 	 * @param signature
 	 * @param webCryptoAPI
 	 * @return
+	 * @throws SignatureException
+	 * @throws NoSuchAlgorithmException
+	 * @throws InvalidKeyException
 	 * @throws Exception
 	 */
-	public static boolean verifyBase64(final String data, final String signature) throws Exception {
+	static boolean verifyBase64(final String data, final String signature, final boolean webCryptoAPI)
+			throws InvalidKeyException, NoSuchAlgorithmException, SignatureException {
 		final Decoder base64 = Base64.getDecoder();
 		final byte[] dataBin = data.getBytes();
 		final byte[] signatureBin = base64.decode(signature);
-		return verify(dataBin, signatureBin);
+		return verify(dataBin, signatureBin, webCryptoAPI);
 	}
 
 	/**
@@ -368,13 +455,25 @@ enum RsaKey {
 	 * @param signature
 	 * @param webCryptoAPI
 	 * @return
+	 * @throws NoSuchAlgorithmException
+	 * @throws InvalidKeyException
+	 * @throws SignatureException
 	 * @throws Exception
 	 */
-	public static boolean verify(byte[] data, byte[] sig) throws Exception {
-		Signature signature = Signature.getInstance(WEB_MODE);
-		signature.initVerify(keyPairVERSGN.getPublic());
-		signature.update(data);
-		return signature.verify(sig);
+	static boolean verify(byte[] data, byte[] signature, final boolean webCryptoAPI)
+			throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
+
+		final Signature sig = getSignature(webCryptoAPI);
+
+		if (webCryptoAPI) {
+			sig.initVerify(keyPairVERSGN.getPublic());
+		} else {
+			sig.initVerify(keyPairENCDEC.getPublic());
+		}
+
+		sig.update(data);
+
+		return sig.verify(signature);
 	}
 
 }

@@ -1,8 +1,8 @@
 /*
  * Copyright (C) 2015, 2020  Green Screens Ltd.
- *
+ * 
  * https://www.greenscreens.io
- *
+ * 
  */
 package io.greenscreens.quark.websocket;
 
@@ -10,13 +10,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 
+import javax.servlet.ServletContext;
 import javax.servlet.http.HttpSession;
 import javax.websocket.HandshakeResponse;
 import javax.websocket.server.HandshakeRequest;
 import javax.websocket.server.ServerEndpointConfig;
 
-import io.greenscreens.quark.Util;
+import io.greenscreens.quark.QuarkUtil;
 import io.greenscreens.quark.web.QuarkConstants;
 import io.greenscreens.quark.web.listener.SessionCollector;
 
@@ -36,7 +38,7 @@ public class WebSocketConfigurator extends ServerEndpointConfig.Configurator {
 
 	/**
 	 * Find query parameter q, which contains request challenge
-	 *
+	 * 
 	 * @param request
 	 * @return
 	 */
@@ -50,7 +52,7 @@ public class WebSocketConfigurator extends ServerEndpointConfig.Configurator {
 
 	/**
 	 * Find session link token based on custom pairing
-	 *
+	 * 
 	 * @param request
 	 * @return
 	 */
@@ -64,12 +66,12 @@ public class WebSocketConfigurator extends ServerEndpointConfig.Configurator {
 			val = WebsocketUtil.findQuery(request, "t");
 		}
 
-		return Util.toInt(val);
+		return QuarkUtil.toInt(val);
 	}
 
 	/**
 	 * Find http session attached to websocket
-	 *
+	 * 
 	 * @param request
 	 * @return
 	 */
@@ -85,19 +87,7 @@ public class WebSocketConfigurator extends ServerEndpointConfig.Configurator {
 		return httpSession;
 	}
 
-	/**
-	 * Store data to websocket user data
-	 *
-	 * @param sec
-	 * @param key
-	 * @param value
-	 */
-	public void store(final ServerEndpointConfig sec, final String key, final Object value) {
-		if (key != null && value != null) {
-			sec.getUserProperties().put(key, value);
-		}
-	}
-
+	
 	@Override
 	public final String getNegotiatedSubprotocol(final List<String> supported, final List<String> requested) {
 		return QuarkConstants.WEBSOCKET_SUBPROTOCOL;
@@ -119,12 +109,29 @@ public class WebSocketConfigurator extends ServerEndpointConfig.Configurator {
 		final String compression = findCompression(request);
 		final Locale locale = WebsocketUtil.getLocale(request);
 		final boolean isCompression = "true".equalsIgnoreCase(compression);
-
-		store(sec, QuarkConstants.WEBSOCKET_PATH, sec.getPath());
-		store(sec, QuarkConstants.WEBSOCKET_CHALLENGE, challenge);
-		store(sec, QuarkConstants.WEBSOCKET_COMPRESSION, isCompression);
-		store(sec, Locale.class.getCanonicalName(), locale);
-		store(sec, HttpSession.class.getCanonicalName(), httpSession);
+		
+		WebSocketStorage.store(sec, QuarkConstants.WEBSOCKET_PATH, sec.getPath());
+		WebSocketStorage.store(sec, QuarkConstants.WEBSOCKET_CHALLENGE, challenge);
+		WebSocketStorage.store(sec, QuarkConstants.WEBSOCKET_COMPRESSION, isCompression);
+		WebSocketStorage.store(sec, Locale.class.getCanonicalName(), locale);
+		WebSocketStorage.store(sec, HttpSession.class.getCanonicalName(), httpSession);
+		if (Objects.nonNull(httpSession)) {
+			WebSocketStorage.store(sec, ServletContext.class.getCanonicalName(), httpSession.getServletContext());
+		}
 	}
+	
+	/**
+	 * Store data to websocket user data
+	 * 
+	 * @param sec
+	 * @param key
+	 * @param value
+	 */
+	public void store(final ServerEndpointConfig sec, final String key, final Object value) {
+		if (key != null && value != null) {
+			sec.getUserProperties().put(key, value);
+		}
+	}
+
 
 }

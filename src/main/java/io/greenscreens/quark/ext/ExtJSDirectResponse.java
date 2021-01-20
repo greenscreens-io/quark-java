@@ -13,12 +13,10 @@ package io.greenscreens.quark.ext;
  */
 public class ExtJSDirectResponse<T> {
 
-	// {"action":"DemoForm","method":"submit","data":[{"id":"0","username":"asfsa","password":"asdfv","email":"sadfv","rank":"345"}],"type":"rpc","tid":1}
 	private String action;
 	private String method;
 	private String type;
 	private String tid = "-1";
-	private boolean keepTransaction;
 	private Object result;
 
 	public ExtJSDirectResponse(final ExtJSDirectRequest<T> request, final Object response) {
@@ -75,18 +73,9 @@ public class ExtJSDirectResponse<T> {
 		this.result = result;
 	}
 
-	public final boolean isKeepTransaction() {
-		return keepTransaction;
-	}
-
-	public final void setKeepTransaction(final boolean keepTransaction) {
-		this.keepTransaction = keepTransaction;
-	}
-
 	@Override
 	public String toString() {
-		return "ExtJSDirectResponse [action=" + action + ", method=" + method + ", type=" + type + ", tid=" + tid
-				+ ", keepTransaction=" + keepTransaction + ", result=" + result + "]";
+		return "ExtJSDirectResponse [action=" + action + ", method=" + method + ", type=" + type + ", tid=" + tid + ", result=" + result + "]";
 	}
 
 }

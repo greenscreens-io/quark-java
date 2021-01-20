@@ -20,12 +20,12 @@ public class WebsocketEncoder implements Encoder.Text<WebSocketResponse> {
 
 	@Override
 	public final void destroy() {
-
+		// not used
 	}
 
 	@Override
 	public final void init(final EndpointConfig arg0) {
-
+		// not used
 	}
 
 	@Override

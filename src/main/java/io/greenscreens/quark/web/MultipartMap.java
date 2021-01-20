@@ -9,6 +9,7 @@ package io.greenscreens.quark.web;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.Collections;
@@ -21,6 +22,8 @@ import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.Part;
+
+import io.greenscreens.quark.QuarkUtil;
 
 /**
  * The MultipartMap. It simulates the
@@ -111,7 +114,8 @@ public class MultipartMap extends HashMap<String, Object> {
 
 		this.encoding = multipartRequest.getCharacterEncoding();
 		if (this.encoding == null) {
-			multipartRequest.setCharacterEncoding(this.encoding = DEFAULT_ENCODING);
+			this.encoding = DEFAULT_ENCODING;
+			multipartRequest.setCharacterEncoding(DEFAULT_ENCODING);
 		}
 
 		for (Part part : multipartRequest.getParts()) {
@@ -173,7 +177,7 @@ public class MultipartMap extends HashMap<String, Object> {
 	 * @see ServletRequest#getParameterMap()
 	 */
 	public Map<String, String[]> getParameterMap() {
-		Map<String, String[]> map = new HashMap<String, String[]>();
+		Map<String, String[]> map = new HashMap<>();
 		for (Entry<String, Object> entry : entrySet()) {
 			Object value = entry.getValue();
 			if (value instanceof String[]) {
@@ -220,12 +224,22 @@ public class MultipartMap extends HashMap<String, Object> {
 	 * Returns the text value of the given part.
 	 */
 	private String getValue(Part part) throws IOException {
-		BufferedReader reader = new BufferedReader(new InputStreamReader(part.getInputStream(), encoding));
-		StringBuilder value = new StringBuilder();
-		char[] buffer = new char[DEFAULT_BUFFER_SIZE];
-		for (int length = 0; (length = reader.read(buffer)) > 0;) {
-			value.append(buffer, 0, length);
+		
+		final StringBuilder value = new StringBuilder();
+		final InputStream is = part.getInputStream();
+		BufferedReader reader = new BufferedReader(new InputStreamReader(is, encoding));
+		
+		try {
+			char[] buffer = new char[DEFAULT_BUFFER_SIZE];
+			for (int length = 0; (length = reader.read(buffer)) > 0;) {
+				value.append(buffer, 0, length);
+			}	
+		} finally {
+			QuarkUtil.close(reader);
+			QuarkUtil.close(is);
 		}
+		
+		
 		return value.toString();
 	}
 
@@ -248,5 +262,5 @@ public class MultipartMap extends HashMap<String, Object> {
 			put(name, newValues);
 		}
 	}
-
+	
 }

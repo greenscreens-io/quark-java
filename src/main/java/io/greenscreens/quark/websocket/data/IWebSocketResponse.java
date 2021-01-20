@@ -6,7 +6,7 @@
  */
 package io.greenscreens.quark.websocket.data;
 
-import io.greenscreens.quark.security.IAesKey;
+import io.greenscreens.quark.IQuarkKey;
 
 public interface IWebSocketResponse {
 
@@ -28,8 +28,8 @@ public interface IWebSocketResponse {
 
 	WebSocketInstruction getCmd();
 
-	IAesKey getKey();
+	IQuarkKey getKey();
 
-	void setKey(IAesKey key);
+	void setKey(IQuarkKey key);
 
 }

@@ -16,7 +16,7 @@ import javax.websocket.EndpointConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.greenscreens.quark.Util;
+import io.greenscreens.quark.QuarkUtil;
 import io.greenscreens.quark.websocket.data.WebSocketResponseBinary;
 
 /**
@@ -29,33 +29,34 @@ public class WebsocketEncoderBinary implements Encoder.Binary<WebSocketResponseB
 
 	@Override
 	public final void destroy() {
-
+		// not used
 	}
 
 	@Override
 	public final void init(final EndpointConfig arg0) {
-
+		// not used
 	}
 
 	@Override
 	public final ByteBuffer encode(final WebSocketResponseBinary data) throws EncodeException {
 		
-		final String msg = WebsocketUtil.encode(data);
+		final String wsmsg = WebsocketUtil.encode(data);
 		ByteBuffer buff = null;
 		
-		if (msg != null && msg.length() > 0) {
+		if (wsmsg != null && wsmsg.length() > 0) {
 			
 			try {
 				if (data.isCompression()) {
-					final byte bytes[] = Util.gzip(msg);
+					final byte [] bytes = QuarkUtil.gzip(wsmsg);
 					buff = ByteBuffer.wrap(bytes);					
 				} else {
-					buff = ByteBuffer.wrap(msg.getBytes(StandardCharsets.UTF_8));
+					buff = ByteBuffer.wrap(wsmsg.getBytes(StandardCharsets.UTF_8));
 				}
 			} catch (Exception e) {
-				LOG.error(e.getMessage());
-				LOG.debug(e.getMessage(), e);
-				throw new EncodeException(data, e.getMessage());
+				final String msg = QuarkUtil.toMessage(e);
+				LOG.error(msg);
+				LOG.debug(msg, e);
+				throw new EncodeException(data, msg);
 			}
 		}
 		

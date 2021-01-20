@@ -14,7 +14,8 @@ public enum QuarkErrors {
 	E0000("E0000", "Invalid encryption data"), 
 	E0001("E0001", "Requested Service not found"),
 	E0002("E0002", "Incomming parameters are invalid"),
-
+	
+	E8888("E8888", "Action disabled!"),
 	E9999("E9999", "General error");
 
 	private String code;
@@ -30,16 +31,8 @@ public enum QuarkErrors {
 		return code;
 	}
 
-	public void setCode(String code) {
-		this.code = code;
-	}
-
 	public String getMessage() {
 		return message;
-	}
-
-	public void setMessage(String message) {
-		this.message = message;
 	}
 
 	public String getString() {

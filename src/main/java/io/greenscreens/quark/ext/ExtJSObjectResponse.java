@@ -6,7 +6,6 @@
  */
 package io.greenscreens.quark.ext;
 
-
 /**
  * ExtJs standard response structure used by other extended response classes
  * 
@@ -52,8 +51,6 @@ public class ExtJSObjectResponse<T> extends ExtJSResponse {
 		private String code;
 		private Throwable exception;
 		private Type type = Type.INFO;
-
-        public Builder() {}
         
         public Builder<T> setStatus(final boolean status) {
         	this.success = status;
@@ -80,13 +77,15 @@ public class ExtJSObjectResponse<T> extends ExtJSResponse {
         	resp.setCode(code);
         	resp.setType(type);
         	resp.setData(data);
-        	if (exception != null) {
-        		resp.setError(exception, msg);
-        	}
+        	resp.setError(exception, msg);
         	return resp;
         }
+
+        public static <K> Builder<K> create(final Class<K> clazz) {
+        	return new Builder<>();
+        }
         
-        public static  <K> Builder<K> create(final Class<K> type) {
+        public static  <K> Builder<K> create() {
         	return new Builder<>();
         }
 

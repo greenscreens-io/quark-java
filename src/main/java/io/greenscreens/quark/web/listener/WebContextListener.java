@@ -19,7 +19,7 @@ import javax.validation.ValidatorFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.greenscreens.quark.security.Security;
+import io.greenscreens.quark.QuarkSecurity;
 import io.greenscreens.quark.websocket.WebsocketEvent;
 
 /**
@@ -28,21 +28,24 @@ import io.greenscreens.quark.websocket.WebsocketEvent;
 @WebListener
 public final class WebContextListener implements ServletContextListener {
 
-	private static Logger LOG = LoggerFactory.getLogger(WebContextListener.class);
+	private static final Logger LOG = LoggerFactory.getLogger(WebContextListener.class);
 
 	private static ServletContext context;
-	public static ValidatorFactory factory = null;
+	private static ValidatorFactory factory = null;
 
 	public static ServletContext getContext() {
 		return context;
 	}
 
+	public static ValidatorFactory getValidationFactory() {
+		return factory;
+	}
+
 	/**
-	 * reassign WebSocket session to active telnet sessions; this is in a case when
-	 * browser is reloaded
+	 * 
 	 */
 	protected void onWebSocketEvent(@Observes final WebsocketEvent wsEvent) {
-
+		// not used for now
 	}
 
 	/**
@@ -63,15 +66,16 @@ public final class WebContextListener implements ServletContextListener {
 
 		final int year = Calendar.getInstance().get(Calendar.YEAR);
 
-		LOG.info("Starting Green Screens Service VERSION : {} BUILD : {}", "2.0.0", "20200901");
 		LOG.info("Green Screens Ltd., \u00a9 2016 - {}", year);
 		LOG.info("Email: info@.greenscreens.io");
 		LOG.info("Visit: http://www.greenscreens.io");
 
-		factory = Validation.buildDefaultValidatorFactory();
-		//factory = Validation.byProvider(HibernateProvider.class);
-
-		Security.initialize();
+		QuarkSecurity.initialize();
+		try {
+			factory = Validation.buildDefaultValidatorFactory();
+		} catch (Exception e) {
+			LOG.warn(e.getMessage());
+		}
 	}
 
 }

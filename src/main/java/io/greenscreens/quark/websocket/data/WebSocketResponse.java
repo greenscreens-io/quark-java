@@ -6,16 +6,21 @@
  */
 package io.greenscreens.quark.websocket.data;
 
+
+import java.io.Serializable;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import io.greenscreens.quark.security.IAesKey;
 import io.greenscreens.quark.web.QuarkConstants;
+import io.greenscreens.quark.IQuarkKey;
 
 /**
  * Object to be converted into JSON structure. {type :'ws' , sid : session_id ,
  * tid : transaction_id, timeout : 0 , ....}
  */
-public class WebSocketResponse implements IWebSocketResponse {
+public class WebSocketResponse implements IWebSocketResponse, Serializable {
+
+	private static final long serialVersionUID = 1L;
 
 	private String type = QuarkConstants.WEBSOCKET_TYPE;
 
@@ -26,7 +31,7 @@ public class WebSocketResponse implements IWebSocketResponse {
 	private Object data;
 	
 	@JsonIgnore
-	private transient IAesKey key;
+	private transient IQuarkKey key;
 
 	public WebSocketResponse(final WebSocketInstruction cmd) {
 		this.cmd = cmd;
@@ -78,12 +83,12 @@ public class WebSocketResponse implements IWebSocketResponse {
 	}
 
 	@Override
-	public IAesKey getKey() {
+	public IQuarkKey getKey() {
 		return key;
 	}
 
 	@Override
-	public void setKey(final IAesKey key) {
+	public void setKey(final IQuarkKey key) {
 		this.key = key;
 	}
 

@@ -7,11 +7,10 @@
 package io.greenscreens.quark.websocket;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import javax.enterprise.event.Event;
@@ -20,7 +19,6 @@ import javax.inject.Inject;
 import javax.servlet.http.HttpSession;
 import javax.websocket.CloseReason;
 import javax.websocket.CloseReason.CloseCode;
-import javax.websocket.EncodeException;
 import javax.websocket.EndpointConfig;
 import javax.websocket.Session;
 
@@ -31,12 +29,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import io.greenscreens.quark.Util;
+import io.greenscreens.quark.QuarkUtil;
 import io.greenscreens.quark.cdi.BeanManagerUtil;
 import io.greenscreens.quark.ext.ExtJSDirectRequest;
-import io.greenscreens.quark.ext.ExtJSDirectResponse;
 import io.greenscreens.quark.ext.ExtJSResponse;
 import io.greenscreens.quark.web.QuarkConstants;
+import io.greenscreens.quark.web.QuarkHandler;
 import io.greenscreens.quark.websocket.data.IWebSocketResponse;
 import io.greenscreens.quark.websocket.data.WebSocketInstruction;
 import io.greenscreens.quark.websocket.data.WebSocketRequest;
@@ -52,22 +50,18 @@ public class WebSocketEndpoint {
 	private static final Logger LOG = LoggerFactory.getLogger(WebSocketEndpoint.class);
 	private static final String MSG_HTTP_SEESION_REQUIRED = "WebSocket requires valid http session";
 
-	private static final ThreadLocal<WebSocketSession> websocketContextThreadLocal = new ThreadLocal<WebSocketSession>();
-	// private static final long MINUTE = 60_000;
+	private static final ThreadLocal<WebSocketSession> websocketContextThreadLocal = new ThreadLocal<>();
 
 	@Inject
-	BeanManagerUtil BM;
+	BeanManagerUtil beanManagerUtil;
 	
 	@Inject
 	Event<WebsocketEvent> webSocketEvent;
 
-	private final WebSocketOperations<JsonNode> wsOperations;
-
-	static private Set<WebSocketSession> sessions = Collections.synchronizedSet(new HashSet<>());
+	private static final Set<WebSocketSession> sessions = Collections.synchronizedSet(new HashSet<>());
 	
 	public WebSocketEndpoint() {
 		super();
-		wsOperations = new WebSocketOperations<JsonNode>();
 	}
 
 	@Produces
@@ -80,23 +74,15 @@ public class WebSocketEndpoint {
 	 * 
 	 * @param message
 	 */
-	public void broadcast(final IWebSocketResponse message) {
+	public static void broadcast(final IWebSocketResponse message) {
 
 		if (sessions != null) {
 
 			LOG.trace("Broadcasting message {}", message);
 
-			for (Session session : sessions) {
-
-				try {
-					if (session != null && session.isOpen()) {
-						session.getBasicRemote().sendObject(message);
-						LOG.trace("for session {}", session);
-					}
-				} catch (Exception e) {
-					LOG.error(e.getMessage());
-					LOG.debug(e.getMessage(), e);
-				}
+			for (WebSocketSession session : sessions) {
+				session.sendResponse(message, true);
+				LOG.trace("  for {}", session);
 			}
 
 		}
@@ -119,17 +105,28 @@ public class WebSocketEndpoint {
 			LOG.trace("Received message {} \n      for session : {}", message, session);
 
 			wsession = new WebSocketSession(session);
-			websocketContextThreadLocal.set(wsession);
-			// do not use - to not to overload for many users
-			// webSocketEvent.fire(new WebsocketEvent(wsession,
-			// WebSocketEventStatus.MESSAGE));
+			attach(wsession);
 
 			final WebSocketInstruction cmd = message.getCmd();
 			if (cmd == null)
 				return;
+			
+			if (cmd.isSimple()) {
+				processSimple(wsession, message);
+			} else if (cmd == WebSocketInstruction.ENC) {
+				processData(true, wsession, message);
+			} else if (cmd == WebSocketInstruction.DATA) {
+				processData(false, wsession, message);
+			}
 
+			// ECLIPSE COMPILER ISSUE
+			/* 
 			switch (cmd) {
 			case WELCO:
+			case API:
+			case ECHO:
+			case PING:
+			case BYE:
 				processSimple(wsession, message);
 				break;
 			case ENC:
@@ -138,24 +135,18 @@ public class WebSocketEndpoint {
 			case DATA:
 				processData(false, wsession, message);
 				break;
-			case API:
-				processSimple(wsession, message);				
-			case ECHO:
-				processSimple(wsession, message);
-				break;
-			case BYE:
-				processSimple(wsession, message);
-				break;
 			case ERR:
 				break;
 			default:
 				break;
 			}
+			*/
 
 		} catch (Exception e) {
 
-			LOG.error(e.getMessage());
-			LOG.debug(e.getMessage(), e);
+			final String msg = QuarkUtil.toMessage(e);
+			LOG.error(msg);
+			LOG.debug(msg, e);
 
 			if (wsession != null) {
 				final boolean isCompression = wsession.get(QuarkConstants.WEBSOCKET_COMPRESSION);
@@ -163,7 +154,7 @@ public class WebSocketEndpoint {
 			}
 
 		} finally {
-			websocketContextThreadLocal.remove();
+			release();
 		}
 	}
 
@@ -173,48 +164,35 @@ public class WebSocketEndpoint {
 		try {
 			LOG.trace("Openning new WebSocket connection : {} ", session);
 
-			final Map<String, Object> endpProps = config.getUserProperties();
-			final HttpSession httpSession = (HttpSession) endpProps.get(HttpSession.class.getName());
+			final HttpSession httpSession = WebSocketStorage.get(config, HttpSession.class);
 			final WebSocketSession wsession = new WebSocketSession(session, httpSession);
 
-			boolean requireSession = false;
-
-			if (wsession.contains(QuarkConstants.WEBSOCKET_SESSION)) {
-				requireSession = wsession.get(QuarkConstants.WEBSOCKET_SESSION);
-			}
+			final Boolean requireSession = wsession.get(QuarkConstants.WEBSOCKET_SESSION);
 
 			// disable websocket session timeout due to inactivity
-			// session.setMaxIdleTimeout(MINUTE * 30);
 			session.setMaxIdleTimeout(0);
 
-			final Object path = endpProps.get(QuarkConstants.WEBSOCKET_PATH);
+			final Object path = WebSocketStorage.get(config, QuarkConstants.WEBSOCKET_PATH);
 			wsession.set(QuarkConstants.WEBSOCKET_PATH, path);
 
-			websocketContextThreadLocal.set(wsession);
+			attach(wsession);
 
 			boolean allowed = true;
 			String reason = null;
 
-			wsOperations.setRequiredSession(requireSession);
+			// wsOperations.setRequiredSession(requireSession);
 
-			if (requireSession && !wsession.isValidHttpSession()) {
+			if (Objects.nonNull(requireSession) && requireSession.booleanValue() && !wsession.isValidHttpSession()) {
 				allowed = false;
 				reason = MSG_HTTP_SEESION_REQUIRED;
 			}
 
-			if (allowed == false) {
-				LOG.error(reason);
-				final CloseCode closeCode = new CloseCode() {
-
-					@Override
-					public int getCode() {
-						return 4000;
-					}
-				};
-				session.close(new CloseReason(closeCode, ""));
-
-			} else {
+			if (allowed) {
 				webSocketEvent.fire(new WebsocketEvent(wsession, WebSocketEventStatus.START));
+			} else {
+				LOG.error(reason);
+				final CloseCode closeCode = new CloseCodeImpl();
+				session.close(new CloseReason(closeCode, ""));
 			}
 
 			updateSessions(wsession);
@@ -224,10 +202,11 @@ public class WebSocketEndpoint {
 			}
 			
 		} catch (IOException e) {
-			LOG.error(e.getMessage());
-			LOG.debug(e.getMessage(), e);
+			final String msg = QuarkUtil.toMessage(e);
+			LOG.error(msg);
+			LOG.debug(msg, e);
 		} finally {
-			websocketContextThreadLocal.remove();
+			release();
 		}
 
 	}
@@ -235,18 +214,17 @@ public class WebSocketEndpoint {
 	public void onClose(final Session session, final CloseReason reason) {
 
 		final WebSocketSession wsession = new WebSocketSession(session);
-		LOG.warn("Closing WebSocket session with reason code : {}, Session: {}", reason.getCloseCode().getCode(),
-				wsession);
+		LOG.warn("Closing WebSocket session with reason code : {}, Session: {}", reason.getCloseCode().getCode(), wsession);
 
 		try {
 
-			websocketContextThreadLocal.set(wsession);
+			attach(wsession);
 			WebsocketEvent event = new WebsocketEvent(wsession, WebSocketEventStatus.CLOSE, reason);
 			webSocketEvent.fire(event);
 
 		} finally {
 
-			websocketContextThreadLocal.remove();
+			release();
 			updateSessions(wsession);
 
 		}
@@ -257,15 +235,17 @@ public class WebSocketEndpoint {
 
 		final WebSocketSession wsession = new WebSocketSession(session);
 
-		LOG.error("WebSocket error for session : {},  Message: {}", wsession, throwable.getMessage());
+		final String msg = QuarkUtil.toMessage(throwable);
+
+		LOG.error("WebSocket error for session : {},  Message: {}", wsession, msg);
 
 		try {
 
-			websocketContextThreadLocal.set(wsession);
+			attach(wsession);
 			webSocketEvent.fire(new WebsocketEvent(wsession, WebSocketEventStatus.ERROR, throwable));
 
 		} finally {
-			websocketContextThreadLocal.remove();
+			release();
 		}
 	}
 
@@ -274,8 +254,6 @@ public class WebSocketEndpoint {
 	 */
 
 	private void updateSessions(final WebSocketSession session) {
-
-		LOG.trace("updateSessions");
 
 		if (!session.isOpen()) {
 			sessions.remove(session);
@@ -295,7 +273,7 @@ public class WebSocketEndpoint {
 	
 	private boolean sendAPI(final WebSocketSession session) {
 		
-		if (BM == null) return false;
+		if (beanManagerUtil == null) return false;
 
 		
 		if (!session.contains(QuarkConstants.WEBSOCKET_CHALLENGE)) {
@@ -305,8 +283,8 @@ public class WebSocketEndpoint {
 		final String challenge = session.get(QuarkConstants.WEBSOCKET_CHALLENGE);
 		final WebSocketResponse wsResposne = new WebSocketResponse(WebSocketInstruction.API);		
 		
-		final ArrayNode api = BM.getAPI();
-		final ObjectNode root = Util.buildAPI(api, challenge); 
+		final ArrayNode api = beanManagerUtil.getAPI();
+		final ObjectNode root = QuarkUtil.buildAPI(api, challenge); 
 		wsResposne.setData(root);		
 		
 		session.sendResponse(wsResposne, true);
@@ -318,7 +296,7 @@ public class WebSocketEndpoint {
 		
 		final WebSocketInstruction cmd = message.getCmd();
 				
-		if (WebSocketInstruction.API == cmd && BM != null) {
+		if (WebSocketInstruction.API == cmd && beanManagerUtil != null) {
 			sendAPI(session);
 		}
 
@@ -328,53 +306,34 @@ public class WebSocketEndpoint {
 
 	}
 
-	private void processData(final boolean encrypted, final WebSocketSession session, final WebSocketRequest wsMessage)
-			throws IOException, EncodeException {
+	private void processData(final boolean encrypted, final WebSocketSession session, final WebSocketRequest wsMessage) {
 
-		LOG.trace("processData");
-
-		final List<ExtJSDirectResponse<?>> responseList = new ArrayList<ExtJSDirectResponse<?>>();
-		final String wsPath = session.get(QuarkConstants.WEBSOCKET_PATH);
 		final List<ExtJSDirectRequest<JsonNode>> requests = wsMessage.getData();
-
+		
 		for (final ExtJSDirectRequest<JsonNode> request : requests) {
-			processRequest(encrypted, session, request, wsPath, responseList);
+			QuarkHandler.process(session, request, wsMessage.isBinary(), encrypted);
 		}
-
-		final boolean isCompression = session.get(QuarkConstants.WEBSOCKET_COMPRESSION);		
-		final IWebSocketResponse wsResponse = WebSocketResponseFactory.createAsData(wsMessage.isBinary(), isCompression);	
-		wsResponse.setData(responseList);
-		session.sendResponse(wsResponse, true);
 		
 	}
-	
-	private void processRequest(final boolean encrypted, final WebSocketSession session,
-			final ExtJSDirectRequest<JsonNode> request, final String wsPath,
-			final List<ExtJSDirectResponse<?>> responseList) throws IOException, EncodeException {
 
-		LOG.trace("processRequest");
-
-		ExtJSDirectResponse<?> extResponse = null;
-		try {
-
-			if (encrypted) {
-				extResponse = wsOperations.processEncrypted(request, session, wsPath);
-			} else {
-				extResponse = wsOperations.process(request, session.getHttpSession(), wsPath);
-			}
-
-		} catch (Exception e) {
-			LOG.debug(e.getMessage(), e);
-			final ExtJSResponse errorResponse = new ExtJSResponse(e, e.getMessage());
-			extResponse = new ExtJSDirectResponse<>(request, errorResponse);
-		}
-
-		if (extResponse != null) {
-			responseList.add(extResponse);
+	public static void attach(final WebSocketSession session) {
+		if (Objects.nonNull(session)) {
+			websocketContextThreadLocal.set(session);
 		}
 	}
-
+	
+	public static void release() {
+		websocketContextThreadLocal.remove();
+	}
+	
 	public static WebSocketSession get() {
 		return websocketContextThreadLocal.get();
+	}
+	
+	public static final class CloseCodeImpl implements CloseCode {
+		@Override
+		public int getCode() {
+			return 4000;
+		}
 	}
 }

@@ -10,6 +10,7 @@ import java.net.URI;
 import java.security.Principal;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import javax.servlet.ServletContext;
@@ -29,7 +30,8 @@ import javax.websocket.WebSocketContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.greenscreens.quark.security.IAesKey;
+import io.greenscreens.quark.IQuarkKey;
+import io.greenscreens.quark.QuarkUtil;
 import io.greenscreens.quark.web.QuarkConstants;
 import io.greenscreens.quark.websocket.data.IWebSocketResponse;
 import io.greenscreens.quark.websocket.data.WebSocketInstruction;
@@ -44,8 +46,6 @@ public class WebSocketSession implements Session {
 	private static final Logger LOG = LoggerFactory.getLogger(WebSocketSession.class);
 
 	private final Session session;
-
-	// private ExtJSDirectRequest<?> request;
 
 	public WebSocketSession(final Session session) {
 		super();
@@ -62,7 +62,7 @@ public class WebSocketSession implements Session {
 	}
 
 	@Override
-	public final void addMessageHandler(final MessageHandler arg0) throws IllegalStateException {
+	public final void addMessageHandler(final MessageHandler arg0) {
 		session.addMessageHandler(arg0);
 	}
 
@@ -76,8 +76,9 @@ public class WebSocketSession implements Session {
 			try {
 				session.getBasicRemote().sendObject(response);
 			} catch (EncodeException e) {
-				LOG.error(e.getMessage());
-				LOG.trace(e.getMessage(), e);
+				final String msg = QuarkUtil.toMessage(e);
+				LOG.error(msg);
+				LOG.debug(msg, e);
 			}
 			close(new CloseReason(CloseCodes.NORMAL_CLOSURE, ""));
 		}
@@ -91,7 +92,14 @@ public class WebSocketSession implements Session {
 	}
 
 	public final ServletContext getContext() {
-		return getHttpSession().getServletContext();
+		ServletContext ctx = WebSocketStorage.get(this, ServletContext.class);
+		if (Objects.isNull(ctx)) {
+			final HttpSession httpSession = getHttpSession();
+			if (Objects.nonNull(httpSession)) {
+				ctx = httpSession.getServletContext();
+			}
+		}
+		return ctx;
 	}
 
 	public final boolean sendResponse(final IWebSocketResponse wsResponse, final boolean async) {
@@ -114,7 +122,7 @@ public class WebSocketSession implements Session {
 		boolean success = true;
 
 		try {
-			final IAesKey aes = WebSocketStorage.get(session, QuarkConstants.HTTP_SEESION_ENCRYPT);
+			final IQuarkKey aes = WebSocketStorage.get(session, QuarkConstants.HTTP_SEESION_ENCRYPT);
 			wsResponse.setKey(aes);	
 			
 			if (async) {
@@ -130,8 +138,9 @@ public class WebSocketSession implements Session {
 			success = false;
 		} catch (Exception e) {
 			success = false;
-			LOG.error(e.getMessage());
-			LOG.debug(e.getMessage(), e);
+			final String msg = QuarkUtil.toMessage(e);
+			LOG.error(msg);
+			LOG.debug(msg, e);
 		}
 
 		return success;
@@ -267,6 +276,16 @@ public class WebSocketSession implements Session {
 	}
 
 	/**
+	 * Get data from socket storage
+	 * @param <T>
+	 * @param key
+	 * @return
+	 */
+	public final <T> T remove(final String key) {
+		return WebSocketStorage.remove(this, key);
+	}
+	
+	/**
 	 * Set data to socket storage
 	 * @param <T>
 	 * @param key
@@ -278,7 +297,7 @@ public class WebSocketSession implements Session {
 	}
 	
 	public final HttpSession getHttpSession() {
-		return (HttpSession) WebSocketStorage.get(this, HttpSession.class);
+		return WebSocketStorage.get(this, HttpSession.class);
 	}
 
 	public final boolean isValidHttpSession() {
@@ -328,12 +347,12 @@ public class WebSocketSession implements Session {
 
 	@Override
 	public <T> void addMessageHandler(final Class<T> arg0, final Whole<T> arg1) {
-
+		// not used
 	}
 
 	@Override
 	public <T> void addMessageHandler(final Class<T> arg0, final Partial<T> arg1) {
-
+		// not used
 	}
 
 }

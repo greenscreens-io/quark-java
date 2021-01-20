@@ -6,19 +6,25 @@
  */
 package io.greenscreens.quark.security;
 
+import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
+import java.security.spec.InvalidKeySpecException;
 import java.util.Arrays;
 
+import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.greenscreens.quark.Util;
+import io.greenscreens.quark.QuarkUtil;
 
 /**
  * Helper class for handling encryption One can use
@@ -33,23 +39,11 @@ public enum Security {
 
 	private static final Logger LOG = LoggerFactory.getLogger(Security.class);
 
-	final private static Charset ASCII = Charset.forName("ASCII");
-	final private static Charset UTF8 = Charset.forName("UTF-8");
+	private static final Charset ASCII = StandardCharsets.US_ASCII;
+	private static final Charset UTF8 = StandardCharsets.UTF_8;	
 
 	// timeout value from config file
 	private static long time;
-
-	public static void initialize() {
-
-		try {
-			java.security.Security.removeProvider("BC");
-			java.security.Security.addProvider(new BouncyCastleProvider());
-			generateRSAKeys();
-		} catch (Exception e) {
-			LOG.error(e.getMessage());
-			LOG.debug(e.getMessage(), e);
-		}
-	}
 
 	/**
 	 * Get password timeout value in seconds
@@ -61,7 +55,7 @@ public enum Security {
 	}
 
 	/**
-	 * Get password timeout value in miliseconds
+	 * Get password timeout value in milliseconds
 	 * 
 	 * @return
 	 */
@@ -94,13 +88,20 @@ public enum Security {
 	 * 
 	 * @param size
 	 * @return
+	 * @throws NoSuchAlgorithmException
 	 * @throws Exception
 	 */
-	public static byte[] getRandom(final int size) throws Exception {
-		final SecureRandom randomSecureRandom = SecureRandom.getInstance("SHA1PRNG");
-		final byte[] iv = new byte[size];
-		randomSecureRandom.nextBytes(iv);
-		return iv;
+
+	public static byte[] getRandom(final int size) {
+		byte[] bytes = new byte[size];
+		try {
+			SecureRandom.getInstanceStrong().nextBytes(bytes);
+		} catch (NoSuchAlgorithmException e) {
+			final String msg = QuarkUtil.toMessage(e);
+			LOG.error(msg);
+			LOG.debug(msg, e);
+		}
+		return bytes;
 	}
 
 	/**
@@ -108,20 +109,22 @@ public enum Security {
 	 * 
 	 * @param k
 	 * @return
+	 * @throws IOException 
 	 */
-	public static IAesKey initAESfromRSA(final String k) {
+	public static IAesKey initAES(final String k, final boolean webCryptoAPI) throws IOException {
 
 		IAesKey aes = null;
+		final boolean isHex = QuarkUtil.isHex(k);
+		
+		final byte[] aesData = RsaCrypt.decrypt(k, RsaKey.getPrivateKey(), isHex, webCryptoAPI);
 
-		final byte[] aes_data = RsaCrypt.decrypt(k, RsaKey.getPrivateKey(), true);
+		if (aesData != null) {
 
-		if (aes_data != null) {
+			final byte[] aesIV = Arrays.copyOfRange(aesData, 0, 16);
+			final byte[] aesKey = Arrays.copyOfRange(aesData, 16, 32);
 
-			final byte[] aes_iv = Arrays.copyOfRange(aes_data, 0, 16);
-			final byte[] aes_key = Arrays.copyOfRange(aes_data, 16, 32);
+			aes = new AesCrypt(aesKey, aesIV);
 
-			aes = new AesCrypt(aes_key);
-			aes.setIv(aes_iv);
 		}
 
 		return aes;
@@ -132,11 +135,16 @@ public enum Security {
 	 * 
 	 * @param secretKey
 	 * @return
+	 * @throws IOException 
 	 */
-	public static IAesKey initAES(final String secretKey) {
+	public static IAesKey initAES(final String secretKey) throws IOException {
 		return new AesCrypt(secretKey);
 	}
-
+	
+	public static IAesKey initAES(final byte [] secretKey) throws IOException {
+		return new AesCrypt(secretKey);
+	}
+	
 	/**
 	 * Generate new RSA key
 	 * 
@@ -151,11 +159,13 @@ public enum Security {
 	 * 
 	 * @param publicKey
 	 * @param privateKey
+	 * @throws NoSuchAlgorithmException 
+	 * @throws InvalidKeySpecException 
 	 * @throws Exception
 	 */
-	public static void setRSAKeys(final String publicKey, final String privateKey) throws Exception {
-		PublicKey pubKey = RsaUtil.getPublicKey(publicKey);
-		PrivateKey privKey = RsaUtil.getPrivateKey(privateKey);
+	public static void setRSAKeys(final String publicKey, final String privateKey) throws InvalidKeySpecException, NoSuchAlgorithmException {
+		final PublicKey pubKey = RsaUtil.getPublicKey(publicKey);
+		final PrivateKey privKey = RsaUtil.getPrivateKey(privateKey);
 		RsaKey.setKeys(pubKey, privKey);
 	}
 
@@ -187,31 +197,19 @@ public enum Security {
 	 * @param data
 	 * @return
 	 */
-	public static String sign(final String data, final boolean isHex) {
+	public static String sign(final String data, final boolean isHex, final boolean webCryptoAPI) {
 
 		String msg = null;
 
 		try {
-			msg = RsaKey.sign(data, isHex, true);
+			msg = RsaKey.sign(data, isHex, webCryptoAPI);
 		} catch (Exception e) {
-			LOG.error(e.getMessage());
-			LOG.debug(e.getMessage(), e);
+			final String msge = QuarkUtil.toMessage(e);
+			LOG.error(msge);
+			LOG.debug(msge, e);
 		}
 
 		return msg;
-	}
-
-	/**
-	 * Used by api servlet to send signed key helping prevent MITM modifications
-	 * 
-	 * @param challenge
-	 * @return
-	 */
-	public static String signApiKey(final String challenge) {
-		final String keyEnc = Security.getRSAPublic(true);
-		final String keyVer = Security.getRSAVerifier(true);
-		final String data = String.format("%s%s%s", challenge, keyEnc, keyVer);
-		return Security.sign(data, false);
 	}
 
 	/**
@@ -227,8 +225,9 @@ public enum Security {
 		try {
 			msg = RsaKey.signChallenge(data, isHex, webCryptoAPI);
 		} catch (Exception e) {
-			LOG.error(e.getMessage());
-			LOG.debug(e.getMessage(), e);
+			final String msge = QuarkUtil.toMessage(e);
+			LOG.error(msge);
+			LOG.debug(msge, e);
 		}
 
 		return msg;
@@ -243,33 +242,53 @@ public enum Security {
 	 * @return
 	 * @throws Exception
 	 */
-	public static String decodeRequest(final String d, final String k, final IAesKey crypt) throws Exception {
+	public static String decodeRequest(final String d, final String k, final IAesKey crypt, final boolean webCryptoAPI) throws IOException {
 
-		final byte[] aes_data = RsaCrypt.decrypt(k, RsaKey.getPrivateKey(), true);
-		final byte[] iv = Arrays.copyOfRange(aes_data, 0, 16);
+		final byte[] aesData = RsaCrypt.decrypt(k, RsaKey.getPrivateKey(), webCryptoAPI, webCryptoAPI);
 
-		final byte[] decoded = crypt.decryptData(d, iv);
-		return new String(decoded, UTF8);
+		if (aesData != null) {
+			final byte[] aesIV = Arrays.copyOfRange(aesData, 0, 16);
+			final byte[] decoded = crypt.decryptData(d, aesIV);
+			return new String(decoded, UTF8);
+		}
+		
+		return null;
+	}
+
+	public static byte [] decrypt(final byte [] data, final SecretKeySpec secret, final String algo) {
+		byte [] value = null;
+		try {
+			final Cipher cipher = Cipher.getInstance(algo);
+			cipher.init(Cipher.DECRYPT_MODE, secret);			
+			value = cipher.doFinal(data);
+		} catch (Exception e) {
+			final String msg = QuarkUtil.toMessage(e);
+			LOG.error(msg);
+			LOG.debug(msg, e);
+		}
+		return value;
 	}
 
 	/**
-	 * Converts raw bytes to string hex
-	 * 
+	 * Digest data for required algorithm 
+	 * @param type
 	 * @param data
 	 * @return
 	 */
-	protected static String bytesToHex(final byte[] data) {
-		return Util.bytesToHex(data);
-	}
+	public static byte[] digest(final String type, final byte[] data) {
 
-	/**
-	 * Convert string hex to raw byte's
-	 * 
-	 * @param str
-	 * @return
-	 */
-	protected static byte[] hexToBytes(final String str) {
-		return Util.hexStringToByteArray(str);
+		byte[] result = null;
+		try {
+			final MessageDigest md = MessageDigest.getInstance(QuarkUtil.normalize(type));
+			result = md.digest(data);
+		} catch (NoSuchAlgorithmException e) {
+			result = new byte[0];
+			final String msg = QuarkUtil.toMessage(e);
+			LOG.error(msg);
+			LOG.debug(msg, e);
+		}
+		
+		return result;
 	}
 
 }

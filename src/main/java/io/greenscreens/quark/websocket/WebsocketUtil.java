@@ -6,6 +6,7 @@
  */
 package io.greenscreens.quark.websocket;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -16,27 +17,22 @@ import java.util.Scanner;
 import javax.websocket.EncodeException;
 import javax.websocket.server.HandshakeRequest;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import io.greenscreens.quark.JsonDecoder;
-import io.greenscreens.quark.Util;
-import io.greenscreens.quark.security.IAesKey;
-import io.greenscreens.quark.security.Security;
+import io.greenscreens.quark.QuarkSecurity;
+import io.greenscreens.quark.QuarkUtil;
 import io.greenscreens.quark.websocket.data.IWebSocketResponse;
 import io.greenscreens.quark.websocket.data.WebSocketInstruction;
+import io.greenscreens.quark.IQuarkKey;
+import io.greenscreens.quark.JsonDecoder;
 
 /**
  * Internal encoder for WebSocket ExtJS response
  */
 public enum WebsocketUtil {
 	;
-
-	private static final Logger LOG = LoggerFactory.getLogger(WebsocketUtil.class);
 
 	/**
 	 * Encrypt message for websocket response
@@ -45,7 +41,7 @@ public enum WebsocketUtil {
 	 * @return
 	 * @throws EncodeException
 	 */
-	static final String encode(final IWebSocketResponse data) throws EncodeException {
+	static String encode(final IWebSocketResponse data) throws EncodeException {
 
 		String response = null;
 
@@ -54,7 +50,7 @@ public enum WebsocketUtil {
 			final ObjectMapper mapper = JsonDecoder.getJSONEngine();
 
 			if (mapper != null) {
-				final IAesKey key = data.getKey();
+				final IQuarkKey key = data.getKey();
 				data.setKey(null);
 
 				response = mapper.writeValueAsString(data);
@@ -62,8 +58,6 @@ public enum WebsocketUtil {
 			}
 
 		} catch (Exception e) {
-			LOG.error(e.getMessage());
-			LOG.debug(e.getMessage(), e);
 			throw new EncodeException(data, e.getMessage(), e);
 		}
 
@@ -82,20 +76,19 @@ public enum WebsocketUtil {
 	 * @return
 	 * @throws Exception
 	 */
-	static private final String encrypt(final String data, final IAesKey crypt) throws Exception {
+	private static String encrypt(final String data, final IQuarkKey crypt) throws IOException {
 
 		if (crypt == null) {
 			return data;
 		}
 
-		final byte[] iv = Security.getRandom(crypt.getCipher().getBlockSize());
+		final byte[] iv = QuarkSecurity.getRandom(crypt.getBlockSize());
 		final String enc = crypt.encrypt(data, iv);
 		final ObjectNode node = JsonNodeFactory.instance.objectNode();
-		node.put("iv", Util.bytesToHex(iv));
+		node.put("iv", QuarkUtil.bytesToHex(iv));
 		node.put("d", enc);
 		node.put("cmd", WebSocketInstruction.ENC.toString());
-		final String json = JsonDecoder.getJSONEngine().writeValueAsString(node);
-		return json;
+		return JsonDecoder.getJSONEngine().writeValueAsString(node);
 	}
 
 	/**
@@ -104,7 +97,7 @@ public enum WebsocketUtil {
 	 * @param cookies
 	 * @return
 	 */
-	static public Map<String, String> parseCookies(final List<String> cookies) {
+	public static Map<String, String> parseCookies(final List<String> cookies) {
 
 
 		if (cookies == null) {
@@ -130,7 +123,7 @@ public enum WebsocketUtil {
 				}
 
 			} finally {
-				Util.close(scan);
+				QuarkUtil.close(scan);
 			}
 
 		}
@@ -145,7 +138,7 @@ public enum WebsocketUtil {
 	 * @param key
 	 * @return
 	 */
-	static public String findHeader(final HandshakeRequest request, final String key) {
+	public static String findHeader(final HandshakeRequest request, final String key) {
 
 		final Map<String, List<String>> map = request.getHeaders();
 		final List<String> params = map.get(key);
@@ -163,12 +156,12 @@ public enum WebsocketUtil {
 	 * @param name
 	 * @return
 	 */
-	 static public String findQuery(final HandshakeRequest request, final String name) {
+	public static String findQuery(final HandshakeRequest request, final String name) {
 		final List<String> list = request.getParameterMap().get(name);
-		if (list != null && list.size() > 0) {
-			return list.get(0);
+		if (list == null || list.isEmpty()) {
+			return null;
 		}
-		return null;
+		return list.get(0);
 	}
 
 	/**
@@ -179,7 +172,7 @@ public enum WebsocketUtil {
 	 * @param request
 	 * @return
 	 */
-	 static public Locale getLocale(final HandshakeRequest request) {
+	public static Locale getLocale(final HandshakeRequest request) {
 
 		String data = WebsocketUtil.findHeader(request, "Accept-Language");
 		Locale locale = Locale.ENGLISH;

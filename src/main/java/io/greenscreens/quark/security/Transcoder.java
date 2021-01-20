@@ -6,12 +6,16 @@
  */
 package io.greenscreens.quark.security;
 
+import java.io.IOException;
+
 /**
  * Transcodes the JCA ASN.1/DER-encoded signature to support WebCrypto API
  * format
  */
-public enum Transcoder {
+enum Transcoder {
 	;
+
+	private static final String ERROR_MSG = "Invalid ECDSA signature format";
 
 	/**
 	 * Returns the expected signature byte array length (R + S parts) for the
@@ -21,7 +25,7 @@ public enum Transcoder {
 	 * @return The expected byte array length for the signature.
 	 * @throws JwtException If the algorithm is not supported.
 	 */
-	public static int getSignatureByteArrayLength(final int alg) throws Exception {
+	static int getSignatureByteArrayLength(final int alg) throws IOException {
 
 		switch (alg) {
 		case 256:
@@ -31,7 +35,7 @@ public enum Transcoder {
 		case 512:
 			return 132;
 		default:
-			throw new Exception("Unsupported Algorithm: ");
+			throw new IOException("Unsupported Algorithm: " + alg);
 		}
 	}
 
@@ -44,10 +48,10 @@ public enum Transcoder {
 	 * @return The ECDSA JWS encoded signature.
 	 * @throws JwtException If the ASN.1/DER signature format is invalid.
 	 */
-	public static byte[] transcodeSignatureToConcat(final byte[] derSignature, int outputLength) throws Exception {
+	static byte[] transcodeSignatureToConcat(final byte[] derSignature, final int outputLength) throws IOException {
 
-		if (derSignature.length < 8 || derSignature[0] != 48) {
-			throw new Exception("Invalid ECDSA signature format");
+		if (derSignature == null || derSignature.length < 8 || derSignature[0] != 48) {
+			throw new IOException(ERROR_MSG);
 		}
 
 		int offset;
@@ -56,7 +60,7 @@ public enum Transcoder {
 		} else if (derSignature[1] == (byte) 0x81) {
 			offset = 3;
 		} else {
-			throw new Exception("Invalid ECDSA signature format");
+			throw new IOException(ERROR_MSG);
 		}
 
 		byte rLength = derSignature[offset + 1];
@@ -79,7 +83,7 @@ public enum Transcoder {
 		if ((derSignature[offset - 1] & 0xff) != derSignature.length - offset
 				|| (derSignature[offset - 1] & 0xff) != 2 + rLength + 2 + sLength || derSignature[offset] != 2
 				|| derSignature[offset + 2 + rLength] != 2) {
-			throw new Exception("Invalid ECDSA signature format");
+			throw new IOException(ERROR_MSG);
 		}
 
 		final byte[] concatSignature = new byte[2 * rawLen];
@@ -99,7 +103,10 @@ public enum Transcoder {
 	 * @return The ASN.1/DER encoded signature.
 	 * @throws JwtException If the ECDSA JWS signature format is invalid.
 	 */
-	public static byte[] transcodeSignatureToDER(byte[] jwsSignature) throws Exception {
+	static byte[] transcodeSignatureToDER(final byte[] jwsSignature) throws IOException {
+
+		if (jwsSignature == null)
+			throw new IOException(ERROR_MSG);
 
 		int rawLen = jwsSignature.length / 2;
 
@@ -130,12 +137,12 @@ public enum Transcoder {
 		int len = 2 + j + 2 + l;
 
 		if (len > 255) {
-			throw new Exception("Invalid ECDSA signature format");
+			throw new IOException(ERROR_MSG);
 		}
 
 		int offset;
 
-		final byte derSignature[];
+		final byte [] derSignature;
 
 		if (len < 128) {
 			derSignature = new byte[2 + 2 + j + 2 + l];
@@ -162,4 +169,5 @@ public enum Transcoder {
 
 		return derSignature;
 	}
+
 }

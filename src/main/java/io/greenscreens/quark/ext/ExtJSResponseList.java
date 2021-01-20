@@ -71,9 +71,7 @@ public class ExtJSResponseList<T> extends ExtJSResponse {
 
 		private int total;
 		private int page;
-		
-        public Builder() {}
-        
+		        
         public Builder<T> setStatus(final boolean status) {
         	this.success = status;
         	return this;
@@ -111,13 +109,15 @@ public class ExtJSResponseList<T> extends ExtJSResponse {
         	resp.setData(data);
         	resp.setTotal(total);
         	resp.setPage(page);
-        	if (exception != null) {
-        		resp.setError(exception, msg);
-        	}
+        	resp.setError(exception, msg);
         	return resp;
         }
         
-        public static  <K> Builder<K> create(final Class<K> type) {
+        public static <K> Builder<K> create(final Class<K> clazz) {
+        	return new Builder<>();
+        }
+        
+        public static <K> Builder<K> create() {
         	return new Builder<>();
         }
 	}

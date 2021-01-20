@@ -37,11 +37,12 @@ public final class WebSocketHttpSessionListener implements HttpSessionListener, 
 
 	@Override
 	public void contextDestroyed(final ServletContextEvent event) {
+		// not used
 	}
 
 	@Override
 	public void contextInitialized(final ServletContextEvent event) {
-		// TnConstants.initialize(event.getServletContext());
+		// not used
 	}
 
 }

@@ -9,15 +9,16 @@ package io.greenscreens.quark.security;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.math.BigInteger;
+import java.security.InvalidAlgorithmParameterException;
 import java.security.Key;
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
+import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.RSAKeyGenParameterSpec;
 import java.security.spec.RSAPrivateKeySpec;
@@ -25,8 +26,10 @@ import java.security.spec.X509EncodedKeySpec;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Enumeration;
+import java.util.regex.Pattern;
 
 import org.bouncycastle.asn1.ASN1Integer;
+import org.bouncycastle.asn1.ASN1Primitive;
 import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.util.io.pem.PemObject;
 import org.bouncycastle.util.io.pem.PemWriter;
@@ -37,20 +40,18 @@ import org.bouncycastle.util.io.pem.PemWriter;
 enum RsaUtil {
 	;
 
-	private final static int KEY_SIZE = 1024;
-	private final static String PUBLIC = "PUBLIC KEY";
-	private final static String PRIVATE = "PRIVATE KEY";
+	private static final int KEY_SIZE = 1024;
+	private static final String PUBLIC = "PUBLIC KEY";
+	private static final String PRIVATE = "PRIVATE KEY";
 
-	private static final String regex = "(-{5}[A-Z ]*-{5})";
-	private static final String regnl = "\\s{2,}";
+	private static final Pattern REGEX = Pattern.compile("(-{5}[A-Z ]*-{5})");
+	private static final Pattern REGNL = Pattern.compile("\\s{2,}");
 
-	public static KeyFactory getKeyFactory() throws NoSuchAlgorithmException, NoSuchProviderException {
-		// return KeyFactory.getInstance("RSA", "SC");
+	static KeyFactory getKeyFactory() throws NoSuchAlgorithmException {
 		return KeyFactory.getInstance("RSA");
 	}
 
-	public static KeyPairGenerator getKeyPairGenerator() throws NoSuchAlgorithmException, NoSuchProviderException {
-		// return KeyPairGenerator.getInstance("RSA", "SC");
+	static KeyPairGenerator getKeyPairGenerator() throws NoSuchAlgorithmException {
 		return KeyPairGenerator.getInstance("RSA");
 	}
 
@@ -60,9 +61,10 @@ enum RsaUtil {
 	 * @param val
 	 * @return
 	 */
-	public static final String flatten(final String val) {
+	static final String flatten(final String val) {
 		if (val != null) {
-			return val.replaceAll(regex, "").replaceAll(regnl, "");
+			final String tmp = REGEX.matcher(val).replaceAll("");
+			return REGNL.matcher(tmp).replaceAll("");
 		} else {
 			return val;
 		}
@@ -75,7 +77,7 @@ enum RsaUtil {
 	 * @param raw
 	 * @return
 	 */
-	public static byte[] convertFromPEM(final byte[] raw) {
+	static byte[] convertFromPEM(final byte[] raw) {
 		String data = new String(raw);
 		final String[] lines = data.split("\\r?\\n");
 		if (lines.length > 1) {
@@ -86,7 +88,7 @@ enum RsaUtil {
 		return Base64.getDecoder().decode(data);
 	}
 
-	public static PrivateKey getPrivateKey(final String key) throws Exception {
+	static PrivateKey getPrivateKey(final String key) throws NoSuchAlgorithmException, InvalidKeySpecException {
 
 		final byte[] raw = convertFromPEM(key.getBytes());
 		KeyFactory fact = getKeyFactory();
@@ -96,9 +98,9 @@ enum RsaUtil {
 		return priv;
 	}
 
-	public static PrivateKey getPrivateKey2(final String key) throws Exception {
+	static PrivateKey getPrivateKey2(final String key) throws IOException, InvalidKeySpecException, NoSuchAlgorithmException {
 		final byte[] raw = convertFromPEM(key.getBytes());
-		final ASN1Sequence primitive = (ASN1Sequence) ASN1Sequence.fromByteArray(raw);
+		final ASN1Sequence primitive = (ASN1Sequence) ASN1Primitive.fromByteArray(raw);
 		final Enumeration<?> e = primitive.getObjects();
 		final BigInteger v = ((ASN1Integer) e.nextElement()).getValue();
 
@@ -111,8 +113,8 @@ enum RsaUtil {
 		 * In fact only modulus and private exponent are in use.
 		 */
 		final BigInteger modulus = ((ASN1Integer) e.nextElement()).getValue();
-		@SuppressWarnings("unused")
-		final BigInteger publicExponent = ((ASN1Integer) e.nextElement()).getValue();
+
+		// final BigInteger publicExponent = ((ASN1Integer) e.nextElement()).getValue();
 		final BigInteger privateExponent = ((ASN1Integer) e.nextElement()).getValue();
 		/*
 		 * BigInteger prime1 = ((ASN1Integer) e.nextElement()).getValue(); BigInteger
@@ -124,19 +126,17 @@ enum RsaUtil {
 
 		final RSAPrivateKeySpec keySpec = new RSAPrivateKeySpec(modulus, privateExponent);
 		final KeyFactory kf = getKeyFactory();
-		final PrivateKey pkey = kf.generatePrivate(keySpec);
-		return pkey;
+		return kf.generatePrivate(keySpec);
 	}
 
-	public static PublicKey getPublicKey(final String key) throws Exception {
+	static PublicKey getPublicKey(final String key) throws InvalidKeySpecException, NoSuchAlgorithmException {
 		final byte[] raw = convertFromPEM(key.getBytes());
 		final X509EncodedKeySpec spec = new X509EncodedKeySpec(raw);
 		final KeyFactory kf = getKeyFactory();
 		return kf.generatePublic(spec);
 	}
 
-	public static KeyPair generateRSAKeyPair() throws Exception {
-		// final SecureRandom random = new SecureRandom();
+	static KeyPair generateRSAKeyPair() throws  NoSuchAlgorithmException, InvalidAlgorithmParameterException {
 		final SecureRandom random = SecureRandom.getInstance("SHA1PRNG");
 		final RSAKeyGenParameterSpec spec = new RSAKeyGenParameterSpec(KEY_SIZE, RSAKeyGenParameterSpec.F4);
 		final KeyPairGenerator generator = getKeyPairGenerator();
@@ -144,7 +144,7 @@ enum RsaUtil {
 		return generator.generateKeyPair();
 	}
 
-	public static String getPem(final Key key, final String name) throws IOException {
+	static String getPem(final Key key, final String name) throws IOException {
 		final StringWriter writer = new StringWriter();
 		final PemWriter pemWriter = new PemWriter(writer);
 		pemWriter.writeObject(new PemObject(name, key.getEncoded()));
@@ -153,19 +153,19 @@ enum RsaUtil {
 		return writer.toString();
 	}
 
-	public static String toPublicPem(final Key key) throws IOException {
+	static String toPublicPem(final Key key) throws IOException {
 		return getPem(key, PUBLIC);
 	}
 
-	public static String toPrivatePem(final Key key) throws IOException {
+	static String toPrivatePem(final Key key) throws IOException {
 		return getPem(key, PRIVATE);
 	}
 
-	public static String toPublicPem(final KeyPair key) throws IOException {
+	static String toPublicPem(final KeyPair key) throws IOException {
 		return toPublicPem(key.getPublic());
 	}
 
-	public static String toPrivatePem(final KeyPair key) throws IOException {
+	static String toPrivatePem(final KeyPair key) throws IOException {
 		return toPrivatePem(key.getPrivate());
 	}
 

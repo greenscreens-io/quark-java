@@ -15,9 +15,9 @@ import javax.websocket.EndpointConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.greenscreens.quark.JsonDecoder;
-import io.greenscreens.quark.Util;
+import io.greenscreens.quark.QuarkUtil;
 import io.greenscreens.quark.websocket.data.WebSocketRequest;
+import io.greenscreens.quark.JsonDecoder;
 
 /**
  * Internal JSON decoder for WebSocket ExtJS request
@@ -41,14 +41,15 @@ public class WebsocketDecoderBinary implements Decoder.Binary<WebSocketRequest> 
 		WebSocketRequest wsMessage = null;
 
 		try {
-			message = Util.ungzip(buffer.array());
+			message = QuarkUtil.ungzip(buffer.array());
 			final JsonDecoder<WebSocketRequest> jd = new JsonDecoder<>(WebSocketRequest.class, message);
 			wsMessage = jd.getObject();
 			wsMessage.setBinary(true);			
 		} catch (Exception e) {
-			LOG.error(e.getMessage());
-			LOG.debug(e.getMessage(), e);
-			throw new DecodeException(message, e.getMessage(), e);
+			final String msg = QuarkUtil.toMessage(e);
+			LOG.error(msg);
+			LOG.debug(msg, e);
+			throw new DecodeException(message, msg, e);
 		}
 
 		return wsMessage;
@@ -57,12 +58,12 @@ public class WebsocketDecoderBinary implements Decoder.Binary<WebSocketRequest> 
 
 	@Override
 	public void destroy() {
-
+		// not used
 	}
 
 	@Override
 	public void init(final EndpointConfig arg0) {
-
+		// not used
 	}
 
 
