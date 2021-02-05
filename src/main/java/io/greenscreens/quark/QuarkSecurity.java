@@ -7,6 +7,7 @@
 package io.greenscreens.quark;
 
 import java.io.IOException;
+
 import io.greenscreens.quark.security.IAesKey;
 import io.greenscreens.quark.security.Security;
 
@@ -19,11 +20,11 @@ public enum QuarkSecurity {
 	
 	public static void initialize() {
 		SecurityProvider.get();
-		Security.generateRSAKeys(); 
+		Security.generateRSAKeys();
 	}
 
-	public static IQuarkKey initAES(final String k, final boolean webCryptoAPI) throws IOException {
-		return (IQuarkKey) Security.initAES(k, webCryptoAPI);
+	public static IAesKey initAES(final String k, final boolean webCryptoAPI) throws IOException {
+		return Security.initAES(k, webCryptoAPI);
 	}
 
 	public static String decodeRequest(final String d, final String k, final IAesKey crypt, final boolean webCryptoAPI) throws IOException {

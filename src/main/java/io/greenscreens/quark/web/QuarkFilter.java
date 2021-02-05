@@ -22,22 +22,26 @@ public abstract class QuarkFilter extends HttpFilter {
 	private static final long serialVersionUID = 1L;
 	
 	@Override
-	protected void doFilter(HttpServletRequest req, HttpServletResponse res, FilterChain chain) {
+	protected void doFilter(HttpServletRequest req, HttpServletResponse res, FilterChain chain) throws IOException {
 		try {
 			onFilter(req, res, chain);
 		} catch (Exception e) {
 			ServletUtils.log(e, req, res);
+		} finally {
+			onFinish(req, res);
 		}
 	}
-
-	protected abstract boolean onFilter(HttpServletRequest req, HttpServletResponse res) throws IOException;
 	
 	protected void onFilter(HttpServletRequest req, HttpServletResponse res, FilterChain chain) throws IOException, ServletException {
 		if (onFilter(req, res)) {
-			super.doFilter(req, res, chain);		
+			chain.doFilter(req, res);		
 		} else {
 			ServletUtils.sendError(res, HttpServletResponse.SC_FORBIDDEN);
 		}
 	}
+
+	protected abstract boolean onFilter(final HttpServletRequest req, final HttpServletResponse res) throws IOException;
+	
+	protected void onFinish(final HttpServletRequest req, final HttpServletResponse res) throws IOException {};
 
 }

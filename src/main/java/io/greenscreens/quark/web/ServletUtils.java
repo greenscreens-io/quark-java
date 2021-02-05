@@ -8,7 +8,13 @@ package io.greenscreens.quark.web;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
+import java.nio.channels.ReadableByteChannel;
+import java.nio.channels.WritableByteChannel;
 import java.util.Objects;
 
 import javax.servlet.ServletContext;
@@ -39,13 +45,16 @@ public enum ServletUtils {
 	
 	private static final Logger LOG = LoggerFactory.getLogger(ServletUtils.class);
 
+	private static final String IP_LOG_MSG = "Request from: {}";
+	
 	public static void log(final Exception e, final HttpServletRequest request, final HttpServletResponse response) {
 		log(LOG, e, request, response, true);
 	}
 	
 	public static void log(final Logger logger,final Exception e, final HttpServletRequest request, final HttpServletResponse response, final boolean details) {
-
+		final String clientip = request.getRemoteAddr();
 		final String message = QuarkUtil.toMessage(e);
+		logger.error(IP_LOG_MSG, clientip);
 		if (details) {
 			logger.error(message, e);
 		} else {
@@ -231,8 +240,9 @@ public enum ServletUtils {
 	public static void writeResponse(final HttpServletResponse resp, final String message) {
 		
 		try {
+			if (resp.isCommitted()) return;
 			final PrintWriter out = resp.getWriter();			
-			out.print(message);
+			out.print(QuarkUtil.normalize(message));
 			out.flush();		
         } catch (IOException e) {
         	final String msg = QuarkUtil.toMessage(e);
@@ -241,6 +251,24 @@ public enum ServletUtils {
         }
 	}
 
+	public static long stream(final InputStream input, final OutputStream output) throws IOException {
+	    try (
+	        ReadableByteChannel inputChannel = Channels.newChannel(input);
+	        WritableByteChannel outputChannel = Channels.newChannel(output);
+	    ) {
+	        ByteBuffer buffer = ByteBuffer.allocateDirect(10240);
+	        long size = 0;
+
+	        while (inputChannel.read(buffer) != -1) {
+	            buffer.flip();
+	            size += outputChannel.write(buffer);
+	            buffer.clear();
+	        }
+
+	        return size;
+	    }
+	}
+	
 	/**
 	 * Safe way to send error without re-throwing 
 	 * @param response
@@ -249,7 +277,13 @@ public enum ServletUtils {
 	 */
 	public static void sendError(final HttpServletResponse response, final int code, final String message) {
 		try {
-			response.sendError(code, message);
+			if (!response.isCommitted()) {
+				response.setStatus(code);
+				final PrintWriter writer = response.getWriter();
+				writer.write(QuarkUtil.normalize(message));
+				writer.flush();
+				//response.sendError(code, StringUtil.normalize(message));
+			}
 		} catch (IOException e) {
 			final String msg = QuarkUtil.toMessage(e);
 			LOG.error(msg);

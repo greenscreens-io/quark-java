@@ -30,12 +30,12 @@ import javax.websocket.WebSocketContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.greenscreens.quark.IQuarkKey;
 import io.greenscreens.quark.QuarkUtil;
 import io.greenscreens.quark.web.QuarkConstants;
 import io.greenscreens.quark.websocket.data.IWebSocketResponse;
 import io.greenscreens.quark.websocket.data.WebSocketInstruction;
 import io.greenscreens.quark.websocket.data.WebSocketResponse;
+import io.greenscreens.quark.security.IAesKey;
 
 /**
  * Class for holding WebSocket session data. Purpose of this class is similar to
@@ -122,7 +122,7 @@ public class WebSocketSession implements Session {
 		boolean success = true;
 
 		try {
-			final IQuarkKey aes = WebSocketStorage.get(session, QuarkConstants.HTTP_SEESION_ENCRYPT);
+			final IAesKey aes = WebSocketStorage.get(session, QuarkConstants.HTTP_SEESION_ENCRYPT);
 			wsResponse.setKey(aes);	
 			
 			if (async) {

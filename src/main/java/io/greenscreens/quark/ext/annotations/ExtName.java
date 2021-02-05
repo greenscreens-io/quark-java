@@ -1,9 +1,3 @@
-/*
- * Copyright (C) 2015, 2020  Green Screens Ltd.
- *
- * https://www.greenscreens.io
- *
- */
 package io.greenscreens.quark.ext.annotations;
 
 import static java.lang.annotation.ElementType.PARAMETER;

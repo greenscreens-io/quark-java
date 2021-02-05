@@ -25,6 +25,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 
+import io.greenscreens.quark.JsonDecoder;
 import io.greenscreens.quark.QuarkEngine;
 import io.greenscreens.quark.QuarkSecurity;
 import io.greenscreens.quark.QuarkUtil;
@@ -36,13 +37,13 @@ import io.greenscreens.quark.ext.ExtJSDirectResponse;
 import io.greenscreens.quark.ext.ExtJSProtected;
 import io.greenscreens.quark.ext.ExtJSResponse;
 import io.greenscreens.quark.ext.annotations.ExtJSDirect;
+import io.greenscreens.quark.security.IAesKey;
 import io.greenscreens.quark.web.QuarkConstants;
 import io.greenscreens.quark.web.QuarkErrors;
 import io.greenscreens.quark.web.QuarkHandlerUtil;
 import io.greenscreens.quark.web.ServletUtils;
 import io.greenscreens.quark.websocket.data.WebSocketInstruction;
-import io.greenscreens.quark.IQuarkKey;
-import io.greenscreens.quark.JsonDecoder;
+
 
 /**
  * Attach Java class to remote call
@@ -68,7 +69,7 @@ public final class WebSocketOperations<T> {
 	 */
 	private String decryptData(final WebSocketSession session, final ExtEncrypt encrypt) throws IOException {
 
-		IQuarkKey crypt = session.get(QuarkConstants.HTTP_SEESION_ENCRYPT);
+		IAesKey crypt = session.get(QuarkConstants.HTTP_SEESION_ENCRYPT);
 		String data = null;
 
 		if (crypt == null) {

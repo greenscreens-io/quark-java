@@ -7,6 +7,7 @@
 package io.greenscreens.quark.web;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Objects;
 
 import javax.inject.Inject;
@@ -38,9 +39,19 @@ public class QuarkAPIServlet extends QuarkServlet {
 	 */
 	@Override
 	protected void onGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
-		build(request,  response, null);
+		build(request, response, null);
 	}
 
+	protected void script(final HttpServletRequest request, final HttpServletResponse response) throws IOException {
+		response.setContentType("text/javascript");
+		final ClassLoader loader = QuarkAPIServlet.class.getClassLoader();
+		final InputStream inputStream = loader.getResourceAsStream("quark.min.js");
+		if (Objects.nonNull(inputStream)) {
+			ServletUtils.stream(inputStream, response.getOutputStream());
+			inputStream.close();					
+		}
+	}
+	
 	/**
 	 * Build dfault api list or filtered by path
 	 * @param request
@@ -58,8 +69,8 @@ public class QuarkAPIServlet extends QuarkServlet {
 	 * Post request will process non-encrypted / encrypted requests
 	 */
 	@Override
-	protected void onPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
-		QuarkHandler.process(request, response, false);
+	protected void onPost(final HttpServletRequest request, final HttpServletResponse response) throws IOException {
+		QuarkHandler.call(request, response);
 	}
 
 	@Override

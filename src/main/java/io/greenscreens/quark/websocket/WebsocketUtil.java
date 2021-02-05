@@ -6,6 +6,7 @@
  */
 package io.greenscreens.quark.websocket;
 
+
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
@@ -25,7 +26,7 @@ import io.greenscreens.quark.QuarkSecurity;
 import io.greenscreens.quark.QuarkUtil;
 import io.greenscreens.quark.websocket.data.IWebSocketResponse;
 import io.greenscreens.quark.websocket.data.WebSocketInstruction;
-import io.greenscreens.quark.IQuarkKey;
+import io.greenscreens.quark.security.IAesKey;
 import io.greenscreens.quark.JsonDecoder;
 
 /**
@@ -50,7 +51,7 @@ public enum WebsocketUtil {
 			final ObjectMapper mapper = JsonDecoder.getJSONEngine();
 
 			if (mapper != null) {
-				final IQuarkKey key = data.getKey();
+				final IAesKey key = data.getKey();
 				data.setKey(null);
 
 				response = mapper.writeValueAsString(data);
@@ -76,7 +77,7 @@ public enum WebsocketUtil {
 	 * @return
 	 * @throws Exception
 	 */
-	private static String encrypt(final String data, final IQuarkKey crypt) throws IOException {
+	private static String encrypt(final String data, final IAesKey crypt) throws IOException {
 
 		if (crypt == null) {
 			return data;

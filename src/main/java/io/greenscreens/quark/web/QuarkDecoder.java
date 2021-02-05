@@ -17,11 +17,12 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import io.greenscreens.quark.IQuarkKey;
 import io.greenscreens.quark.JsonDecoder;
 import io.greenscreens.quark.QuarkSecurity;
 import io.greenscreens.quark.QuarkUtil;
 import io.greenscreens.quark.ext.ExtJSProtected;
+import io.greenscreens.quark.security.IAesKey;
+
 
 /**
  * Quark data format parser / decoder
@@ -71,7 +72,7 @@ public enum QuarkDecoder {
 		if (isEncrypted(d, k)) {
 
 			try {
-				final IQuarkKey crypt = QuarkSecurity.initAES(k, webCryptoAPI);
+				final IAesKey crypt = QuarkSecurity.initAES(k, webCryptoAPI);
 				final String data = crypt.decrypt(d);
 				LOG.debug("decodeRaw decoded : {}", data);
 

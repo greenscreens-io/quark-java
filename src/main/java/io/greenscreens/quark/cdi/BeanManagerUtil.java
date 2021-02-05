@@ -26,15 +26,15 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import io.greenscreens.quark.JsonDecoder;
 import io.greenscreens.quark.QuarkEngine;
 import io.greenscreens.quark.ext.annotations.ExtJSAction;
 import io.greenscreens.quark.ext.annotations.ExtJSDirect;
 import io.greenscreens.quark.ext.annotations.ExtJSDirectLiteral;
 import io.greenscreens.quark.ext.annotations.ExtJSMethod;
-import io.greenscreens.quark.JsonDecoder;
 
 /**
- * Singleton class used to find CDI bean and wraps it into destructible
+ * Singleton class used to find CDI bean and wraps it into destructable
  * instance. It is used as an internal bean finder.
  */
 @ApplicationScoped

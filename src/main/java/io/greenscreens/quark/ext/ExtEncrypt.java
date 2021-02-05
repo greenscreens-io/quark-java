@@ -8,9 +8,9 @@ package io.greenscreens.quark.ext;
 
 import java.io.IOException;
 
-import io.greenscreens.quark.IQuarkKey;
 import io.greenscreens.quark.QuarkSecurity;
 import io.greenscreens.quark.QuarkUtil;
+import io.greenscreens.quark.security.IAesKey;
 
 public class ExtEncrypt {
 
@@ -59,7 +59,7 @@ public class ExtEncrypt {
 		return !QuarkUtil.isEmpty(d) && !QuarkUtil.isEmpty(k);  
 	}
 	
-	public IQuarkKey toKey() throws IOException {
+	public IAesKey toKey() throws IOException {
 		return QuarkSecurity.initAES(getK(), isWebCryptoAPI());
 	}
 	

@@ -11,14 +11,12 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import javax.servlet.annotation.WebListener;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpSessionActivationListener;
 import javax.servlet.http.HttpSessionEvent;
 import javax.servlet.http.HttpSessionListener;
 
-@WebListener
-public class SessionCollector implements HttpSessionListener, HttpSessionActivationListener {
+public final class SessionCollector implements HttpSessionListener, HttpSessionActivationListener {
 
 	private static final Map<Integer, HttpSession> sessions = new ConcurrentHashMap<>();
 

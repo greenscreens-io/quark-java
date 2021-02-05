@@ -6,7 +6,16 @@
  */
 package io.greenscreens.quark;
 
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.StringWriter;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
@@ -178,11 +187,52 @@ public enum QuarkUtil {
 	}
 
 	public static String ungzip(final byte[] bytes) throws Exception {
-        return Util.ungzip(bytes);
+		
+		String result = null;
+		StringWriter sw = null;
+		ByteArrayInputStream bis = null;
+		GZIPInputStream gis = null;
+		InputStreamReader isr = null;
+		
+		
+		try {
+			sw = new StringWriter();
+			bis = new ByteArrayInputStream(bytes);
+			gis = new GZIPInputStream(bis);
+			isr = new InputStreamReader(gis, StandardCharsets.UTF_8);
+
+			final char[] chars = new char[1024];
+			for (int len; (len = isr.read(chars)) > 0; ) {
+				sw.write(chars, 0, len);
+			}
+			sw.flush();
+			result = sw.toString();
+		} finally {
+			close(isr);
+			close(sw);
+		}
+        
+        return result;
     }
 
     public static byte[] gzip(final String s) throws Exception {
-        return Util.gzip(s);
+
+    	final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    	
+        GZIPOutputStream gzip = null;
+        OutputStreamWriter osw = null;
+        
+        try {
+        	gzip = new GZIPOutputStream(bos);
+        	osw = new OutputStreamWriter(gzip, StandardCharsets.UTF_8);
+        	osw.write(s);
+        	osw.flush();        	
+        } finally {
+			close(osw);
+			close(gzip);
+		}
+        
+        return bos.toByteArray();
     }
 
 	/**
@@ -192,17 +242,30 @@ public enum QuarkUtil {
 	 * @return
 	 */
 	public static String toMessage(final Throwable e) {
-		return Util.toMessage(e);
+		return toMessage(e, e == null ? "" : e.toString());
 	}
 	
 	public static String toMessage(final Throwable e, final String def) {
-		return Util.toMessage(e, def);
+		if (e == null) {
+			return "";
+		}
+
+		String err = e.getMessage();
+		if (err == null && e.getCause() != null) {
+			err = e.getCause().getMessage();
+		}
+
+		if (err == null) {
+			err = def;
+		}
+
+		return err;
 	}
 
 	public static boolean isEmpty(final String val) {
 		return StringUtil.isEmpty(val);
 	}
-
+	
 	public static boolean isHex(final String val) {
 		return StringUtil.isHex(val);
 	}

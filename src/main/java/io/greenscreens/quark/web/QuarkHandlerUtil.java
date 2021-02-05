@@ -1,3 +1,8 @@
+/*
+ * Copyright (C) 2015, 2020  Green Screens Ltd.
+ * 
+ * https://www.greenscreens.io
+ */
 package io.greenscreens.quark.web;
 
 import java.io.IOException;
@@ -21,6 +26,7 @@ import javax.enterprise.inject.spi.Bean;
 import javax.servlet.http.HttpSession;
 import javax.validation.ConstraintViolation;
 import javax.validation.ElementKind;
+import javax.validation.Validation;
 import javax.validation.ValidatorFactory;
 import javax.validation.Path.Node;
 import javax.validation.Path.ParameterNode;
@@ -35,8 +41,6 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import io.greenscreens.quark.IQuarkKey;
-import io.greenscreens.quark.JsonDecoder;
 import io.greenscreens.quark.QuarkEngine;
 import io.greenscreens.quark.QuarkSecurity;
 import io.greenscreens.quark.QuarkUtil;
@@ -47,14 +51,17 @@ import io.greenscreens.quark.ext.ExtJSResponse;
 import io.greenscreens.quark.ext.annotations.ExtJSActionLiteral;
 import io.greenscreens.quark.ext.annotations.ExtJSMethod;
 import io.greenscreens.quark.ext.annotations.ExtName;
-import io.greenscreens.quark.web.listener.WebContextListener;
 import io.greenscreens.quark.websocket.data.WebSocketInstruction;
+import io.greenscreens.quark.security.IAesKey;
+import io.greenscreens.quark.JsonDecoder;
 
 
 public enum QuarkHandlerUtil {
 ;
 	
 	private static final Logger LOG = LoggerFactory.getLogger(QuarkHandlerUtil.class);
+
+	private static ValidatorFactory factory = null;
 	
 	public static Bean<?> findBean(final ExtJSDirectRequest<?> request) {
 		final ExtJSActionLiteral literal = new ExtJSActionLiteral(request.getNamespace(), request.getAction());
@@ -203,7 +210,7 @@ public enum QuarkHandlerUtil {
 
 		for (AnnotatedParameter<?> param : paramList) {
 			req = param.getAnnotation(Required.class);
-			if (req != null && params[i] == null) {
+			if (Objects.nonNull(req) && Objects.isNull(params[i])) {
 				sts = true;
 				break;
 			}
@@ -262,7 +269,7 @@ public enum QuarkHandlerUtil {
 
 		final Class<?> clazz = method.getReturnType();
 		ExtJSResponse response = null;
-		if (void.class == clazz || Void.class == clazz) {
+		if (isVoid(method)) {
 			response = new ExtJSResponse(true, null);
 		} else if (ExtJSResponse.class.isAssignableFrom(clazz)) {
 			response = (ExtJSResponse) obj;
@@ -274,6 +281,25 @@ public enum QuarkHandlerUtil {
 		return response;
 	}
 
+	/**
+	 * True is method does not have return type
+	 * @param method
+	 * @return
+	 */
+	public static boolean isVoid(final Method method) {
+		final Class<?> clz = method.getReturnType();
+		return (clz == void.class || clz == Void.class);		
+	}
+	
+	/**
+	 * True if method has return type
+	 * @param method
+	 * @return
+	 */
+	public static boolean hasRetVal(final Method method) {
+		return !isVoid(method);
+	}
+	
 	/**
 	 * Print exception trace in a safe manner
 	 * @param e
@@ -303,9 +329,7 @@ public enum QuarkHandlerUtil {
 			return;
 		}
 
-		final ValidatorFactory factory = WebContextListener.getValidationFactory();
-		
-		if (factory == null) {
+		if (Objects.isNull(factory)) {
 			LOG.warn("Validation factory not initialized! Unable to validate Quark Engine call parameters.");
 			return;
 		}
@@ -359,7 +383,7 @@ public enum QuarkHandlerUtil {
 			final Parameter par = method.getParameters()[(int) index];
 			final ExtName name = par.getAnnotation(ExtName.class);
 			
-			if (name != null) {
+			if (Objects.nonNull(name)) {
 				builder.append(par.getAnnotation(ExtName.class).value());
 				builder.append(" - ");
 			}
@@ -401,9 +425,9 @@ public enum QuarkHandlerUtil {
 	 * @return
 	 * @throws Exception
 	 */
-	public static final ObjectNode encrypt(final IQuarkKey key, final String data) throws IOException {
+	public static final ObjectNode encrypt(final IAesKey key, final String data) throws IOException {
 
-		if (key == null)
+		if (Objects.isNull(key))
 			return JsonNodeFactory.instance.objectNode();
 
 		final byte[] iv = QuarkSecurity.getRandom(key.getBlockSize());
@@ -415,4 +439,19 @@ public enum QuarkHandlerUtil {
 		return node;
 	}
 
+	public static void releaseValidator() {
+		if (Objects.nonNull(factory)) {
+			factory.close();
+			factory = null;
+		}
+	}
+	
+	public static void initValidator() {
+		if (Objects.nonNull(factory)) return;
+		try {
+			factory = Validation.buildDefaultValidatorFactory();
+		} catch (Exception e) {
+			LOG.warn(e.getMessage());
+		}
+	}
 }

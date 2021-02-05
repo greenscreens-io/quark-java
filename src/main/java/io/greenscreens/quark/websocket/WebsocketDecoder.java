@@ -13,9 +13,9 @@ import javax.websocket.EndpointConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.greenscreens.quark.JsonDecoder;
 import io.greenscreens.quark.QuarkUtil;
 import io.greenscreens.quark.websocket.data.WebSocketRequest;
-import io.greenscreens.quark.JsonDecoder;
 
 /**
  * Internal JSON decoder for WebSocket ExtJS request

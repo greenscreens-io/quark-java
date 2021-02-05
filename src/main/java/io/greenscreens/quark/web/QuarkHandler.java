@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
 
 import javax.enterprise.inject.spi.AnnotatedMethod;
 import javax.enterprise.inject.spi.AnnotatedParameter;
@@ -31,8 +30,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import io.greenscreens.quark.IQuarkKey;
-import io.greenscreens.quark.JsonDecoder;
 import io.greenscreens.quark.QuarkEngine;
 import io.greenscreens.quark.QuarkSecurity;
 import io.greenscreens.quark.QuarkUtil;
@@ -47,6 +44,8 @@ import io.greenscreens.quark.websocket.WebSocketSession;
 import io.greenscreens.quark.websocket.data.IWebSocketResponse;
 import io.greenscreens.quark.websocket.data.WebSocketInstruction;
 import io.greenscreens.quark.websocket.data.WebSocketResponseFactory;
+import io.greenscreens.quark.security.IAesKey;
+import io.greenscreens.quark.JsonDecoder;
 
 /**
  * Handle Quark request with support for WebSocket, HTTP, Async
@@ -66,10 +65,11 @@ public class QuarkHandler {
 	final boolean isEncrypted;
 	final boolean requireSession;
 
-	boolean isAsync = false;
+	boolean sent = false;
+
 	ExtJSDirectRequest<JsonNode> request;
 	ExtJSResponse response;
-	IQuarkKey crypt; 
+	IAesKey crypt; 
 
 	public QuarkHandler(final WebSocketSession wsSession, final ExtJSDirectRequest<JsonNode> data, final String uri, final boolean isBinary, final boolean isEncrypted) {
 		super();
@@ -85,7 +85,7 @@ public class QuarkHandler {
 		this.requireSession = isSessionRequired();
 	}
 
-	public QuarkHandler(final HttpServletRequest request, final HttpServletResponse response, final ExtJSDirectRequest<JsonNode> data, final String uri, final boolean supportAsync) {
+	public QuarkHandler(final HttpServletRequest request, final HttpServletResponse response, final ExtJSDirectRequest<JsonNode> data, final String uri) {
 		super();
 		this.uri = uri;
 		this.isEncrypted = false;
@@ -94,13 +94,13 @@ public class QuarkHandler {
 		this.request = data;
 		this.httpRequest = request;
 		this.httpResponse = response;
-		this.supportAsync = supportAsync;
+		this.supportAsync = request.isAsyncSupported();
 		this.ctx = request.getServletContext();
 		this.requireSession = isSessionRequired();
 		this.httpResponse.setContentType("application/json");
 
 	}
-
+	
 	/**
 	 * Check if session is required to call a Caller
 	 * @return
@@ -128,7 +128,7 @@ public class QuarkHandler {
 	/**
 	 * Main processing
 	 */
-	public void process() {
+	public void call() {
 
 		try {
 			
@@ -139,16 +139,17 @@ public class QuarkHandler {
 			}
 
 			prepare();
-			doProcess();
+			
+			if (doProcess()) {
+				send();
+			}
 
 		} catch (Exception e) {
 			final String msg = QuarkUtil.toMessage(e);
 			LOG.error(msg);
 			LOG.debug(msg, e);
 			response = new ExtJSResponse(e, msg);
-		} finally {
 			send();
-			if (!isAsync) cleanup();
 		}
 
 	}
@@ -234,20 +235,43 @@ public class QuarkHandler {
 	 * @return
 	 */
 	private ExtJSDirectResponse<JsonNode> getResult() {
+		
 		final ExtJSDirectResponse<JsonNode> directResponse = new ExtJSDirectResponse<>(request, response);
+		
 		if (response.isException()) {
 			directResponse.setType(WebSocketInstruction.ERR.getText());
 		}
+		
 		return directResponse;
 	} 
+	
+	public AsyncContext getContext() {
+		
+		if (Objects.nonNull(httpRequest)) {
+		
+			if (httpRequest.isAsyncStarted()) {
+				return httpRequest.getAsyncContext();
+			}
+			
+			return httpRequest.startAsync(httpRequest, httpResponse);
+		}
+		
+		return null;
+	}
+	
+	public boolean send(final ExtJSResponse response) {
+		this.response = response;
+		return send();
+	}
 	
 	/**
 	 * Send response to requester. Determine is it for WebSocket or Servlet
 	 * @return
 	 */
-	private boolean send() {
+	protected boolean send() {
 		
 		if (Objects.isNull(response)) return false;
+		if (sent) return !sent;
 
 		try {
 			if (Objects.isNull(wsSession)) {
@@ -255,11 +279,15 @@ public class QuarkHandler {
 			} else {
 				sendWS();
 			}			
+			
+			sent = true;
 		} catch (Exception e) {
 			final String msg = QuarkUtil.toMessage(e);
 			LOG.error(msg);
 			LOG.debug(msg, e);
 			return false;
+		} finally {
+			cleanup();
 		}
 
 		return true;
@@ -287,7 +315,9 @@ public class QuarkHandler {
 	 * @throws IOException
 	 */
 	private void sendHTTP() throws IOException {
+		
 		final ExtJSDirectResponse<JsonNode> result = getResult();
+		
 		if (isEncrypted()) {
 			final String json = JsonDecoder.stringify(result);
 			final ObjectNode node = QuarkHandlerUtil.encrypt(crypt, json);
@@ -295,13 +325,17 @@ public class QuarkHandler {
 		} else {		
 			ServletUtils.sendResponse(httpResponse, result);
 		}
+		
+		if (httpRequest.isAsyncStarted()) {
+			httpRequest.getAsyncContext().complete();
+		}	
 	}
 
 	/**
 	 * Prepare Controller - validate access, prepare parameters
 	 * @throws IOException
 	 */
-	private void doProcess() throws IOException {
+	private boolean doProcess() throws IOException {
 
 		final Bean<?> bean = QuarkHandlerUtil.findBean(request);
 		final Class<?> beanClass = bean.getBeanClass();
@@ -318,6 +352,7 @@ public class QuarkHandler {
 
 			final boolean isProtected = selectedMethod.isAnnotationPresent(ExtJSProtected.class);
 			if (isProtected) {
+				error = true;
 				response = QuarkHandlerUtil.getError(QuarkErrors.E8888);
 			} else {
 				final List<AnnotatedParameter<?>> paramList = selectedMethod.getParameters();
@@ -328,58 +363,15 @@ public class QuarkHandler {
 					response = QuarkHandlerUtil.getError(QuarkErrors.E0002);
 				} else {
 					final Method javaMethod = QuarkHandlerUtil.toMethod(selectedMethod);
-					executeBean(bean, javaMethod, params);
+					QuarkBeanCaller.get(this, bean, javaMethod, params).call();
 				}
 			}
 
 		}
+		
+		return error;
 	}
 
-	/**
-	 * Execute Controller bean
-	 * @param bean
-	 * @param method
-	 * @param params
-	 */
-	private void executeBean(final Bean<?> bean, final Method method, final Object[] params) {
-		
-		final QuarkBeanCaller caller = QuarkBeanCaller.get(this, bean, method, params);
-		
-		isAsync = supportAsync && QuarkHandlerUtil.isAsync(method);
-		if (isAsync) {
-			if (isWebSocket()) {
-				executeAsyncWS(caller);				
-			} else {
-				executeAsyncHTTP(caller);
-			}
-		} else {
-			response = caller.get();
-		}
-	}
-
-	/**
-	 * Asynchronously execute controller for WebSocket
-	 * @param caller
-	 */
-	private void executeAsyncWS(final QuarkBeanCaller caller) {
-		final QuarkHandler handler = this;
-		CompletableFuture.supplyAsync(caller).thenAcceptAsync(c -> { handler.response = c; handler.send();});		
-	}
-	
-	/**
-	 * Asynchronously execute controller for Servlet
-	 * @param caller
-	 */
-	private void executeAsyncHTTP(final QuarkBeanCaller caller) {
-		final QuarkHandler handler = this;
-		final AsyncContext asyncContext = httpRequest.startAsync(httpRequest, httpResponse);
-		CompletableFuture.supplyAsync(caller).thenAcceptAsync(c -> { 
-			handler.response = c; 
-			handler.send();
-			asyncContext.complete();
-			cleanup();
-		}); 
-	}
 	
 	/**
 	 * Get encryption key 
@@ -387,7 +379,7 @@ public class QuarkHandler {
 	 * @return
 	 * @throws IOException
 	 */
-	private IQuarkKey getAes(final ExtEncrypt encrypt) throws IOException {
+	private IAesKey getAes(final ExtEncrypt encrypt) throws IOException {
 		if (isWebSocket()) {
 			return getAesWs(encrypt);
 		} else {
@@ -401,8 +393,8 @@ public class QuarkHandler {
 	 * @return
 	 * @throws IOException
 	 */
-	private IQuarkKey getAesWs(final ExtEncrypt encrypt) throws IOException {
-		IQuarkKey aesKey = wsSession.get(QuarkConstants.HTTP_SEESION_ENCRYPT);
+	private IAesKey getAesWs(final ExtEncrypt encrypt) throws IOException {
+		IAesKey aesKey = wsSession.get(QuarkConstants.HTTP_SEESION_ENCRYPT);
 		if (Objects.isNull(aesKey)) {
 			aesKey = encrypt.toKey();
 			wsSession.set(QuarkConstants.HTTP_SEESION_ENCRYPT, aesKey);
@@ -416,9 +408,9 @@ public class QuarkHandler {
 	 * @return
 	 * @throws IOException
 	 */
-	private IQuarkKey getAesWeb(final ExtEncrypt encrypt) throws IOException {
+	private IAesKey getAesWeb(final ExtEncrypt encrypt) throws IOException {
 		final HttpSession session = getSession();
-		IQuarkKey aesKey = ServletUtils.get(session, QuarkConstants.HTTP_SEESION_ENCRYPT);
+		IAesKey aesKey = ServletUtils.get(session, QuarkConstants.HTTP_SEESION_ENCRYPT);
 		if (Objects.isNull(aesKey)) {
 			aesKey = encrypt.toKey();
 			ServletUtils.put(session, QuarkConstants.HTTP_SEESION_ENCRYPT, aesKey);
@@ -522,9 +514,9 @@ public class QuarkHandler {
 	 * @param isBinary
 	 * @param isEncrypted
 	 */
-	public static void process(final WebSocketSession wsSession, final ExtJSDirectRequest<JsonNode> data, final boolean isBinary, final boolean isEncrypted) {
+	public static void call(final WebSocketSession wsSession, final ExtJSDirectRequest<JsonNode> data, final boolean isBinary, final boolean isEncrypted) {
 		final String uri = wsSession.get(QuarkConstants.WEBSOCKET_PATH);
-		process(wsSession, data, uri, isBinary, isEncrypted);
+		call(wsSession, data, uri, isBinary, isEncrypted);
 	}
 	
 	/**
@@ -535,9 +527,8 @@ public class QuarkHandler {
 	 * @param isBinary
 	 * @param isEncrypted
 	 */
-	public static void process(final WebSocketSession wsSession, final ExtJSDirectRequest<JsonNode> data, final String uri, final boolean isBinary, final boolean isEncrypted) {
-		final QuarkHandler handler = new QuarkHandler(wsSession, data, uri, isBinary, isEncrypted);
-		handler.process();
+	public static void call(final WebSocketSession wsSession, final ExtJSDirectRequest<JsonNode> data, final String uri, final boolean isBinary, final boolean isEncrypted) {
+		new QuarkHandler(wsSession, data, uri, isBinary, isEncrypted).call();
 	}
 	
 	/**
@@ -545,20 +536,10 @@ public class QuarkHandler {
 	 * @param request
 	 * @param response
 	 */
-	public static void process(final HttpServletRequest request, final HttpServletResponse response) {
-		process(request, response, null, request.getServletPath(), false);
+	public static void call(final HttpServletRequest request, final HttpServletResponse response) {
+		call(request, response, null, request.getServletPath());
 	}
-	
-	/**
-	 * Start processing for Servlet
-	 * @param request
-	 * @param response
-	 * @param supportAsync
-	 */
-	public static void process(final HttpServletRequest request, final HttpServletResponse response, final boolean supportAsync) {
-		process(request, response, null, request.getServletPath(), supportAsync);
-	}
-	
+		
 	/**
 	 * Start processing for Servlet
 	 * @param request
@@ -567,9 +548,8 @@ public class QuarkHandler {
 	 * @param uri
 	 * @param supportAsync
 	 */
-	public static void process(final HttpServletRequest request, final HttpServletResponse response, final ExtJSDirectRequest<JsonNode> data, final String uri, final boolean supportAsync) {
-		final QuarkHandler handler = new QuarkHandler(request, response, data, uri, supportAsync);
-		handler.process();
+	public static void call(final HttpServletRequest request, final HttpServletResponse response, final ExtJSDirectRequest<JsonNode> data, final String uri) {
+		new QuarkHandler(request, response, data, uri).call();
 	}
 
 }

@@ -10,6 +10,7 @@ import javax.websocket.Session;
 
 import io.greenscreens.quark.QuarkUtil;
 
+
 @SuppressWarnings("unchecked")
 public enum WebSocketStorage {
 ;

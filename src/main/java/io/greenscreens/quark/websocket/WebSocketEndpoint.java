@@ -14,7 +14,6 @@ import java.util.Objects;
 import java.util.Set;
 
 import javax.enterprise.event.Event;
-import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import javax.servlet.http.HttpSession;
 import javax.websocket.CloseReason;
@@ -29,6 +28,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import io.greenscreens.quark.QuarkProducer;
 import io.greenscreens.quark.QuarkUtil;
 import io.greenscreens.quark.cdi.BeanManagerUtil;
 import io.greenscreens.quark.ext.ExtJSDirectRequest;
@@ -50,8 +50,6 @@ public class WebSocketEndpoint {
 	private static final Logger LOG = LoggerFactory.getLogger(WebSocketEndpoint.class);
 	private static final String MSG_HTTP_SEESION_REQUIRED = "WebSocket requires valid http session";
 
-	private static final ThreadLocal<WebSocketSession> websocketContextThreadLocal = new ThreadLocal<>();
-
 	@Inject
 	BeanManagerUtil beanManagerUtil;
 	
@@ -62,11 +60,6 @@ public class WebSocketEndpoint {
 	
 	public WebSocketEndpoint() {
 		super();
-	}
-
-	@Produces
-	public WebSocketSession sessionProducer() {
-		return websocketContextThreadLocal.get();
 	}
 
 	/**
@@ -105,7 +98,7 @@ public class WebSocketEndpoint {
 			LOG.trace("Received message {} \n      for session : {}", message, session);
 
 			wsession = new WebSocketSession(session);
-			attach(wsession);
+			QuarkProducer.attachSession(wsession);
 
 			final WebSocketInstruction cmd = message.getCmd();
 			if (cmd == null)
@@ -154,7 +147,7 @@ public class WebSocketEndpoint {
 			}
 
 		} finally {
-			release();
+			QuarkProducer.releaseSession();
 		}
 	}
 
@@ -175,7 +168,7 @@ public class WebSocketEndpoint {
 			final Object path = WebSocketStorage.get(config, QuarkConstants.WEBSOCKET_PATH);
 			wsession.set(QuarkConstants.WEBSOCKET_PATH, path);
 
-			attach(wsession);
+			QuarkProducer.attachSession(wsession);
 
 			boolean allowed = true;
 			String reason = null;
@@ -206,7 +199,7 @@ public class WebSocketEndpoint {
 			LOG.error(msg);
 			LOG.debug(msg, e);
 		} finally {
-			release();
+			QuarkProducer.releaseSession();
 		}
 
 	}
@@ -218,13 +211,13 @@ public class WebSocketEndpoint {
 
 		try {
 
-			attach(wsession);
+			QuarkProducer.attachSession(wsession);
 			WebsocketEvent event = new WebsocketEvent(wsession, WebSocketEventStatus.CLOSE, reason);
 			webSocketEvent.fire(event);
 
 		} finally {
 
-			release();
+			QuarkProducer.releaseSession();
 			updateSessions(wsession);
 
 		}
@@ -241,11 +234,11 @@ public class WebSocketEndpoint {
 
 		try {
 
-			attach(wsession);
+			QuarkProducer.attachSession(wsession);
 			webSocketEvent.fire(new WebsocketEvent(wsession, WebSocketEventStatus.ERROR, throwable));
 
 		} finally {
-			release();
+			QuarkProducer.releaseSession();
 		}
 	}
 
@@ -311,23 +304,9 @@ public class WebSocketEndpoint {
 		final List<ExtJSDirectRequest<JsonNode>> requests = wsMessage.getData();
 		
 		for (final ExtJSDirectRequest<JsonNode> request : requests) {
-			QuarkHandler.process(session, request, wsMessage.isBinary(), encrypted);
+			QuarkHandler.call(session, request, wsMessage.isBinary(), encrypted);
 		}
 		
-	}
-
-	public static void attach(final WebSocketSession session) {
-		if (Objects.nonNull(session)) {
-			websocketContextThreadLocal.set(session);
-		}
-	}
-	
-	public static void release() {
-		websocketContextThreadLocal.remove();
-	}
-	
-	public static WebSocketSession get() {
-		return websocketContextThreadLocal.get();
 	}
 	
 	public static final class CloseCodeImpl implements CloseCode {
