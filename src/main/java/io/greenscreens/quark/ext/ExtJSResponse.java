@@ -131,7 +131,6 @@ public class ExtJSResponse implements Serializable {
 		private boolean success;
 		private String msg;
 		private String code;
-		private Throwable exception;
 		private Type type = Type.INFO;
         
         public Builder setStatus(final boolean status) {
@@ -153,7 +152,7 @@ public class ExtJSResponse implements Serializable {
         	final ExtJSResponse resp = new ExtJSResponse(success, msg);
         	resp.setCode(code);
         	resp.setType(type);
-        	resp.setError(exception, msg);
+        	//resp.setError(exception, msg);
         	return resp;
         }
 
@@ -163,5 +162,8 @@ public class ExtJSResponse implements Serializable {
 
 	}
 
-	
+	public static void main(String[] args) {
+		ExtJSResponse r = ExtJSResponse.Builder.create().setStatus(true).setMessage("").build();
+		System.out.println(r.isSuccess());
+	}
 }

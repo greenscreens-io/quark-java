@@ -44,7 +44,6 @@ import io.greenscreens.quark.web.QuarkHandlerUtil;
 import io.greenscreens.quark.web.ServletUtils;
 import io.greenscreens.quark.websocket.data.WebSocketInstruction;
 
-
 /**
  * Attach Java class to remote call
  */
@@ -262,13 +261,12 @@ public final class WebSocketOperations<T> {
 			
 			final boolean isAsync= QuarkHandlerUtil.isAsync(method);
 			if (isAsync) {
-				CompletableFuture.supplyAsync(()->{ 
+				CompletableFuture.runAsync(()->{ 
 					try {
 						method.invoke(beanInstance, params);
 					} catch (Exception e) {
 						QuarkHandlerUtil.printError(e);
-					}
-					return null;					
+					}		
 				});
 
 			} else {

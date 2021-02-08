@@ -66,7 +66,6 @@ public class ExtJSResponseList<T> extends ExtJSResponse {
 		private boolean success;
 		private String msg;
 		private String code;
-		private Throwable exception;
 		private Type type = Type.INFO;
 
 		private int total;
@@ -109,7 +108,7 @@ public class ExtJSResponseList<T> extends ExtJSResponse {
         	resp.setData(data);
         	resp.setTotal(total);
         	resp.setPage(page);
-        	resp.setError(exception, msg);
+        	//resp.setError(exception, msg);
         	return resp;
         }
         

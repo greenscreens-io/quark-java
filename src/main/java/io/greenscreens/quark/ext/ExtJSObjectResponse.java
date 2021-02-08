@@ -49,7 +49,6 @@ public class ExtJSObjectResponse<T> extends ExtJSResponse {
 		private boolean success;
 		private String msg;
 		private String code;
-		private Throwable exception;
 		private Type type = Type.INFO;
         
         public Builder<T> setStatus(final boolean status) {
@@ -77,7 +76,7 @@ public class ExtJSObjectResponse<T> extends ExtJSResponse {
         	resp.setCode(code);
         	resp.setType(type);
         	resp.setData(data);
-        	resp.setError(exception, msg);
+        	//resp.setError(exception, msg);
         	return resp;
         }
 

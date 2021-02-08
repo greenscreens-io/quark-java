@@ -11,7 +11,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Supplier;
 
 import javax.enterprise.inject.spi.Bean;
 import javax.inject.Inject;
@@ -27,7 +26,7 @@ import io.greenscreens.quark.ext.ExtJSResponse;
 /**
  * Class to execute bean 
  */
-public class QuarkBeanCaller implements Supplier<ExtJSResponse> {
+public class QuarkBeanCaller implements Runnable {
 
 	final Bean<?> bean;
 	final Method method;
@@ -54,14 +53,14 @@ public class QuarkBeanCaller implements Supplier<ExtJSResponse> {
 		
 		if (isAsync) {
 			handler.getContext();
-			CompletableFuture.supplyAsync(this);
+			CompletableFuture.runAsync(this);
 		} else {
-			get();
+			run();
 		}
 	}
 
 	@Override
-	public ExtJSResponse get() {
+	public void run() {
 			
 		IDestructibleBeanInstance<?> di = null;
 		
@@ -78,7 +77,7 @@ public class QuarkBeanCaller implements Supplier<ExtJSResponse> {
 			deattach();
 		}
 
-		return handler.response;
+
 	}
 	
 	protected void attach() {
