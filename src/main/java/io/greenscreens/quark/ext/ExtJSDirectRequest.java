@@ -21,6 +21,7 @@ public class ExtJSDirectRequest<T> {
 	private String namespace;
 	private String type;
 	private String tid;
+	private long ts;
 	private List<T> data;
 
 	public final String getNamespace() {
@@ -61,6 +62,14 @@ public class ExtJSDirectRequest<T> {
 
 	public final void setTid(final String tid) {
 		this.tid = tid;
+	}
+	
+	public long getTs() {
+		return ts;
+	}
+
+	public void setTs(long ts) {
+		this.ts = ts;
 	}
 
 	public final List<T> getData() {

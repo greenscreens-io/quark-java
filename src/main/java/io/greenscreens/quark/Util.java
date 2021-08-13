@@ -196,4 +196,21 @@ enum Util {
 		return err;
 	}
 
+	/**
+	 * Calculate difference between current time and given timestamp Timestamp can
+	 * be in UNIX format (PHP) or Java
+	 * 
+	 * @param time
+	 * @return
+	 */
+	public static final long timediff(final long time) {
+
+		if (time <= 0) {
+			return 0;
+		}
+
+		final long stime = System.currentTimeMillis();
+		return Math.abs(stime - time);
+	}
+
 }

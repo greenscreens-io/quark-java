@@ -269,4 +269,16 @@ public enum QuarkUtil {
 	public static boolean isHex(final String val) {
 		return StringUtil.isHex(val);
 	}
+	
+	/**
+	 * Calculate difference between current time and given timestamp Timestamp can
+	 * be in UNIX format (PHP) or Java
+	 * 
+	 * @param time
+	 * @return
+	 */
+	public static final long timediff(final long time) {
+		return Util.timediff(time);
+	}
+
 }

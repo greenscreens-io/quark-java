@@ -171,6 +171,14 @@ public class QuarkHandler {
 	 * @throws IOException
 	 */
 	private void prepare() throws IOException {
+		
+		if (QuarkEngine.TIMESTAMP > 0) {
+			final long diff = QuarkUtil.timediff(request.getTs());
+			if (diff > QuarkEngine.TIMESTAMP) {
+				throw new IOException("Request timeout");
+			}
+		}
+
 		if (Objects.isNull(wsSession)) {
 			prepareHTTP();
 		} else {
