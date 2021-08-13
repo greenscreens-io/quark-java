@@ -15,6 +15,11 @@ import javax.enterprise.inject.spi.CDI;
 public enum QuarkEngine {
 ;
 
+	/**
+	 *  if GT 0, check system time difference for request  
+	 */
+	public static long TIMESTAMP = -1;
+
 	public static BeanManager getBeanManager() {
 
 		final CDI<Object> cdi = CDI.current();
