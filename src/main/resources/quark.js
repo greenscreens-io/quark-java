@@ -1,116 +1,3 @@
-/* Quark Engine v2.3.0 (c) Green Screens Ltd. */
-
-/*
- * Copyright (C) 2015, 2020  Green Screens Ltd.
- */
-
-/*
-class TestEvents extends EventES6 {
-     constructor() {
-        super();
-     }
-}
-obj.on('', callback)
-obj.once('', callback)
-obj.emit('', ...args)
-*/
-
-class Events {
-
-	constructor() {
-		this.listeners = new Map();
-		this.onceListeners = new Map();
-		this.triggers = new Map();
-	}
-
-	// help-function for onReady and onceReady
-	// the callbackfunction will execute,
-	// if the label has already been triggerd with the last called parameters
-	_checkPast(label, callback) {
-		if (this.triggers.has(label)) {
-			callback(this.triggers.get(label));
-			return true;
-		} else {
-			return false;
-		}
-	}
-
-	// execute the callback everytime the label is trigger
-	on(label, callback, checkPast = false) {
-		this.listeners.has(label) || this.listeners.set(label, []);
-		this.listeners.get(label).push(callback);
-		if (checkPast)
-			this._checkPast(label, callback);
-	}
-
-	// execute the callback everytime the label is trigger
-	// check if the label had been already called
-	// and if so excute the callback immediately
-	onReady(label, callback) {
-		this.on(label, callback, true);
-	}
-
-	// execute the callback onetime the label is trigger
-	once(label, callback, checkPast = false) {
-		this.onceListeners.has(label) || this.onceListeners.set(label, []);
-		if (!(checkPast && this._checkPast(label, callback))) {
-			this.onceListeners.get(label).push(callback);
-		}
-	}
-
-	// execute the callback onetime the label is trigger
-	// or execute the callback if the label had been called already
-	onceReady(label, callback) {
-		this.once(label, callback, true);
-	}
-
-	// remove the callback for a label
-	off(label, callback = true) {
-		if (callback === true) {
-			// remove listeners for all callbackfunctions
-			this.removeAllListeners(label);
-		} else {
-			// remove listeners only with match callbackfunctions
-			let _off = (inListener) => {
-				let listeners = inListener.get(label);
-				if (listeners) {
-					inListener.set(label, listeners.filter((value) => !(value === callback)));
-				}
-			};
-			_off(this.listeners);
-			_off(this.onceListeners);
-		}
-	}
-
-	removeAllListeners(label) {
-		this.listeners.delete(label);
-		this.onceListeners.delete(label);
-	}
-
-	trigger(label, ...args) {
-		this.emit(label, ...args);
-	}
-
-	// trigger the event with the label
-	emit(label, ...args) {
-		let res = false;
-		this.triggers.set(label, ...args); // save all triggerd labels for onready and onceready
-		let _trigger = (inListener, label, ...args) => {
-			let listeners = inListener.get(label);
-			if (listeners && listeners.length) {
-				listeners.forEach((listener) => {
-					listener(...args);
-				});
-				res = true;
-			}
-		};
-		_trigger(this.onceListeners, label, ...args);
-		_trigger(this.listeners, label, ...args);
-		this.onceListeners.delete(label); // callback for once executed, so delete it.
-		return res;
-	}
-}
-
 /*
  * Copyright (C) 2015, 2020  Green Screens Ltd.
  */
@@ -153,9 +40,9 @@ class Buffer {
 
 	static fromBase64(value) {
 
-		let strbin = atob(value);
-		let buffer = new ArrayBuffer(strbin.length);
-		let bufView = new Uint8Array(buffer);
+		const strbin = atob(value);
+		const buffer = new ArrayBuffer(strbin.length);
+		const bufView = new Uint8Array(buffer);
 
 		for (let i = 0, strLen = strbin.length; i < strLen; i++) {
 			bufView[i] = strbin.charCodeAt(i);
@@ -178,6 +65,122 @@ class Buffer {
  * Copyright (C) 2015, 2020  Green Screens Ltd.
  */
 
+/*
+class TestEvents extends EventES6 {
+     constructor() {
+        super();
+     }
+}
+obj.on('', callback)
+obj.once('', callback)
+obj.emit('', ...args)
+*/
+
+class Events {
+
+	constructor() {
+		this.listeners = new Map();
+		this.onceListeners = new Map();
+		this.triggers = new Map();
+	}
+
+	// help-function for onReady and onceReady
+	// the callbackfunction will execute,
+	// if the label has already been triggerd with the last called parameters
+	_checkPast(label, callback) {
+		const me = this;
+		if (me.triggers.has(label)) {
+			callback(me.triggers.get(label));
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	// execute the callback everytime the label is trigger
+	on(label, callback, checkPast = false) {
+		const me = this;
+		me.listeners.has(label) || me.listeners.set(label, []);
+		me.listeners.get(label).push(callback);
+		if (checkPast)
+			me._checkPast(label, callback);
+	}
+
+	// execute the callback everytime the label is trigger
+	// check if the label had been already called
+	// and if so excute the callback immediately
+	onReady(label, callback) {
+		this.on(label, callback, true);
+	}
+
+	// execute the callback onetime the label is trigger
+	once(label, callback, checkPast = false) {
+		const me = this;
+		me.onceListeners.has(label) || me.onceListeners.set(label, []);
+		if (!(checkPast && me._checkPast(label, callback))) {
+			me.onceListeners.get(label).push(callback);
+		}
+	}
+
+	// execute the callback onetime the label is trigger
+	// or execute the callback if the label had been called already
+	onceReady(label, callback) {
+		this.once(label, callback, true);
+	}
+
+	// remove the callback for a label
+	off(label, callback = true) {
+		const me = this;
+		if (callback === true) {
+			// remove listeners for all callbackfunctions
+			me.removeAllListeners(label);
+		} else {
+			// remove listeners only with match callbackfunctions
+			let _off = (inListener) => {
+				const listeners = inListener.get(label);
+				if (listeners) {
+					inListener.set(label, listeners.filter((value) => (value !== callback)));
+				}
+			};
+			_off(me.listeners);
+			_off(me.onceListeners);
+		}
+	}
+
+	removeAllListeners(label) {
+		const me = this;
+		me.listeners.delete(label);
+		me.onceListeners.delete(label);
+	}
+
+	trigger(label, ...args) {
+		this.emit(label, ...args);
+	}
+
+	// trigger the event with the label
+	emit(label, ...args) {
+		const me = this;		
+		me.triggers.set(label, ...args); // save all triggerd labels for onready and onceready
+		const _trigger = (inListener, label, ...args) => {
+			const listeners = inListener.get(label);
+			if (listeners && listeners.length) {
+				listeners.forEach((listener) => {
+					listener(...args);
+				});
+				return true;
+			}
+		};
+		let res = _trigger(me.onceListeners, label, ...args);
+		res = res || _trigger(me.listeners, label, ...args);
+		me.onceListeners.delete(label); // callback for once executed, so delete it.
+		return res;
+	}
+}
+
+/*
+ * Copyright (C) 2015, 2020  Green Screens Ltd.
+ */
+
 /**
  * Queue to handle requests
  */
@@ -185,7 +188,7 @@ class Queue extends Map {
 
 	constructor() {
 		super();
-		let me = this;
+		const me = this;
 
 		me.up = 0;
 		me.down = 0;
@@ -198,7 +201,7 @@ class Queue extends Map {
 	 *      Request data
 	 */
 	updateRequest(req, callback) {
-		let me = this;
+		const me = this;
 		me.tid++;
 		me.up++;
 		req.tid = me.tid.toString();
@@ -209,7 +212,7 @@ class Queue extends Map {
 	 * Reset queue to remove old stalled elements
 	 */
 	reset() {
-		let me = this;
+		const me = this;
 		if (me.up > 50 && me.down >= me.up) {
 			me.up = 0;
 			me.down = 0;
@@ -223,16 +226,16 @@ class Queue extends Map {
 	 */
 	process(obj) {
 
-		let me = this;
-		let unknown = [];
+		const me = this;
+		const unknown = [];
 
 		if (Array.isArray(obj)) {
 			obj.forEach((o) => {
-				let res = me.execute(o);
+				const res = me.execute(o);
 				if (res) unkown.push(res);
 			});
 		} else {
-			let o = me.execute(obj);
+			const o = me.execute(obj);
 			if (o) unknown.push(o);
 		}
 
@@ -247,8 +250,8 @@ class Queue extends Map {
 	 */
 	execute(obj) {
 
-		let me = this;
-		let tid = obj.tid;
+		const me = this;
+		const tid = obj.tid;
 		let unknown = null;
 
 		me.down++;
@@ -269,7 +272,7 @@ class Queue extends Map {
 		me.reset();
 
 		return unknown;
-	};
+	}
 }
 
 /*
@@ -287,20 +290,20 @@ class Streams {
 	}
 
 	static async compress(text, encoding = 'gzip') {
-		let byteArray = new TextEncoder().encode(text);
-		let cs = new CompressionStream(encoding);
-		let writer = cs.writable.getWriter();
+		const byteArray = new TextEncoder().encode(text);
+		const cs = new CompressionStream(encoding);
+		const writer = cs.writable.getWriter();
 		writer.write(byteArray);
 		writer.close();
 		return new Response(cs.readable).arrayBuffer();
 	}
 
 	static async decompress(byteArray, encoding = 'gzip') {
-		let cs = new DecompressionStream(encoding);
-		let writer = cs.writable.getWriter();
+		const cs = new DecompressionStream(encoding);
+		const writer = cs.writable.getWriter();
 		writer.write(byteArray);
 		writer.close();
-		let arrayBuffer = await new Response(cs.readable).arrayBuffer();
+		const arrayBuffer = await new Response(cs.readable).arrayBuffer();
 		return new TextDecoder().decode(arrayBuffer);
 	}
 
@@ -322,7 +325,7 @@ class Security {
 
 	constructor() {
 
-		let me = this;
+		const me = this;
 		me.VERSION = 0;
 		me.encKEY = null;
 		me.aesKEY = null;
@@ -351,7 +354,7 @@ class Security {
 	 *     length of data (required)
 	 */
 	getRandom(size) {
-		let array = new Uint8Array(size);
+		const array = new Uint8Array(size);
 		crypto.getRandomValues(array);
 		return array;
 	}
@@ -361,11 +364,11 @@ class Security {
 	 * @returns CryptoKey
 	 */
 	async generateAesKey() {
-		let type = {
+		const type = {
 			name: "AES-CTR",
 			length: 128
 		};
-		let mode = ["encrypt", "decrypt"];
+		const mode = ["encrypt", "decrypt"];
 		return crypto.subtle.generateKey(type, true, mode);
 	}
 
@@ -375,7 +378,7 @@ class Security {
 	 * @returns Uin8Array
 	 */
 	async exportAesKey(key) {
-		let buffer = await crypto.subtle.exportKey("raw", key);
+		const buffer = await crypto.subtle.exportKey("raw", key);
 		return new Uint8Array(buffer);
 	}
 
@@ -395,7 +398,7 @@ class Security {
 	 */
 	async importRsaKey(key, type, mode) {
 
-		let binaryDer = Buffer.from(key, 'base64');
+		const binaryDer = Buffer.from(key, 'base64');
 
 		return crypto.subtle.importKey(
 			"spki",
@@ -420,11 +423,11 @@ class Security {
 	 */
 	async verify(key, signature, challenge) {
 
-		let me = this;
-		let binSignature = Buffer.from(signature, 'base64');
-		let binChallenge = me.encoder.encode(challenge);
+		const me = this;
+		const binSignature = Buffer.from(signature, 'base64');
+		const binChallenge = me.encoder.encode(challenge);
 
-		let type = {
+		const type = {
 			name: "ECDSA",
 			hash: {
 				name: "SHA-384"
@@ -447,7 +450,7 @@ class Security {
 	 */
 	async encryptRSA(data) {
 
-		let me = this;
+		const me = this;
 		let encoded = data;
 
 		if (typeof data === 'string') {
@@ -466,8 +469,8 @@ class Security {
 	 */
 	async encryptAesMessage(key, iv, data) {
 
-		let encoded = this.encoder.encode(data);
-		let type = {
+		const encoded = this.encoder.encode(data);
+		const type = {
 			name: "AES-CTR",
 			counter: iv,
 			length: 128
@@ -481,10 +484,10 @@ class Security {
 	 */
 	async decryptAesMessage(key, iv, data) {
 
-		let databin = Buffer.from(data, "hex");
-		let counter = Buffer.from(iv, "hex");
+		const databin = Buffer.from(data, "hex");
+		const counter = Buffer.from(iv, "hex");
 
-		let type = {
+		const type = {
 			name: "AES-CTR",
 			counter: counter,
 			length: 128
@@ -494,7 +497,7 @@ class Security {
 	}
 
 	get isValid() {
-		let me = this;
+		const me = this;
 		return me.encKEY !== null && me.aesKEY !== null;
 	}
 
@@ -508,7 +511,7 @@ class Security {
 	 */
 	async init(cfg) {
 
-		let me = this;
+		const me = this;
 
 		if (!Security.isAvailable) {
 			console.log('Security mode not available, TLS protocol required.');
@@ -527,12 +530,12 @@ class Security {
 		me.aesKEY = await me.generateAesKey();
 		me.exportedAES = await me.exportAesKey(me.aesKEY);
 
-		let verKey = await me.importRsaKey(cfg.keyVer, {
+		const verKey = await me.importRsaKey(cfg.keyVer, {
 			name: 'ECDSA',
 			namedCurve: "P-384"
 		}, 'verify');
 
-		let status = await me.verify(verKey, cfg.signature, me.getChallenge(cfg || {}));
+		const status = await me.verify(verKey, cfg.signature, me.getChallenge(cfg || {}));
 
 		if (!status) {
 			me.encKEY = null;
@@ -552,16 +555,16 @@ class Security {
 	 */
 	async encrypt(data, bin) {
 
-		let me = this;
-		let iv = me.getRandom(16);
-		let key = new Uint8Array(iv.length + me.exportedAES.length);
+		const me = this;
+		const iv = me.getRandom(16);
+		const key = new Uint8Array(iv.length + me.exportedAES.length);
 
 		key.set(iv);
 		key.set(me.exportedAES, iv.length);
 
-		let str = (typeof data === 'string') ? data : JSON.stringify(data);
-		let encryptedKey = await me.encryptRSA(key);
-		let encryptedData = await me.encryptAesMessage(me.aesKEY, iv, str);
+		const str = (typeof data === 'string') ? data : JSON.stringify(data);
+		const encryptedKey = await me.encryptRSA(key);
+		const encryptedData = await me.encryptAesMessage(me.aesKEY, iv, str);
 
 		if (bin === true) {
 			return {
@@ -590,14 +593,14 @@ class Security {
 	 */
 	async decrypt(cfg) {
 
-		let me = this;
-		let iv = cfg.iv;
-		let data = cfg.d;
+		const me = this;
+		const iv = cfg.iv;
+		const data = cfg.d;
 
-		let message = await me.decryptAesMessage(me.aesKEY, iv, data);
+		const message = await me.decryptAesMessage(me.aesKEY, iv, data);
 
-		let str = me.decoder.decode(message);
-		let obj = JSON.parse(str);
+		const str = me.decoder.decode(message);
+		const obj = JSON.parse(str);
 
 		if (obj && obj.type == 'ws' && obj.cmd === 'data') {
 			obj = obj.data;
@@ -607,7 +610,7 @@ class Security {
 	}
 
 	static async init(cfg) {
-		let security = new Security();
+		const security = new Security();
 		await security.init(cfg);
 		return security;
 	}
@@ -642,7 +645,7 @@ class Generator extends Events {
 	 */
 	stop() {
 
-		let me = this;
+		const me = this;
 		me.removeAllListeners('call');
 		me.removeAllListeners('api');
 		me.detach();
@@ -652,8 +655,8 @@ class Generator extends Events {
 	 * Detach generated API namespace from global
 	 */
 	detach() {
-		let me = this;
-		let root = typeof global === 'undefined' ? self : global;
+		const me = this;
+		const root = typeof global === 'undefined' ? self : global;
 		Object.keys(me._model).forEach(v => root[v] = null);
 		me._model = {};
 	}
@@ -662,8 +665,8 @@ class Generator extends Events {
 	 * Attach generated API namespace to global
 	 */
 	attach() {
-		let me = this;
-		let root = typeof global === 'undefined' ? self : global;
+		const me = this;
+		const root = typeof global === 'undefined' ? self : global;
 		Object.entries(me._model).forEach(v => root[v[0]] = v[1]);
 	}
 
@@ -676,8 +679,8 @@ class Generator extends Events {
 	 */
 	build(o) {
 
-		let me = this;
-		let data = o ? o.api || o : null;
+		const me = this;
+		const data = o ? o.api || o : null;
 
 		if (!data) return data;
 		me._buildAPI(data);
@@ -695,13 +698,10 @@ class Generator extends Events {
 	 */
 	_buildAPI(cfg) {
 
-		let me = this;
+		const me = this;
 
 		if (Array.isArray(cfg)) {
-			cfg.every(v => {
-				me._buildInstance(v);
-				return true;
-			});
+			cfg.forEach(v => me._buildInstance(v));
 		} else {
 			me._buildInstance(cfg);
 		}
@@ -716,7 +716,7 @@ class Generator extends Events {
 	 */
 	_buildInstance(api) {
 
-		let me = this;
+		const me = this;
 		let tree = null;
 		let action = null;
 
@@ -727,10 +727,8 @@ class Generator extends Events {
 		}
 		action = tree[api.action];
 
-		api.methods.every(v => {
-			me._buildMethod(api.namespace, api.action, action, v);
-			return true;
-		});
+		api.methods.forEach(v => me._buildMethod(api.namespace, api.action, action, v));
+
 	}
 
 	/**
@@ -744,7 +742,7 @@ class Generator extends Events {
 	 */
 	_buildNamespace(namespace) {
 
-		let me = this;
+		const me = this;
 		let tmp = null;
 
 		namespace.split('.').every(v => {
@@ -774,8 +772,8 @@ class Generator extends Events {
 	 */
 	_buildMethod(namespace, action, instance, api) {
 
-		let enc = api.encrypt === false ? false : true;
-		let cfg = {
+		const enc = api.encrypt === false ? false : true;
+		const cfg = {
 			n: namespace,
 			c: action,
 			m: api.name,
@@ -794,8 +792,8 @@ class Generator extends Events {
 	 */
 	_apiFn(params) {
 
-		let me = this;
-		let prop = params;
+		const me = this;
+		const prop = params;
 
 		function fn() {
 
@@ -808,7 +806,8 @@ class Generator extends Events {
 				"action": prop.c,
 				"method": prop.m,
 				"e": prop.e,
-				"data": args
+				"data": args,
+				"ts":Date.now()
 			};
 
 			promise = new Promise((resolve, reject) => {
@@ -833,7 +832,7 @@ class Generator extends Events {
 			return;
 		}
 
-		let sts = (prop.c === obj.action) &&
+		const sts = (prop.c === obj.action) &&
 			(prop.m === obj.method) &&
 			obj.result &&
 			obj.result.success;
@@ -850,7 +849,7 @@ class Generator extends Events {
 	 * Static instance builder
 	 */
 	static async build(cfg) {
-		let generator = new Generator();
+		const generator = new Generator();
 		generator.build(cfg);
 		return generator;
 	}
@@ -872,14 +871,14 @@ class WebChannel {
 	 */
 	async init(engine) {
 
-		let me = this;
+		const me = this;
 
 		if (me.engine) me.stop();
 
 		me.engine = engine;
-		let generator = engine.Generator;
+		const generator = engine.Generator;
 
-		let data = await me.getAPI(engine.apiURL);
+		const data = await me.getAPI(engine.apiURL);
 		await engine.registerAPI(data);
 
 		if (engine.isSockChannel) return;
@@ -893,8 +892,8 @@ class WebChannel {
 	 */
 	stop() {
 
-		let me = this;
-		let engine = me.engine;
+		const me = this;
+		const engine = me.engine;
 		me.engine = null;
 
 		engine.Generator.off('call');
@@ -911,7 +910,7 @@ class WebChannel {
 	 */
 	async onRequest(req, callback) {
 
-		let me = this;
+		const me = this;
 		let o = null;
 		let e = null;
 
@@ -933,17 +932,19 @@ class WebChannel {
 	 */
 	async getAPI(url) {
 
-		let service = url;
-		let id = Date.now();
+		const me = this;
+		const service = url;
+		const engine = me.engine; 
+		const id = Date.now();
 
-		let resp = await fetch(service, {
+		const headers = Object.assign({}, engine.headers || {}, {'x-time': id});
+		
+		const resp = await fetch(service, {
 			method: 'get',
-			headers: {
-				'x-time': id
-			}
+			headers: headers
 		});
 
-		let data = await resp.json();
+		const data = await resp.json();
 
 		// update local challenge for signature verificator
 		data.challenge = id.toString();
@@ -957,20 +958,23 @@ class WebChannel {
 	 */
 	async fetchCall(url, data) {
 
-		let MIME = 'application/json';
-		let HEADERS = {
+		const me = this;
+		const engine = me.engine;
+		const MIME = 'application/json';
+		const HEADERS_ = {
 			'Accept': MIME,
 			'Content-Type': MIME
 		};
-
-		let body = JSON.stringify(data);
-		let req = {
+		
+		const headers = Object.assign({}, engine.headers || {}, HEADERS_);
+		const body = JSON.stringify(data);
+		const req = {
 			method: 'post',
-			headers: HEADERS,
+			headers: headers,
 			body: body
 		};
-		let res = await fetch(url, req);
-		let json = await res.json();
+		const res = await fetch(url, req);
+		const json = await res.json();
 
 		return json;
 	}
@@ -987,12 +991,12 @@ class WebChannel {
 	 */
 	async onCall(engine, req) {
 
-		let me = this;
-		let security = engine.Security;
-		let url = engine.serviceURL;
+		const me = this;
+		const security = engine.Security;
+		const url = engine.serviceURL;
 
-		let hasArgs = Array.isArray(req.data) && req.data.length > 0;
-		let shouldEncrypt = security.isValid && hasArgs;
+		const hasArgs = Array.isArray(req.data) && req.data.length > 0;
+		const shouldEncrypt = security.isValid && hasArgs;
 		let data = req;
 
 		// encrypt if supported
@@ -1038,7 +1042,7 @@ class SocketChannel extends Events {
 
 	constructor() {
 		super();
-		let me = this;
+		const me = this;
 
 		me.queue = new Queue();
 		me.webSocket = null;
@@ -1050,7 +1054,7 @@ class SocketChannel extends Events {
 	 */
 	async init(engine) {
 
-		let me = this;
+		const me = this;
 		me.stop();
 		me.engine = engine;
 
@@ -1059,6 +1063,12 @@ class SocketChannel extends Events {
 			return null;
 		});
 
+	}
+	
+	get isOpen() {
+		const me = this;
+		if (me.webSocket == null) return false;
+		return me.webSocket.readyState === me.webSocket.OPEN;		
 	}
 
 	/**
@@ -1079,7 +1089,7 @@ class SocketChannel extends Events {
 	 * @param {Object} req
 	 */
 	canEncrypt(req) {
-		let hasArgs = Array.isArray(req.data) && req.data.length > 0 && req.e !== false;
+		const hasArgs = Array.isArray(req.data) && req.data.length > 0 && req.e !== false;
 		return this.engine.Security.isValid && hasArgs;
 	}
 
@@ -1091,12 +1101,12 @@ class SocketChannel extends Events {
 	 */
 	async onCall(req, callback) {
 
-		let me = this;
+		const me = this;
 		let msg = null;
 		let enc = null;
 		let data = null;
 
-		let isEncrypt = me.canEncrypt(req);
+		const isEncrypt = me.canEncrypt(req);
 
 		me.queue.updateRequest(req, callback);
 
@@ -1124,21 +1134,25 @@ class SocketChannel extends Events {
 
 	async _startSocket(resolve, reject) {
 
-		let me = this;
-		let engine = me.engine;
-		let generator = engine.Generator;
+		const me = this;
+		const engine = me.engine;
+		const generator = engine.Generator;
 
-		let challenge = Date.now();
+		const challenge = Date.now();
+		const url = new URL(engine.serviceURL);
 		
-		// let url = `${engine.serviceURL}?q=${challenge}&c=${Streams.isAvailable}`;
-		let url = new URL(engine.serviceURL);
-		url.searchParams.append('q', challenge);
-		url.searchParams.append('c', Streams.isAvailable);
+		let headers = Object.assign({}, engine.headers || {});
+		headers.q = challenge;
+		headers.c = Streams.isAvailable;
+		
+		Object.entries(headers || {}).forEach((v) => {
+			url.searchParams.append(v[0], encodeURIComponent(v[1]));			
+		});
 
 		me.webSocket = new WebSocket(url.toString(), ['ws4is']);
 		me.webSocket.binaryType = "arraybuffer";
 
-		let onCall = me.onCall.bind(me);
+		const onCall = me.onCall.bind(me);
 
 		me.webSocket.onopen = (event) => {
 
@@ -1182,6 +1196,14 @@ class SocketChannel extends Events {
 
 	}
 
+	_isJsonObj(msg) {
+		return msg.startsWith('{') && msg.endsWith('}');
+	}
+	
+	_isJsonArray(msg) {
+		return msg.startsWith('[') && msg.endsWith(']');
+	}
+	
 	/**
 	 * Parse and prepare received message for processing
 	 *
@@ -1190,29 +1212,29 @@ class SocketChannel extends Events {
 	 */
 	async _prepareMessage(message) {
 
-		let me = this;
+		const me = this;
+		const engine = me.engine;
+		const generator = engine.Generator;
+		
 		let obj = null;
-
-		let engine = me.engine;
-		let generator = engine.Generator;
-
+		let text = message;
+		
 		try {
 
 			if (message instanceof ArrayBuffer) {
-				let text = await Streams.decompress(message);
+				text = await Streams.decompress(message);
+			}
+
+			const msg = text.trim();
+			const isJSON = me._isJsonObj(msg) || me._isJsonArray(msg); 
+			if (isJSON) {
 				obj = JSON.parse(text);
-			}
-
-			if (typeof message === 'string') {
-				obj = JSON.parse(message);
-			}
-
-			if (obj) {
-				me.onMessage(obj);
+				me.onMessage(obj);				
 			} else {
-				generator.emit('error', event);
+				generator.emit('raw', text);	
 			}
-
+			
+			
 		} catch (e) {
 			generator.emit('error', e);
 		}
@@ -1227,12 +1249,12 @@ class SocketChannel extends Events {
 	 */
 	async onMessage(obj) {
 
-		let me = this;
+		const me = this;
 		let data = null;
 
-		let engine = me.engine;
-		let generator = engine.Generator;
-		let security = engine.Security;
+		const engine = me.engine;
+		const generator = engine.Generator;
+		const security = engine.Security;
 
 		if (obj.cmd === 'api') {
 			return generator.emit('api', obj.data);
@@ -1255,7 +1277,7 @@ class SocketChannel extends Events {
 		}
 
 		if (data) {
-			let unknown = me.queue.process(data);
+			const unknown = me.queue.process(data);
 			unknown.forEach((obj) => me.emit('message', obj));
 		} else {
 			me.emit('message', data);
@@ -1263,7 +1285,7 @@ class SocketChannel extends Events {
 
 	}
 
-};
+}
 
 /*
  * Copyright (C) 2015, 2020  Green Screens Ltd.
@@ -1294,7 +1316,7 @@ class Engine {
 			throw new Error(ERROR_SVC_UNDEFIEND);
 		}
 
-		let me = this;
+		const me = this;
 
 		me.cfg = null;
 		me.isWSAPI = false;
@@ -1308,6 +1330,8 @@ class Engine {
 
 		me.cfg = cfg;
 		me.isWSAPI = cfg.api === cfg.service && cfg.api.indexOf('ws') == 0;
+
+		me.headers = cfg.headers || {};
 
 		me.isWebChannel = cfg.service.indexOf('http') === 0;
 		me.isSockChannel = cfg.service.indexOf('ws') === 0;
@@ -1323,7 +1347,7 @@ class Engine {
 	 */
 	async init() {
 
-		let me = this;
+		const me = this;
 		if (me.isActive) return;
 
 		me.Security = new Security();
@@ -1347,7 +1371,7 @@ class Engine {
 	 */
 	async registerAPI(data) {
 
-		let me = this;
+		const me = this;
 
 		// initialize encryption if provided
 		if (data.signature) {
@@ -1365,7 +1389,7 @@ class Engine {
 	 */
 	stop() {
 
-		let me = this;
+		const me = this;
 
 		if (me.WebChannel) me.WebChannel.stop();
 		if (me.SocketChannel) me.SocketChannel.stop();
@@ -1389,7 +1413,9 @@ class Engine {
 	 * Check if engine is active
 	 */
 	get isActive() {
-		return this.api && this.Security;
+		const me = this;
+		if (me.SocketChannel && !me.SocketChannel.isOpen) return false; 
+		return me.api && me.Security ? true : false;
 	}
 
 	/*
@@ -1410,9 +1436,8 @@ class Engine {
 	 * Static instance builder
 	 */
 	static async init(cfg) {
-		let engine = new Engine(cfg);
+		const engine = new Engine(cfg);
 		await engine.init();
 		return engine;
 	}
 }
-
