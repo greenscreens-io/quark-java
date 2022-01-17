@@ -8,9 +8,12 @@ package io.greenscreens.quark.ext;
 
 import java.util.Collection;
 
+import javax.enterprise.inject.Vetoed;
+
 /**
  * ExtJS array response structure.
  */
+@Vetoed
 public class ExtJSResponseList<T> extends ExtJSResponse {
 
 	private static final long serialVersionUID = 1L;

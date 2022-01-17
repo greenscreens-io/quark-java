@@ -8,20 +8,23 @@ package io.greenscreens.quark.websocket.data;
 
 import java.io.Serializable;
 
+import javax.enterprise.inject.Vetoed;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import io.greenscreens.quark.web.QuarkConstants;
 import io.greenscreens.quark.security.IAesKey;
+import io.greenscreens.quark.web.QuarkConstants;
 
 /**
  * Object to be converted into JSON structure. {type :'ws' , sid : session_id ,
  * tid : transaction_id, timeout : 0 , ....}
  */
+@Vetoed
 public class WebSocketResponseBinary implements IWebSocketResponse, Serializable {
 
 	private static final long serialVersionUID = 1L;
 
-	private String type = QuarkConstants.WEBSOCKET_TYPE;
+	private String type = QuarkConstants.MESSAGE_TYPE;
 
 	private final WebSocketInstruction cmd;
 

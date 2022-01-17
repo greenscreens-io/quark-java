@@ -8,12 +8,15 @@ package io.greenscreens.quark.ext;
 
 import java.util.List;
 
+import javax.enterprise.inject.Vetoed;
+
 /**
  * Class representing ExtJS Direct request. It is used for decoding received
  * JSON data from ExtJS into Java class instance
  * 
  * @param <T>
  */
+@Vetoed
 public class ExtJSDirectRequest<T> {
 
 	private String action;

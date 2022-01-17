@@ -9,8 +9,10 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
+import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.AnnotatedMethod;
 import javax.enterprise.inject.spi.AnnotatedParameter;
 import javax.enterprise.inject.spi.AnnotatedType;
@@ -26,6 +28,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 
 import io.greenscreens.quark.JsonDecoder;
+import io.greenscreens.quark.security.IAesKey;
 import io.greenscreens.quark.QuarkEngine;
 import io.greenscreens.quark.QuarkSecurity;
 import io.greenscreens.quark.QuarkUtil;
@@ -37,16 +40,17 @@ import io.greenscreens.quark.ext.ExtJSDirectResponse;
 import io.greenscreens.quark.ext.ExtJSProtected;
 import io.greenscreens.quark.ext.ExtJSResponse;
 import io.greenscreens.quark.ext.annotations.ExtJSDirect;
-import io.greenscreens.quark.security.IAesKey;
 import io.greenscreens.quark.web.QuarkConstants;
 import io.greenscreens.quark.web.QuarkErrors;
 import io.greenscreens.quark.web.QuarkHandlerUtil;
 import io.greenscreens.quark.web.ServletUtils;
 import io.greenscreens.quark.websocket.data.WebSocketInstruction;
 
+
 /**
  * Attach Java class to remote call
  */
+@Vetoed
 public final class WebSocketOperations<T> {
 
 	private static final Logger LOG = LoggerFactory.getLogger(WebSocketOperations.class);
@@ -68,12 +72,12 @@ public final class WebSocketOperations<T> {
 	 */
 	private String decryptData(final WebSocketSession session, final ExtEncrypt encrypt) throws IOException {
 
-		IAesKey crypt = session.get(QuarkConstants.HTTP_SEESION_ENCRYPT);
+		IAesKey crypt = session.get(QuarkConstants.ENCRYPT_ENGINE);
 		String data = null;
 
-		if (crypt == null) {
+		if (Objects.isNull(crypt)) {
 			crypt = QuarkSecurity.initAES(encrypt.getK(), encrypt.isWebCryptoAPI());
-			session.set(QuarkConstants.HTTP_SEESION_ENCRYPT, crypt);
+			session.set(QuarkConstants.ENCRYPT_ENGINE, crypt);
 			data = crypt.decrypt(encrypt.getD());
 		} else {
 			data = QuarkSecurity.decodeRequest(encrypt.getD(), encrypt.getK(), crypt, encrypt.isWebCryptoAPI());
@@ -99,7 +103,7 @@ public final class WebSocketOperations<T> {
 		try {
 
 			final List<T> data = request.getData();
-			final int size = data == null ? 0 : data.size();
+			final int size = Objects.isNull(data) ? 0 : data.size();
 
 			if (size == 0) {
 				response = new ExtJSResponse(false, QuarkErrors.E0000.getMessage());
@@ -130,7 +134,7 @@ public final class WebSocketOperations<T> {
 
 		} finally {
 
-			if (directResponse == null) {
+			if (Objects.isNull(directResponse)) {
 				directResponse = new ExtJSDirectResponse<>(request, response);
 				if (err) {
 					directResponse.setType(WebSocketInstruction.ERR.getText());
@@ -234,7 +238,7 @@ public final class WebSocketOperations<T> {
 	private boolean checkForError(final AnnotatedMethod<?> selectedMethod, final ExtJSDirect direct, final HttpSession httpSession, final String uri) {
 
 		// check for path
-		if (direct == null)
+		if (Objects.isNull(direct))
 			return true;
 
 		if (!QuarkHandlerUtil.checkPath(uri, direct.paths()))
@@ -243,7 +247,7 @@ public final class WebSocketOperations<T> {
 		if (requiredSession && ! QuarkHandlerUtil.isValidHttpSession(httpSession))
 			return true;
 
-		return (selectedMethod == null);
+		return Objects.isNull(selectedMethod);
 	}
 
 	private ExtJSResponse executeBean(final Bean<?> bean, final Method method, final Object[] params) {
@@ -279,15 +283,10 @@ public final class WebSocketOperations<T> {
 			response = new ExtJSResponse(e, e.getMessage());
 			QuarkHandlerUtil.printError(e);
 		} finally {
-
-			if (di != null) {
-				di.release();
-			}
-
+			if (Objects.nonNull(di)) di.release();
 		}
 
 		return response;
 	}
-	
 
 }

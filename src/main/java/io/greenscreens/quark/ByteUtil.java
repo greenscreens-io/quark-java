@@ -7,12 +7,26 @@
 package io.greenscreens.quark;
 
 import java.nio.ByteBuffer;
+import java.util.Objects;
 
 enum ByteUtil {
 ;
 	protected static final char[] HEX_ARRAY = "0123456789ABCDEF".toCharArray();
 	
+	public static String bufferToHex(final ByteBuffer buffer) {
 
+		if (Objects.nonNull(buffer)) {
+			final int pos = buffer.position();
+			final byte[] b = new byte[buffer.limit()];
+			buffer.rewind();
+			buffer.get(b);
+			buffer.position(pos);
+			return ByteUtil.bytesToHex(b);
+		}
+
+		return null;
+	}
+	
 	/**
 	 * Converts byte array to hex string
 	 *

@@ -12,13 +12,14 @@ import java.lang.reflect.Method;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
+import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.Bean;
 import javax.inject.Inject;
 
 import io.greenscreens.quark.QuarkEngine;
 import io.greenscreens.quark.QuarkProducer;
 import io.greenscreens.quark.QuarkUtil;
-import io.greenscreens.quark.async.QuarkAsyncResponse;
+import io.greenscreens.quark.async.QuarkAsyncContext;
 import io.greenscreens.quark.cdi.BeanManagerUtil;
 import io.greenscreens.quark.cdi.IDestructibleBeanInstance;
 import io.greenscreens.quark.ext.ExtJSResponse;
@@ -26,6 +27,7 @@ import io.greenscreens.quark.ext.ExtJSResponse;
 /**
  * Class to execute bean 
  */
+@Vetoed
 public class QuarkBeanCaller implements Runnable {
 
 	final Bean<?> bean;
@@ -87,11 +89,11 @@ public class QuarkBeanCaller implements Runnable {
 		if (Objects.nonNull(handler.wsSession)) {
 			QuarkProducer.attachSession(handler.wsSession);
 		} else {
-			QuarkProducer.attachRequest(QuarkRequest.create(handler.httpRequest, handler.httpResponse));
+			QuarkProducer.attachRequest(QuarkContext.create(handler.httpRequest, handler.httpResponse));
 		}
 
 		if (hasAsyncReponse && isVoid) {
-			QuarkProducer.attachAsync(new QuarkAsyncResponse(handler));
+			QuarkProducer.attachAsync(new QuarkAsyncContext(handler));
 		}
 		
 		
@@ -122,7 +124,7 @@ public class QuarkBeanCaller implements Runnable {
 	}
 	
 	private boolean isAsyncResponder(final Field field) {
-		return field.isAnnotationPresent(Inject.class) && field.getType() == QuarkAsyncResponse.class;		
+		return field.isAnnotationPresent(Inject.class) && field.getType() == QuarkAsyncContext.class;		
 	}
 	
 	private boolean isAsync() {

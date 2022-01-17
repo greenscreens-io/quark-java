@@ -15,6 +15,7 @@ public enum QuarkErrors {
 	E0001("E0001", "Requested Service not found"),
 	E0002("E0002", "Incomming parameters are invalid"),
 	
+	E7777("E7777", "Request timeout!"),
 	E8888("E8888", "Action disabled!"),
 	E9999("E9999", "General error");
 

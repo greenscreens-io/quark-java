@@ -14,7 +14,6 @@ import javax.enterprise.inject.spi.CDI;
 
 public enum QuarkEngine {
 ;
-
 	/**
 	 *  if GT 0, check system time difference for request  
 	 */
@@ -43,6 +42,7 @@ public enum QuarkEngine {
 
 		return null;
 	}
+
 	public static <T> T of(final Class<T> clazz, Annotation...annotations) {
 		return CDI.current().select(clazz, annotations).get();
     }

@@ -8,10 +8,13 @@ package io.greenscreens.quark.ext;
 
 import java.io.IOException;
 
+import javax.enterprise.inject.Vetoed;
+
 import io.greenscreens.quark.QuarkSecurity;
 import io.greenscreens.quark.QuarkUtil;
 import io.greenscreens.quark.security.IAesKey;
 
+@Vetoed
 public class ExtEncrypt {
 
 	private String d;

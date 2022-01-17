@@ -6,6 +6,7 @@
  */
 package io.greenscreens.quark.websocket;
 
+import javax.enterprise.inject.Vetoed;
 import javax.websocket.DecodeException;
 import javax.websocket.Decoder;
 import javax.websocket.EndpointConfig;
@@ -19,8 +20,8 @@ import io.greenscreens.quark.websocket.data.WebSocketRequest;
 
 /**
  * Internal JSON decoder for WebSocket ExtJS request
- *
  */
+@Vetoed
 public class WebsocketDecoder implements Decoder.Text<WebSocketRequest> {
 
 	private static final Logger LOG = LoggerFactory.getLogger(WebsocketDecoder.class);

@@ -41,7 +41,7 @@ import io.greenscreens.quark.security.IAesKey;
  * Class for holding WebSocket session data. Purpose of this class is similar to
  * HttpSession
  */
-public class WebSocketSession implements Session {
+public class WebSocketSession implements Session, Comparable<WebSocketSession> {
 
 	private static final Logger LOG = LoggerFactory.getLogger(WebSocketSession.class);
 
@@ -122,8 +122,11 @@ public class WebSocketSession implements Session {
 		boolean success = true;
 
 		try {
-			final IAesKey aes = WebSocketStorage.get(session, QuarkConstants.HTTP_SEESION_ENCRYPT);
-			wsResponse.setKey(aes);	
+			final boolean isEncrypted = WebSocketStorage.contains(session, QuarkConstants.ENCRYPT_CHANNEL);
+			if (isEncrypted) {
+				final IAesKey aes = WebSocketStorage.get(session, QuarkConstants.ENCRYPT_ENGINE);
+				wsResponse.setKey(aes);	
+			}
 			
 			if (async) {
 				session.getAsyncRemote().sendObject(wsResponse);
@@ -355,4 +358,12 @@ public class WebSocketSession implements Session {
 		// not used
 	}
 
+	@Override
+	public int compareTo(final WebSocketSession o) {
+		if (Objects.isNull(o)) return 1;
+		final int lh = hashCode();
+		final int rh = o.hashCode();
+		if (lh == rh) return 0;
+		return (lh > rh) ? 1 : -1;
+	}
 }

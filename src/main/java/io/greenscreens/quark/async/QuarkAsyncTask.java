@@ -2,10 +2,12 @@ package io.greenscreens.quark.async;
 
 import java.io.IOException;
 
+import javax.enterprise.inject.Vetoed;
 import javax.servlet.AsyncContext;
 import javax.servlet.AsyncEvent;
 import javax.servlet.AsyncListener;
 
+@Vetoed
 public abstract class QuarkAsyncTask implements Runnable, AsyncListener {
 
 	protected final AsyncContext ctx;

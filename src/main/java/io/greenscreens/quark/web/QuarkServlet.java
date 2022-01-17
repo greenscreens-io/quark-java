@@ -21,25 +21,12 @@ public class QuarkServlet extends HttpServlet {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	protected Part getPart(final HttpServletRequest request, final String name) throws IOException {
-		Part part = null;
-		try {
-			part = request.getPart(name);
-		} catch (ServletException e) {
-			throw new IOException(e);
-		}
-		return part;
+	protected Part getPart(final HttpServletRequest request, final String name) throws IOException {		
+		return ServletUtils.getPart(request, name);
 	}
 	
 	protected MultipartMap getMultipartMap(final HttpServletRequest request) throws IOException {
-		
-		MultipartMap map = null;
-		try {
-			map = new MultipartMap(request, this);
-		} catch (ServletException e) {
-			throw new IOException(e);
-		}
-		return map;
+		return ServletUtils.getPut(request, this);
 	}
 	
 	protected void updateHeaders(final HttpServletResponse response) {
@@ -57,7 +44,7 @@ public class QuarkServlet extends HttpServlet {
 
 		try {
 			onGet(request, response);
-		} catch (Exception e) {
+		} catch (Throwable e) {
 			ServletUtils.log(e, request, response);
 		}
 
@@ -68,7 +55,7 @@ public class QuarkServlet extends HttpServlet {
 
 		try {
 			onPut(request, response);
-		} catch (Exception e) {
+		} catch (Throwable e) {
 			ServletUtils.log(e, request, response);
 		}
 
@@ -79,7 +66,7 @@ public class QuarkServlet extends HttpServlet {
 
 		try {
 			onPost(request, response);
-		} catch (Exception e) {
+		} catch (Throwable e) {
 			ServletUtils.log(e, request, response);
 		}
 		
@@ -90,7 +77,7 @@ public class QuarkServlet extends HttpServlet {
 
 		try {
 			onDelete(request, response);
-		} catch (Exception e) {
+		} catch (Throwable e) {
 			ServletUtils.log(e, request, response);
 		}
 		

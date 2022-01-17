@@ -28,6 +28,7 @@ import io.greenscreens.quark.QuarkUtil;
 import io.greenscreens.quark.websocket.data.IWebSocketResponse;
 import io.greenscreens.quark.websocket.data.WebSocketRequest;
 
+
 /**
  * Base WebSocket endpoint with ExtJS support. Should not be used directly.
  * Create new class extending this one and annotate new class
@@ -62,6 +63,13 @@ public class WebSocketService {
 		}
 
 		endpoint.onOpen(session, config);
+		try {
+			session.getBasicRemote().sendText("{\"msg\":\"WS4IS\"}");
+		} catch (IOException e) {
+			final String msg = QuarkUtil.toMessage(e);
+			LOG.error(msg);
+			LOG.debug(msg, e);
+		}
 	}
 
 	@OnClose
@@ -77,6 +85,9 @@ public class WebSocketService {
 	@OnMessage
 	public void onPongMessage(final PongMessage pong, final Session session) {
 		// not used
+		final String pongData = QuarkUtil.bufferToHex(pong.getApplicationData());
+		LOG.info("Pong Data : {}", pongData);
+		
 	}
 
 	private void close(Closeable closeable) {

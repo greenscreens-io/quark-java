@@ -6,6 +6,8 @@
  */
 package io.greenscreens.quark.web.data;
 
+import javax.enterprise.inject.Vetoed;
+
 import com.fasterxml.jackson.databind.JsonNode;
 
 import io.greenscreens.quark.ext.ExtJSDirectRequest;
@@ -13,6 +15,7 @@ import io.greenscreens.quark.ext.ExtJSDirectRequest;
 /**
  * Class used to map JSON structure describing ExtJS websocket request.
  */
+@Vetoed
 public class WebRequest extends ExtJSDirectRequest<JsonNode> {
 
 	public WebRequest() {

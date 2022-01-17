@@ -6,11 +6,14 @@
  */
 package io.greenscreens.quark.ext;
 
+import javax.enterprise.inject.Vetoed;
+
 /**
  * Internal Engine class which wraps requests/responses between web and server
  *
  * @param <T>
  */
+@Vetoed
 public class ExtJSDirectResponse<T> {
 
 	private String action;

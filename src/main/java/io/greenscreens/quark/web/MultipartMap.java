@@ -17,6 +17,7 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.enterprise.inject.Vetoed;
 import javax.servlet.Servlet;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
@@ -52,6 +53,7 @@ import io.greenscreens.quark.QuarkUtil;
  * @author BalusC
  * @link http://balusc.blogspot.com/2009/12/uploading-files-in-servlet-30.html
  */
+@Vetoed
 public class MultipartMap extends HashMap<String, Object> {
 
 	// Constants

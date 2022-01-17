@@ -12,6 +12,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 
+import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.AnnotatedMethod;
 import javax.enterprise.inject.spi.AnnotatedParameter;
 import javax.enterprise.inject.spi.AnnotatedType;
@@ -30,6 +31,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import io.greenscreens.quark.JsonDecoder;
 import io.greenscreens.quark.QuarkEngine;
 import io.greenscreens.quark.QuarkSecurity;
 import io.greenscreens.quark.QuarkUtil;
@@ -39,17 +41,17 @@ import io.greenscreens.quark.ext.ExtJSDirectResponse;
 import io.greenscreens.quark.ext.ExtJSProtected;
 import io.greenscreens.quark.ext.ExtJSResponse;
 import io.greenscreens.quark.ext.annotations.ExtJSDirect;
+import io.greenscreens.quark.security.IAesKey;
 import io.greenscreens.quark.web.data.WebRequest;
 import io.greenscreens.quark.websocket.WebSocketSession;
 import io.greenscreens.quark.websocket.data.IWebSocketResponse;
 import io.greenscreens.quark.websocket.data.WebSocketInstruction;
 import io.greenscreens.quark.websocket.data.WebSocketResponseFactory;
-import io.greenscreens.quark.security.IAesKey;
-import io.greenscreens.quark.JsonDecoder;
 
 /**
  * Handle Quark request with support for WebSocket, HTTP, Async
  */
+@Vetoed
 public class QuarkHandler {
 
 	private static final Logger LOG = LoggerFactory.getLogger(QuarkHandler.class);
@@ -106,14 +108,22 @@ public class QuarkHandler {
 	 * @return
 	 */
 	private boolean isSessionRequired() {
+		
+		Boolean state = ServletUtils.get(ctx, QuarkConstants.QUARK_SESSION);
+		
 		if (isWebSocket()) {
-			final Boolean state = wsSession.get(QuarkConstants.WEBSOCKET_SESSION);
-			if (Objects.isNull(state)) return false;
-			return state;
+			state = getState(wsSession.get(QuarkConstants.QUARK_SESSION), state);
+		} else {
+			state = getState(ServletUtils.get(httpRequest, QuarkConstants.QUARK_SESSION), state);
 		}
-		return false;
+
+		return Objects.isNull(state) ? false: state;
 	}
 
+	private Boolean getState(Boolean state, Boolean def) {
+		return Objects.isNull(state) ? def : state;		
+	}
+	
 	/**
 	 * Get web session from WebSocket or Servlet depending on request source.
 	 * @return
@@ -135,6 +145,7 @@ public class QuarkHandler {
 			final boolean isDisabled = ServletUtils.isDisabled(ctx);
 			if (isDisabled) {
 				response = QuarkHandlerUtil.getError(QuarkErrors.E8888);
+				send();
 				return;
 			}
 
@@ -311,7 +322,7 @@ public class QuarkHandler {
 		final List<ExtJSDirectResponse<?>> responseList = new ArrayList<>();
 		responseList.add(result);
 		
-		final boolean isCompression = wsSession.get(QuarkConstants.WEBSOCKET_COMPRESSION);		
+		final boolean isCompression = wsSession.get(QuarkConstants.QUARK_COMPRESSION);		
 		final IWebSocketResponse wsResponse = WebSocketResponseFactory.createAsData(isBinary, isCompression);	
 		wsResponse.setData(responseList);
 		wsSession.sendResponse(wsResponse, true);
@@ -402,10 +413,10 @@ public class QuarkHandler {
 	 * @throws IOException
 	 */
 	private IAesKey getAesWs(final ExtEncrypt encrypt) throws IOException {
-		IAesKey aesKey = wsSession.get(QuarkConstants.HTTP_SEESION_ENCRYPT);
+		IAesKey aesKey = wsSession.get(QuarkConstants.ENCRYPT_ENGINE);
 		if (Objects.isNull(aesKey)) {
 			aesKey = encrypt.toKey();
-			wsSession.set(QuarkConstants.HTTP_SEESION_ENCRYPT, aesKey);
+			wsSession.set(QuarkConstants.ENCRYPT_ENGINE, aesKey);
 		}
 		return aesKey;
 	}
@@ -417,12 +428,16 @@ public class QuarkHandler {
 	 * @throws IOException
 	 */
 	private IAesKey getAesWeb(final ExtEncrypt encrypt) throws IOException {
+		
+		if (!requireSession) return encrypt.toKey();
+		
 		final HttpSession session = getSession();
-		IAesKey aesKey = ServletUtils.get(session, QuarkConstants.HTTP_SEESION_ENCRYPT);
+		IAesKey aesKey = ServletUtils.get(session, QuarkConstants.ENCRYPT_ENGINE);
 		if (Objects.isNull(aesKey)) {
 			aesKey = encrypt.toKey();
-			ServletUtils.put(session, QuarkConstants.HTTP_SEESION_ENCRYPT, aesKey);
+			ServletUtils.put(session, QuarkConstants.ENCRYPT_ENGINE, aesKey);
 		}
+		
 		return aesKey;
 	}
 
@@ -441,7 +456,10 @@ public class QuarkHandler {
 		
 		final ExtEncrypt encrypt = JsonDecoder.convert(ExtEncrypt.class, jnode);
 		
-		if (!encrypt.isValid()) return;
+		if (!encrypt.isValid()) {
+			throw new IOException("Invalid encrypted data structure");
+			//return;
+		}
 		
 		final String json = decryptData(encrypt);
 		final JsonNode node = JsonDecoder.parse(json);
@@ -523,7 +541,7 @@ public class QuarkHandler {
 	 * @param isEncrypted
 	 */
 	public static void call(final WebSocketSession wsSession, final ExtJSDirectRequest<JsonNode> data, final boolean isBinary, final boolean isEncrypted) {
-		final String uri = wsSession.get(QuarkConstants.WEBSOCKET_PATH);
+		final String uri = wsSession.get(QuarkConstants.QUARK_PATH);
 		call(wsSession, data, uri, isBinary, isEncrypted);
 	}
 	

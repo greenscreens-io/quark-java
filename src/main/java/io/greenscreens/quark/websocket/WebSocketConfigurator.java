@@ -12,6 +12,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 
+import javax.enterprise.inject.Vetoed;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpSession;
 import javax.websocket.HandshakeResponse;
@@ -25,8 +26,8 @@ import io.greenscreens.quark.web.listener.SessionCollector;
 /**
  * Config object for @ServerEndpoint annotation used to intercept WebSocket
  * initialization for custom setup.
- *
  */
+@Vetoed
 public class WebSocketConfigurator extends ServerEndpointConfig.Configurator {
 
 	private static final List<String> LANG;
@@ -90,7 +91,7 @@ public class WebSocketConfigurator extends ServerEndpointConfig.Configurator {
 	
 	@Override
 	public final String getNegotiatedSubprotocol(final List<String> supported, final List<String> requested) {
-		return QuarkConstants.WEBSOCKET_SUBPROTOCOL;
+		return QuarkConstants.QUARK_SUBPROTOCOL;
 	}
 
 	/**
@@ -110,9 +111,9 @@ public class WebSocketConfigurator extends ServerEndpointConfig.Configurator {
 		final Locale locale = WebsocketUtil.getLocale(request);
 		final boolean isCompression = "true".equalsIgnoreCase(compression);
 		
-		WebSocketStorage.store(sec, QuarkConstants.WEBSOCKET_PATH, sec.getPath());
-		WebSocketStorage.store(sec, QuarkConstants.WEBSOCKET_CHALLENGE, challenge);
-		WebSocketStorage.store(sec, QuarkConstants.WEBSOCKET_COMPRESSION, isCompression);
+		WebSocketStorage.store(sec, QuarkConstants.QUARK_PATH, sec.getPath());
+		WebSocketStorage.store(sec, QuarkConstants.QUARK_CHALLENGE, challenge);
+		WebSocketStorage.store(sec, QuarkConstants.QUARK_COMPRESSION, isCompression);
 		WebSocketStorage.store(sec, Locale.class.getCanonicalName(), locale);
 		WebSocketStorage.store(sec, HttpSession.class.getCanonicalName(), httpSession);
 		if (Objects.nonNull(httpSession)) {

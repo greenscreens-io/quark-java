@@ -31,5 +31,5 @@ public interface IWebSocketResponse {
 	IAesKey getKey();
 
 	void setKey(IAesKey key);
-
+	
 }

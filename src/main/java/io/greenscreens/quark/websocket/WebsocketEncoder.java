@@ -6,6 +6,7 @@
  */
 package io.greenscreens.quark.websocket;
 
+import javax.enterprise.inject.Vetoed;
 import javax.websocket.EncodeException;
 import javax.websocket.Encoder;
 import javax.websocket.EndpointConfig;
@@ -14,8 +15,8 @@ import io.greenscreens.quark.websocket.data.WebSocketResponse;
 
 /**
  * Internal encoder for WebSocket ExtJS response
- *
  */
+@Vetoed
 public class WebsocketEncoder implements Encoder.Text<WebSocketResponse> {
 
 	@Override

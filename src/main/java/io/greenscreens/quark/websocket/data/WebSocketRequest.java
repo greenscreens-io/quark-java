@@ -8,6 +8,8 @@ package io.greenscreens.quark.websocket.data;
 
 import java.util.List;
 
+import javax.enterprise.inject.Vetoed;
+
 import com.fasterxml.jackson.databind.JsonNode;
 
 import io.greenscreens.quark.ext.ExtJSDirectRequest;
@@ -16,9 +18,10 @@ import io.greenscreens.quark.web.QuarkConstants;
 /**
  * Class used to map JSON structure describing ExtJS WebSocket request.
  */
+@Vetoed
 public class WebSocketRequest {
 
-	public final String type = QuarkConstants.WEBSOCKET_TYPE;
+	public final String type = QuarkConstants.MESSAGE_TYPE;
 
 	private WebSocketInstruction cmd; // 'welcome , bye, data' ,
 	private int timeout; // set only when cmd=welcome

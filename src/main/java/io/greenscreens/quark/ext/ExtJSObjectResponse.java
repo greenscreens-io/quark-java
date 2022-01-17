@@ -6,11 +6,14 @@
  */
 package io.greenscreens.quark.ext;
 
+import javax.enterprise.inject.Vetoed;
+
 /**
  * ExtJs standard response structure used by other extended response classes
  * 
  * { "success": false, "msg": "", "error": "", "stack": "" }
  */
+@Vetoed
 public class ExtJSObjectResponse<T> extends ExtJSResponse {
 
 	private static final long serialVersionUID = 1L;

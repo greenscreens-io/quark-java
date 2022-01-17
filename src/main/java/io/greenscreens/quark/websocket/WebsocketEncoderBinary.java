@@ -9,6 +9,7 @@ package io.greenscreens.quark.websocket;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
+import javax.enterprise.inject.Vetoed;
 import javax.websocket.EncodeException;
 import javax.websocket.Encoder;
 import javax.websocket.EndpointConfig;
@@ -21,8 +22,8 @@ import io.greenscreens.quark.websocket.data.WebSocketResponseBinary;
 
 /**
  * Internal encoder for WebSocket ExtJS response
- *
  */
+@Vetoed
 public class WebsocketEncoderBinary implements Encoder.Binary<WebSocketResponseBinary> {
 
 	private static final Logger LOG = LoggerFactory.getLogger(WebsocketEncoderBinary.class);

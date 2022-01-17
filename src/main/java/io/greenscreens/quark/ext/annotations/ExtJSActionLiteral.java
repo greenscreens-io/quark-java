@@ -6,6 +6,7 @@
  */
 package io.greenscreens.quark.ext.annotations;
 
+import javax.enterprise.inject.Vetoed;
 import javax.enterprise.util.AnnotationLiteral;
 import javax.enterprise.util.Nonbinding;
 
@@ -13,6 +14,7 @@ import javax.enterprise.util.Nonbinding;
  * Internally used annotation wrapper used by CDI to find targeted bean methods
  */
 @SuppressWarnings("all")
+@Vetoed
 public final class ExtJSActionLiteral extends AnnotationLiteral<ExtJSAction> implements ExtJSAction {
 
 	private static final long serialVersionUID = 1L;

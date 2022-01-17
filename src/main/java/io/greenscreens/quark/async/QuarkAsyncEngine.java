@@ -5,8 +5,11 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import javax.enterprise.inject.Vetoed;
+
 import io.greenscreens.quark.NamedThreadFactory;
 
+@Vetoed
 public final class QuarkAsyncEngine {
 
 	private final BlockingQueue<Runnable> queue =  new LinkedBlockingQueue<>();
@@ -18,15 +21,15 @@ public final class QuarkAsyncEngine {
 		create(name, parallelTasks, 0, priority, timeoutMinutes);
 	}
 	
-	public QuarkAsyncEngine(final String name, final int parallelTasks, final int maxPool, final int priority, final int timeoutMinutes) {
+	public QuarkAsyncEngine(final String name, final int parallelTasks, final int maxPool, final int priority, final int timeoutSeconds) {
 		super();
-		create(name, parallelTasks, maxPool, priority, timeoutMinutes);
+		create(name, parallelTasks, maxPool, priority, timeoutSeconds);
 	}
 
 	void create(final String name, final int parallelTasks, final int maxPool, final int priority, final int timeoutMinutes) {
 		this.queueSize = maxPool;		
 		final NamedThreadFactory factory = NamedThreadFactory.get(name, priority);
-		this.service = new ThreadPoolExecutor(1, parallelTasks, timeoutMinutes, TimeUnit.MINUTES, queue, factory);
+		this.service = new ThreadPoolExecutor(1, parallelTasks, timeoutMinutes, TimeUnit.SECONDS, queue, factory);
 		this.service.prestartCoreThread();
 	}
 	

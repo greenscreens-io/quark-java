@@ -8,14 +8,15 @@ package io.greenscreens.quark.web.listener;
 
 import java.util.Set;
 
+import javax.enterprise.inject.Vetoed;
 import javax.servlet.ServletContainerInitializer;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 
 /**
  * Programmatically initialize Quark engine web elements
- *
  */
+@Vetoed
 public class QuarkContainerInitializer implements ServletContainerInitializer {
 
 	@Override

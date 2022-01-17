@@ -7,11 +7,10 @@
 package io.greenscreens.quark.websocket;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashSet;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
@@ -50,14 +49,14 @@ public class WebSocketEndpoint {
 	private static final Logger LOG = LoggerFactory.getLogger(WebSocketEndpoint.class);
 	private static final String MSG_HTTP_SEESION_REQUIRED = "WebSocket requires valid http session";
 
+	private static final Collection<WebSocketSession> sessions = new ConcurrentSkipListSet<>();
+
 	@Inject
 	BeanManagerUtil beanManagerUtil;
 	
 	@Inject
 	Event<WebsocketEvent> webSocketEvent;
 
-	private static final Set<WebSocketSession> sessions = Collections.synchronizedSet(new HashSet<>());
-	
 	public WebSocketEndpoint() {
 		super();
 	}
@@ -91,7 +90,7 @@ public class WebSocketEndpoint {
 
 		try {
 
-			if (!QuarkConstants.WEBSOCKET_TYPE.equals(message.getType())) {
+			if (!QuarkConstants.MESSAGE_TYPE.equals(message.getType())) {
 				return;
 			}
 
@@ -101,8 +100,10 @@ public class WebSocketEndpoint {
 			QuarkProducer.attachSession(wsession);
 
 			final WebSocketInstruction cmd = message.getCmd();
-			if (cmd == null)
+			if (cmd == null) {
+				LOG.warn("No message instruction >> {}", message);	
 				return;
+			}
 			
 			if (cmd.isSimple()) {
 				processSimple(wsession, message);
@@ -110,8 +111,10 @@ public class WebSocketEndpoint {
 				processData(true, wsession, message);
 			} else if (cmd == WebSocketInstruction.DATA) {
 				processData(false, wsession, message);
+			} else {
+				LOG.warn("Invalid message instruction >> {}", message);
 			}
-
+			
 			// ECLIPSE COMPILER ISSUE
 			/* 
 			switch (cmd) {
@@ -142,7 +145,7 @@ public class WebSocketEndpoint {
 			LOG.debug(msg, e);
 
 			if (wsession != null) {
-				final boolean isCompression = wsession.get(QuarkConstants.WEBSOCKET_COMPRESSION);
+				final boolean isCompression = wsession.get(QuarkConstants.QUARK_COMPRESSION);
 				wsession.sendResponse(getErrorResponse(e, message.isBinary(), isCompression), true);
 			}
 
@@ -155,18 +158,19 @@ public class WebSocketEndpoint {
 	public void onOpen(final Session session, final EndpointConfig config) {
 
 		try {
+
 			LOG.trace("Openning new WebSocket connection : {} ", session);
 
 			final HttpSession httpSession = WebSocketStorage.get(config, HttpSession.class);
 			final WebSocketSession wsession = new WebSocketSession(session, httpSession);
 
-			final Boolean requireSession = wsession.get(QuarkConstants.WEBSOCKET_SESSION);
+			final Boolean requireSession = wsession.get(QuarkConstants.QUARK_SESSION);
 
 			// disable websocket session timeout due to inactivity
 			session.setMaxIdleTimeout(0);
 
-			final Object path = WebSocketStorage.get(config, QuarkConstants.WEBSOCKET_PATH);
-			wsession.set(QuarkConstants.WEBSOCKET_PATH, path);
+			final Object path = WebSocketStorage.get(config, QuarkConstants.QUARK_PATH);
+			wsession.set(QuarkConstants.QUARK_PATH, path);
 
 			QuarkProducer.attachSession(wsession);
 
@@ -190,7 +194,7 @@ public class WebSocketEndpoint {
 
 			updateSessions(wsession);
 
-			if (wsession.contains(QuarkConstants.WEBSOCKET_CHALLENGE)) {
+			if (wsession.contains(QuarkConstants.QUARK_CHALLENGE)) {
 				sendAPI(wsession);	
 			}
 			
@@ -269,11 +273,11 @@ public class WebSocketEndpoint {
 		if (beanManagerUtil == null) return false;
 
 		
-		if (!session.contains(QuarkConstants.WEBSOCKET_CHALLENGE)) {
+		if (!session.contains(QuarkConstants.QUARK_CHALLENGE)) {
 			return false;
 		}
 		
-		final String challenge = session.get(QuarkConstants.WEBSOCKET_CHALLENGE);
+		final String challenge = session.get(QuarkConstants.QUARK_CHALLENGE);
 		final WebSocketResponse wsResposne = new WebSocketResponse(WebSocketInstruction.API);		
 		
 		final ArrayNode api = beanManagerUtil.getAPI();
@@ -293,7 +297,7 @@ public class WebSocketEndpoint {
 			sendAPI(session);
 		}
 
-		final boolean isCompression = session.get(QuarkConstants.WEBSOCKET_COMPRESSION);		
+		final boolean isCompression = session.get(QuarkConstants.QUARK_COMPRESSION);		
 		final IWebSocketResponse response = WebSocketResponseFactory.create(cmd, message.isBinary(), isCompression);
 		session.sendResponse(response, true);	
 

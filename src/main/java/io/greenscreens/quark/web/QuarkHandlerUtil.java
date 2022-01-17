@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
+
 import javax.enterprise.inject.spi.AnnotatedMethod;
 import javax.enterprise.inject.spi.AnnotatedParameter;
 import javax.enterprise.inject.spi.AnnotatedType;
@@ -41,6 +42,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import io.greenscreens.quark.JsonDecoder;
 import io.greenscreens.quark.QuarkEngine;
 import io.greenscreens.quark.QuarkSecurity;
 import io.greenscreens.quark.QuarkUtil;
@@ -51,9 +53,8 @@ import io.greenscreens.quark.ext.ExtJSResponse;
 import io.greenscreens.quark.ext.annotations.ExtJSActionLiteral;
 import io.greenscreens.quark.ext.annotations.ExtJSMethod;
 import io.greenscreens.quark.ext.annotations.ExtName;
-import io.greenscreens.quark.websocket.data.WebSocketInstruction;
 import io.greenscreens.quark.security.IAesKey;
-import io.greenscreens.quark.JsonDecoder;
+import io.greenscreens.quark.websocket.data.WebSocketInstruction;
 
 
 public enum QuarkHandlerUtil {
@@ -451,7 +452,9 @@ public enum QuarkHandlerUtil {
 		try {
 			factory = Validation.buildDefaultValidatorFactory();
 		} catch (Exception e) {
-			LOG.warn(e.getMessage());
+			final String msg = QuarkUtil.toMessage(e);
+			LOG.warn(msg);
+			LOG.debug(msg, e);
 		}
 	}
 }

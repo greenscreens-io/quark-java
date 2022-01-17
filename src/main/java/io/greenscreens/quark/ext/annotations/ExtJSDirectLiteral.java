@@ -6,12 +6,14 @@
  */
 package io.greenscreens.quark.ext.annotations;
 
+import javax.enterprise.inject.Vetoed;
 import javax.enterprise.util.AnnotationLiteral;
 
 /**
  * Internally used annotation wrapper used by CDI to find targeted beans
  */
 @SuppressWarnings("all")
+@Vetoed
 public class ExtJSDirectLiteral extends AnnotationLiteral<ExtJSDirect> implements ExtJSDirect {
 
 	private static final long serialVersionUID = 1L;

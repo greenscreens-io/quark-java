@@ -52,14 +52,16 @@
 		<maven.jar.version>3.2.0</maven.jar.version>
 		<maven.war.version>3.3.1</maven.war.version>
 		<maven.proguard.version>2.3.1</maven.proguard.version>
-		<bcastle.version>1.67</bcastle.version>
-		<jackson.version>2.12.1</jackson.version>
+		<jackson.version>2.13.0</jackson.version>
+		<bcastle.version>1.69</bcastle.version>
 	</properties>
 
 	<build>
 		<sourceDirectory>src/main/java</sourceDirectory>
+		
 		<plugins>
 			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>${maven.compiler.version}</version>
 			</plugin>
@@ -69,6 +71,7 @@
 				<version>${maven.eclipse.plugin}</version>
 			</plugin>
 			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-resources-plugin</artifactId>
 				<version>3.0.0</version>
 			</plugin>

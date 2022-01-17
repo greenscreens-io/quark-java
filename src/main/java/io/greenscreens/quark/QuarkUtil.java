@@ -6,9 +6,9 @@
  */
 package io.greenscreens.quark;
 
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.StringWriter;
@@ -29,6 +29,15 @@ public enum QuarkUtil {
 	;
 
 	/**
+	 * Convert byteBuffer to HEX tring
+	 * @param buffer
+	 * @return
+	 */
+	public static String bufferToHex(final ByteBuffer buffer) {
+		return ByteUtil.bufferToHex(buffer);
+	}
+	
+	/**
 	 * Converts byte array to hex string
 	 * 
 	 * @param bytes
@@ -47,12 +56,6 @@ public enum QuarkUtil {
 		return ByteUtil.charsToHex(bytes);
 	}
 
-	/**
-	 * Converts hex string into byte array
-	 * 
-	 * @param s
-	 * @return
-	 */
 	public static byte[] hexStringToByteArray(final String s) {
 		return ByteUtil.hexStringToByteArray(s);
 	}
@@ -185,7 +188,35 @@ public enum QuarkUtil {
 		return root;
 
 	}
+	
+	public static String ungzip(final ByteBuffer bytes) throws Exception {
+		
+		String result = null;
+		StringWriter sw = null;
+		InputStream bis = null;
+		InputStream gis = null;
+		InputStreamReader isr = null;
+		
+		try {
+			sw = new StringWriter();
+			bis = new ByteBufferInputStream(bytes);
+			gis = new GZIPInputStream(bis);
+			isr = new InputStreamReader(gis, StandardCharsets.UTF_8);
 
+			final char[] chars = new char[1024];
+			for (int len; (len = isr.read(chars)) > 0; ) {
+				sw.write(chars, 0, len);
+			}
+			sw.flush();
+			result = sw.toString();
+		} finally {
+			close(isr);
+			close(sw);
+		}
+        
+        return result;
+    }
+	
 	public static String ungzip(final byte[] bytes) throws Exception {
 		
 		String result = null;
@@ -246,6 +277,7 @@ public enum QuarkUtil {
 	}
 	
 	public static String toMessage(final Throwable e, final String def) {
+
 		if (e == null) {
 			return "";
 		}
@@ -259,6 +291,9 @@ public enum QuarkUtil {
 			err = def;
 		}
 
+		if (e instanceof NoClassDefFoundError) {
+			err = String.format("%s : %s", "Class not found", err);
+		}
 		return err;
 	}
 
@@ -269,16 +304,9 @@ public enum QuarkUtil {
 	public static boolean isHex(final String val) {
 		return StringUtil.isHex(val);
 	}
-	
-	/**
-	 * Calculate difference between current time and given timestamp Timestamp can
-	 * be in UNIX format (PHP) or Java
-	 * 
-	 * @param time
-	 * @return
-	 */
-	public static final long timediff(final long time) {
-		return Util.timediff(time);
-	}
 
+	public static long timediff(final long ts) {
+		return Util.timediff(ts); 
+	}
+	
 }

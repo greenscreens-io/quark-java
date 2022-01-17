@@ -6,6 +6,9 @@ package io.greenscreens.quark;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import javax.enterprise.inject.Vetoed;
+
+@Vetoed
 public class NamedThreadFactory implements ThreadFactory {
 
 	private static final AtomicInteger poolNumber = new AtomicInteger(1);

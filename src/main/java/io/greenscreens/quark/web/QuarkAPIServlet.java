@@ -75,7 +75,7 @@ public class QuarkAPIServlet extends QuarkServlet {
 
 	@Override
 	protected void onDelete(HttpServletRequest request, HttpServletResponse response) throws IOException {
-		ServletUtils.remove(request.getSession(false), QuarkConstants.HTTP_SEESION_ENCRYPT);
+		ServletUtils.remove(request.getSession(false), QuarkConstants.ENCRYPT_ENGINE);
 		ServletUtils.writeResponse(response, "{}");
 	}
 

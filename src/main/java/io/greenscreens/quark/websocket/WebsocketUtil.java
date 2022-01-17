@@ -6,7 +6,6 @@
  */
 package io.greenscreens.quark.websocket;
 
-
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
@@ -26,8 +25,8 @@ import io.greenscreens.quark.QuarkSecurity;
 import io.greenscreens.quark.QuarkUtil;
 import io.greenscreens.quark.websocket.data.IWebSocketResponse;
 import io.greenscreens.quark.websocket.data.WebSocketInstruction;
-import io.greenscreens.quark.security.IAesKey;
 import io.greenscreens.quark.JsonDecoder;
+import io.greenscreens.quark.security.IAesKey;
 
 /**
  * Internal encoder for WebSocket ExtJS response

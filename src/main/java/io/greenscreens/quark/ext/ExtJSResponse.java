@@ -9,11 +9,14 @@ package io.greenscreens.quark.ext;
 import java.io.Serializable;
 import java.util.Objects;
 
+import javax.enterprise.inject.Vetoed;
+
 /**
  * ExtJs standard response structure used by other extended response classes
  * 
  * { "success": false, "msg": "", "error": "", "stack": "" }
  */
+@Vetoed
 public class ExtJSResponse implements Serializable {
 
 	private static final long serialVersionUID = 1L;

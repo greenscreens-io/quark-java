@@ -6,11 +6,13 @@
  */
 package io.greenscreens.quark.websocket;
 
+import javax.enterprise.inject.Vetoed;
 import javax.websocket.CloseReason;
 
 /**
  * Class holding event data
  */
+@Vetoed
 public class WebsocketEvent {
 
 	private final WebSocketSession session;
