@@ -161,9 +161,4 @@ public class ExtJSResponse implements Serializable {
         }
 
 	}
-
-	public static void main(String[] args) {
-		ExtJSResponse r = ExtJSResponse.Builder.create().setStatus(true).setMessage("").build();
-		System.out.println(r.isSuccess());
-	}
 }

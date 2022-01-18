@@ -30,6 +30,7 @@ import io.greenscreens.quark.ext.annotations.ExtJSDirect;
 import io.greenscreens.quark.ext.annotations.ExtJSDirectLiteral;
 import io.greenscreens.quark.ext.annotations.ExtJSMethod;
 
+
 /**
  * Singleton class used to find CDI bean and wraps it into destructable
  * instance. It is used as an internal bean finder.
@@ -169,6 +170,29 @@ public class BeanManagerUtil {
 
 		api = root;
 		return root;
+
+	}
+	
+	/**
+	 * List of registered service paths
+	 * @return
+	 */
+	public List<String> services() {
+
+		final List<String> list = new ArrayList<>();
+		final ExtJSDirectLiteral type = new ExtJSDirectLiteral(null);
+		final Set<Bean<?>> beans = QuarkEngine.getBeanManager().getBeans(Object.class, type);
+		for (Bean<?> bean : beans) {
+			final Class<?> clazz = bean.getBeanClass();
+			final ExtJSDirect extJSDirect = clazz.getAnnotation(ExtJSDirect.class);		
+			for (String path : extJSDirect.paths()) {
+				if (!list.contains(path)) {
+					list.add(path);
+				}
+			}
+		}
+
+		return list;
 
 	}
 	
