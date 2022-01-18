@@ -1,14 +1,14 @@
 /*
- * Copyright (C) 2015, 2020  Green Screens Ltd.
- *
- * https://www.greenscreens.io
- *
+ * Copyright (C) 2015, 2022 Green Screens Ltd.
  */
 package io.greenscreens.quark;
 
 import java.util.Optional;
 import java.util.regex.Pattern;
 
+/**
+ * General string helper class
+ */
 enum StringUtil {
 ;
 

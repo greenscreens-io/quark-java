@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2015, 2020  Green Screens Ltd.
- * https://www.greenscreens.io
+ * Copyright (C) 2015, 2022 Green Screens Ltd.
  */
 package io.greenscreens.quark.ext.annotations;
 

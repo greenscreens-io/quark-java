@@ -1,13 +1,14 @@
 /*
- * Copyright (C) 2015, 2020  Green Screens Ltd.
- * 
- * https://www.greenscreens.io
- * 
+ * Copyright (C) 2015, 2022 Green Screens Ltd.
  */
 package io.greenscreens.quark.cdi;
 
 import javax.enterprise.inject.spi.Bean;
 
+/**
+ * Definition for self-destructable beans - controllers
+ * @param <T>
+ */
 public interface IDestructibleBeanInstance<T> {
 
 	/**

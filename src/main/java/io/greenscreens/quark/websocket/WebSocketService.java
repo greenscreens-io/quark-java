@@ -1,13 +1,11 @@
 /*
- * Copyright (C) 2015, 2020  Green Screens Ltd.
- * 
- * https://www.greenscreens.io
- * 
+ * Copyright (C) 2015, 2022 Green Screens Ltd.
  */
 package io.greenscreens.quark.websocket;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.Objects;
 import java.util.Optional;
 
 import javax.inject.Inject;
@@ -56,7 +54,7 @@ public class WebSocketService {
 
 		endpoint = Optional.ofNullable(endpoint).orElse(QuarkEngine.getBean(WebSocketEndpoint.class));
 
-		if (endpoint == null) {
+		if (Objects.isNull(endpoint)) {
 			LOG.warn("WebSocketEndpoint not injected. If running in servlet only container, CDI framework is needed.");
 			close(session);
 			return;
@@ -92,8 +90,7 @@ public class WebSocketService {
 
 	private void close(Closeable closeable) {
 
-		if (closeable == null)
-			return;
+		if (Objects.isNull(closeable)) return;
 
 		try {
 			closeable.close();

@@ -1,8 +1,5 @@
 /*
- * Copyright (C) 2015, 2020  Green Screens Ltd.
- * 
- * https://www.greenscreens.io
- * 
+ * Copyright (C) 2015, 2022 Green Screens Ltd.
  */
 package io.greenscreens.quark.websocket;
 
@@ -51,7 +48,7 @@ public class WebsocketDecoder implements Decoder.Text<WebSocketRequest> {
 
 		boolean decode = false;
 
-		if (message != null) {
+		if (QuarkUtil.nonEmpty(message)) {
 			decode = message.trim().startsWith("{") && message.trim().endsWith("}");
 		}
 

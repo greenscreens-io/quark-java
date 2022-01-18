@@ -1,12 +1,10 @@
 /*
- * Copyright (C) 2015, 2020  Green Screens Ltd.
- * 
- * https://www.greenscreens.io
- * 
+ * Copyright (C) 2015, 2022 Green Screens Ltd.
  */
 package io.greenscreens.quark.web;
 
 import java.io.IOException;
+import java.util.Objects;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
@@ -22,7 +20,6 @@ import io.greenscreens.quark.QuarkSecurity;
 import io.greenscreens.quark.QuarkUtil;
 import io.greenscreens.quark.ext.ExtJSProtected;
 import io.greenscreens.quark.security.IAesKey;
-
 
 /**
  * Quark data format parser / decoder
@@ -120,7 +117,7 @@ public enum QuarkDecoder {
 	}
 
 	/**
-	 * Get JSON d & k encrypted data
+	 * Decrypt JSON d & k encrypted data
 	 * 
 	 * @param request
 	 * @return
@@ -144,8 +141,8 @@ public enum QuarkDecoder {
 			
 			// decode encrypted json
 			node2 = decodeRaw(d, k, webCryptoAPI);
-			if (node2 != null) node = node2;
-			if (node != null) ((ObjectNode) node).put("v", v);
+			if (Objects.nonNull(node2)) node = node2;
+			if (Objects.nonNull(node)) ((ObjectNode) node).put("v", v);
 			
 		} catch (Exception e) {
 			final String msg = QuarkUtil.toMessage(e);
@@ -164,7 +161,7 @@ public enum QuarkDecoder {
 	public static boolean isDisabled(final ServletContext context) {
 		final String key = ExtJSProtected.class.getCanonicalName();
 		final Boolean o1 = ServletUtils.get(context, key);
-		return  o1 == null || o1.booleanValue();
+		return  Objects.isNull(o1) || o1.booleanValue();
 	}
 	
 	/**

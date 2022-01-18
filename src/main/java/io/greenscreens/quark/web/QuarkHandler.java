@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2015, 2020  Green Screens Ltd.
- * 
- * https://www.greenscreens.io
+ * Copyright (C) 2015, 2022 Green Screens Ltd.
  */
 package io.greenscreens.quark.web;
 
@@ -209,7 +207,7 @@ public class QuarkHandler {
 		}
 		
 		final List<JsonNode> data = request.getData();
-		final int size = data == null ? 0 : data.size();
+		final int size = Objects.isNull(data) ? 0 : data.size();
 
 		if (size == 0) {
 			response = QuarkHandlerUtil.getError(QuarkErrors.E0000);

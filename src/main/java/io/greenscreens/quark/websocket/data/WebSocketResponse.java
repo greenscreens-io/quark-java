@@ -1,8 +1,5 @@
 /*
- * Copyright (C) 2015, 2020  Green Screens Ltd.
- * 
- * https://www.greenscreens.io
- * 
+ * Copyright (C) 2015, 2022 Green Screens Ltd.
  */
 package io.greenscreens.quark.websocket.data;
 
@@ -14,7 +11,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import io.greenscreens.quark.security.IAesKey;
 import io.greenscreens.quark.web.QuarkConstants;
-
 
 /**
  * Object to be converted into JSON structure. {type :'ws' , sid : session_id ,

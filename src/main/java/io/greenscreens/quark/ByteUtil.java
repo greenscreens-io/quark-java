@@ -1,18 +1,23 @@
 /*
- * Copyright (C) 2015, 2020  Green Screens Ltd.
- *
- * https://www.greenscreens.io
- *
+ * Copyright (C) 2015, 2022 Green Screens Ltd.
  */
 package io.greenscreens.quark;
 
 import java.nio.ByteBuffer;
 import java.util.Objects;
 
+/**
+ * Helper class to work with byte arrays and ByteBuffers
+ */
 enum ByteUtil {
 ;
 	protected static final char[] HEX_ARRAY = "0123456789ABCDEF".toCharArray();
-	
+
+	/**
+	 * Convert ByteBuffer to HEX string
+	 * @param buffer
+	 * @return
+	 */
 	public static String bufferToHex(final ByteBuffer buffer) {
 
 		if (Objects.nonNull(buffer)) {

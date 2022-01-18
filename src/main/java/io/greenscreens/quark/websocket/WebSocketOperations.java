@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2015, 2020  Green Screens Ltd.
- * 
- * https://www.greenscreens.io
+ * Copyright (C) 2015, 2022 Green Screens Ltd.
  */
 package io.greenscreens.quark.websocket;
 
@@ -45,7 +43,6 @@ import io.greenscreens.quark.web.QuarkErrors;
 import io.greenscreens.quark.web.QuarkHandlerUtil;
 import io.greenscreens.quark.web.ServletUtils;
 import io.greenscreens.quark.websocket.data.WebSocketInstruction;
-
 
 /**
  * Attach Java class to remote call

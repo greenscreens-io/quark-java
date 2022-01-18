@@ -1,8 +1,5 @@
 /*
- * Copyright (C) 2015, 2020  Green Screens Ltd.
- * 
- * https://www.greenscreens.io
- * 
+ * Copyright (C) 2015, 2022 Green Screens Ltd.
  */
 package io.greenscreens.quark.cdi;
 
@@ -12,6 +9,11 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Controller method parameter annotations used only if controller parameter is required value.
+ * Quark engine will automatically respond to a requester with error.
+ * Prevents entry into a method if value is null. 
+ */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ PARAMETER })
 public @interface Required {

@@ -1,8 +1,5 @@
 /*
- * Copyright (C) 2015, 2020  Green Screens Ltd.
- * 
- * https://www.greenscreens.io
- * 
+ * Copyright (C) 2015, 2022 Green Screens Ltd.
  */
 package io.greenscreens.quark.websocket;
 
@@ -37,8 +34,7 @@ public class WebsocketEvent {
 		this.reason = null;
 	}
 
-	public WebsocketEvent(final WebSocketSession session, final WebSocketEventStatus eventStatus,
-			final Throwable throwable) {
+	public WebsocketEvent(final WebSocketSession session, final WebSocketEventStatus eventStatus, final Throwable throwable) {
 		super();
 		this.session = session;
 		this.eventStatus = eventStatus;

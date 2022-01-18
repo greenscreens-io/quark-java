@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2015, 2020  Green Screens Ltd.
- * 
- * https://www.greenscreens.io
+ * Copyright (C) 2015, 2022 Green Screens Ltd.
  */
 package io.greenscreens.quark.web;
 
@@ -25,7 +23,7 @@ import io.greenscreens.quark.cdi.IDestructibleBeanInstance;
 import io.greenscreens.quark.ext.ExtJSResponse;
 
 /**
- * Class to execute bean 
+ * Class to execute controller bean 
  */
 @Vetoed
 public class QuarkBeanCaller implements Runnable {
@@ -79,9 +77,11 @@ public class QuarkBeanCaller implements Runnable {
 			deattach();
 		}
 
-
 	}
 	
+	/**
+	 * Attach WebSOcket or Servlet context to current thread before controlelr execution 
+	 */
 	protected void attach() {
 		
 		if (!isAsync) return; 
@@ -95,10 +95,12 @@ public class QuarkBeanCaller implements Runnable {
 		if (hasAsyncReponse && isVoid) {
 			QuarkProducer.attachAsync(new QuarkAsyncContext(handler));
 		}
-		
-		
+
 	}
-	
+
+	/**
+	 * Release thread context
+	 */
 	protected void deattach() {
 		
 		if (!isAsync) return;
@@ -131,10 +133,22 @@ public class QuarkBeanCaller implements Runnable {
 		return handler.supportAsync && QuarkHandlerUtil.isAsync(method);
 	}
 
-	private void release(final IDestructibleBeanInstance<?> bean){
+	/**
+	 * Safe controller bean destruction
+	 * @param bean
+	 */
+	private void release(final IDestructibleBeanInstance<?> bean) {
 		if (Objects.nonNull(bean)) bean.release();
 	}
 	
+	/**
+	 * Execute Controller bean and get response for requester
+	 * @param bean
+	 * @return
+	 * @throws IOException
+	 * @throws IllegalAccessException
+	 * @throws InvocationTargetException
+	 */
 	private ExtJSResponse call(final IDestructibleBeanInstance<?> bean) throws IOException, IllegalAccessException, InvocationTargetException {
 		final Object beanInstance = bean.getInstance();
 		QuarkHandlerUtil.validateParameters(beanInstance, method, params);
@@ -143,6 +157,14 @@ public class QuarkBeanCaller implements Runnable {
 		return QuarkHandlerUtil.toResponse(obj, method);		
 	}
 	
+	/**
+	 * Public controller initializer
+	 * @param handler
+	 * @param bean
+	 * @param method
+	 * @param params
+	 * @return
+	 */
 	public static final QuarkBeanCaller get(final QuarkHandler handler, final Bean<?> bean, final Method method, final Object[] params) {
 		return new QuarkBeanCaller(handler, bean, method, params);
 	}

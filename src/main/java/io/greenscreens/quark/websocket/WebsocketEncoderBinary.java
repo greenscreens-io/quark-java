@@ -1,8 +1,5 @@
 /*
- * Copyright (C) 2015, 2020  Green Screens Ltd.
- * 
- * https://www.greenscreens.io
- * 
+ * Copyright (C) 2015, 2022 Green Screens Ltd.
  */
 package io.greenscreens.quark.websocket;
 
@@ -44,7 +41,7 @@ public class WebsocketEncoderBinary implements Encoder.Binary<WebSocketResponseB
 		final String wsmsg = WebsocketUtil.encode(data);
 		ByteBuffer buff = null;
 		
-		if (wsmsg != null && wsmsg.length() > 0) {
+		if (QuarkUtil.nonEmpty(wsmsg)) {
 			
 			try {
 				if (data.isCompression()) {

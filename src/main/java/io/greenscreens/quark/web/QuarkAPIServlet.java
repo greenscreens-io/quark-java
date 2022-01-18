@@ -1,8 +1,5 @@
 /*
- * Copyright (C) 2015, 2020  Green Screens Ltd.
- * 
- * https://www.greenscreens.io
- * 
+ * Copyright (C) 2015, 2022 Green Screens Ltd.
  */
 package io.greenscreens.quark.web;
 
@@ -21,7 +18,7 @@ import io.greenscreens.quark.QuarkUtil;
 import io.greenscreens.quark.cdi.BeanManagerUtil;
 
 /**
- * Servlet to render API structure
+ * Servlet to render API structure of exposed Controllers
  */
 public class QuarkAPIServlet extends QuarkServlet {
 

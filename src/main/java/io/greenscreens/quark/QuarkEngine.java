@@ -1,8 +1,5 @@
 /*
- * Copyright (C) 2015, 2020  Green Screens Ltd.
- * 
- * https://www.greenscreens.io
- * 
+ * Copyright (C) 2015, 2022 Green Screens Ltd.
  */
 package io.greenscreens.quark;
 
@@ -12,6 +9,11 @@ import javax.enterprise.inject.Instance;
 import javax.enterprise.inject.spi.BeanManager;
 import javax.enterprise.inject.spi.CDI;
 
+/**
+ * Base core of Quark engine, used to instantiate controllers within CDI engine.
+ * On every HTTP/WebSocket request,  JSON data is decoded and matched to proper
+ * Controller class. IF class is found, it is loaded by this engine into CDI context.   
+ */
 public enum QuarkEngine {
 ;
 	/**

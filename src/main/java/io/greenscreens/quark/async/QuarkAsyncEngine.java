@@ -1,7 +1,11 @@
+/*
+ * Copyright (C) 2015, 2022 Green Screens Ltd.
+ */
 package io.greenscreens.quark.async;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -9,6 +13,10 @@ import javax.enterprise.inject.Vetoed;
 
 import io.greenscreens.quark.NamedThreadFactory;
 
+/**
+ * Async engine for Async Servlets - Controllers
+ * For async controllers, instance is put in scheduled task for execution.
+ */
 @Vetoed
 public final class QuarkAsyncEngine {
 
@@ -28,7 +36,7 @@ public final class QuarkAsyncEngine {
 
 	void create(final String name, final int parallelTasks, final int maxPool, final int priority, final int timeoutMinutes) {
 		this.queueSize = maxPool;		
-		final NamedThreadFactory factory = NamedThreadFactory.get(name, priority);
+		final ThreadFactory factory = NamedThreadFactory.get(name, priority);
 		this.service = new ThreadPoolExecutor(1, parallelTasks, timeoutMinutes, TimeUnit.SECONDS, queue, factory);
 		this.service.prestartCoreThread();
 	}

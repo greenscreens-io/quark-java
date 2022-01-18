@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015, 2016  Green Screens Ltd.
+ * Copyright (C) 2015, 2022 Green Screens Ltd.
  */
 package io.greenscreens.quark;
 
@@ -7,6 +7,10 @@ import java.security.Provider;
 import java.security.Security;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
+/**
+ * Helper class to initialize BoncyCastle encryption provider 
+ * if not initialized already. 
+ */
 public enum SecurityProvider {
 	;
 
@@ -16,6 +20,11 @@ public enum SecurityProvider {
 		provider = getProvider();
 	}
 
+	/**
+	 * Check if provider already registered.
+	 * If not , register then return.
+	 * @return
+	 */
 	private static Provider getProvider() {
 		
 		final Provider [] providers = Security.getProviders();
@@ -31,7 +40,11 @@ public enum SecurityProvider {
 
 		return provider;
 	}
-	
+
+	/**
+	 * Retrieve security provider - BounvyCastle
+	 * @return
+	 */
 	public static Provider get() {
 		return provider;
 	}

@@ -1,8 +1,5 @@
 /*
- * Copyright (C) 2015, 2020  Green Screens Ltd.
- * 
- * https://www.greenscreens.io
- * 
+ * Copyright (C) 2015, 2022 Green Screens Ltd.
  */
 package io.greenscreens.quark.websocket;
 
@@ -19,7 +16,6 @@ import org.slf4j.LoggerFactory;
 import io.greenscreens.quark.JsonDecoder;
 import io.greenscreens.quark.QuarkUtil;
 import io.greenscreens.quark.websocket.data.WebSocketRequest;
-
 
 /**
  * Internal JSON decoder for WebSocket ExtJS request

@@ -1,13 +1,13 @@
 /*
- * Copyright (C) 2015, 2020  Green Screens Ltd.
- * 
- * https://www.greenscreens.io
- * 
+ * Copyright (C) 2015, 2022 Green Screens Ltd.
  */
 package io.greenscreens.quark.websocket.data;
 
 import io.greenscreens.quark.security.IAesKey;
 
+/**
+ * Interface that defines response format
+ */
 public interface IWebSocketResponse {
 
 	String getType();

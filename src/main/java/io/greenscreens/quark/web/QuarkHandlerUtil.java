@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2015, 2020  Green Screens Ltd.
- * 
- * https://www.greenscreens.io
+ * Copyright (C) 2015, 2022 Green Screens Ltd.
  */
 package io.greenscreens.quark.web;
 
@@ -56,7 +54,9 @@ import io.greenscreens.quark.ext.annotations.ExtName;
 import io.greenscreens.quark.security.IAesKey;
 import io.greenscreens.quark.websocket.data.WebSocketInstruction;
 
-
+/**
+ * Internal reflection util that handle JSON t oControlelr mappings.  
+ */
 public enum QuarkHandlerUtil {
 ;
 	
@@ -89,6 +89,14 @@ public enum QuarkHandlerUtil {
 		return selectedMethod;
 	}
 
+	/**
+	 * Map JSON arguments to Java Method parameters
+	 * @param <T>
+	 * @param request
+	 * @param methodParams
+	 * @return
+	 * @throws IOException
+	 */
 	public static <T> Object[] fillParams(final ExtJSDirectRequest<T> request, final List<AnnotatedParameter<?>> methodParams)	throws IOException {
 
 		final int paramSize = methodParams.size();
@@ -220,7 +228,6 @@ public enum QuarkHandlerUtil {
 
 		return sts;
 	}
-	
 
 	/**
 	 * Check if method is asynchronous
@@ -253,7 +260,11 @@ public enum QuarkHandlerUtil {
 		return javaMethod;
 	}
 	
-	
+	/**
+	 * Convert enum error to Error response for requester
+	 * @param error
+	 * @return
+	 */
 	public static ExtJSResponse getError(final QuarkErrors error) {
 		final ExtJSResponse response = new ExtJSResponse(false, error.getString());
 		response.setCode(error.getCode());
@@ -413,6 +424,11 @@ public enum QuarkHandlerUtil {
 		return result;
 	}
 
+	/**
+	 * SAfe check if HTTP session is still valid
+	 * @param session
+	 * @return
+	 */
 	public static boolean isValidHttpSession(final HttpSession session) {
 		final String attr = ServletUtils.get(session, QuarkConstants.HTTP_SEESION_STATUS);
 		return Boolean.TRUE.toString().equalsIgnoreCase(attr);
@@ -440,6 +456,9 @@ public enum QuarkHandlerUtil {
 		return node;
 	}
 
+	/**
+	 * Close data validatior engine
+	 */
 	public static void releaseValidator() {
 		if (Objects.nonNull(factory)) {
 			factory.close();
@@ -447,6 +466,9 @@ public enum QuarkHandlerUtil {
 		}
 	}
 	
+	/**
+	 * Initialize data validation engine
+	 */
 	public static void initValidator() {
 		if (Objects.nonNull(factory)) return;
 		try {

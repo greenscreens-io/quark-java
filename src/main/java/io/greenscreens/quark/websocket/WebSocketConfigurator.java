@@ -1,8 +1,5 @@
 /*
- * Copyright (C) 2015, 2020  Green Screens Ltd.
- * 
- * https://www.greenscreens.io
- * 
+ * Copyright (C) 2015, 2022 Green Screens Ltd.
  */
 package io.greenscreens.quark.websocket;
 
@@ -21,7 +18,7 @@ import javax.websocket.server.ServerEndpointConfig;
 
 import io.greenscreens.quark.QuarkUtil;
 import io.greenscreens.quark.web.QuarkConstants;
-import io.greenscreens.quark.web.listener.SessionCollector;
+import io.greenscreens.quark.web.listener.QuarkWebSessionListener;
 
 /**
  * Config object for @ServerEndpoint annotation used to intercept WebSocket
@@ -63,7 +60,7 @@ public class WebSocketConfigurator extends ServerEndpointConfig.Configurator {
 		final Map<String, String> map = WebsocketUtil.parseCookies(cookies);
 
 		String val = map.get("X-Authorization");
-		if (val == null) {
+		if (QuarkUtil.nonEmpty(val)) {
 			val = WebsocketUtil.findQuery(request, "t");
 		}
 
@@ -80,9 +77,9 @@ public class WebSocketConfigurator extends ServerEndpointConfig.Configurator {
 
 		HttpSession httpSession = (HttpSession) request.getHttpSession();
 
-		if (httpSession == null) {
+		if (Objects.isNull(httpSession)) {
 			final int token = findSessionToken(request);
-			httpSession = SessionCollector.get(token);
+			httpSession = QuarkWebSessionListener.get(token);
 		}
 
 		return httpSession;
@@ -129,7 +126,7 @@ public class WebSocketConfigurator extends ServerEndpointConfig.Configurator {
 	 * @param value
 	 */
 	public void store(final ServerEndpointConfig sec, final String key, final Object value) {
-		if (key != null && value != null) {
+		if (QuarkUtil.nonEmpty(key)  && Objects.nonNull(value)) {
 			sec.getUserProperties().put(key, value);
 		}
 	}

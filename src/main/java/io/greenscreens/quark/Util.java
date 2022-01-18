@@ -1,16 +1,15 @@
 /*
- * Copyright (C) 2015, 2020  Green Screens Ltd.
- *
- * https://www.greenscreens.io
- *
+ * Copyright (C) 2015, 2022 Green Screens Ltd.
  */
 package io.greenscreens.quark;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.StringWriter;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -104,7 +103,46 @@ enum Util {
 		return (T) object;
 	}
 
+	/**
+	 * Decompress GZIP byte buffer into string
+	 * @param bytes
+	 * @return
+	 * @throws Exception
+	 */
+	public static String ungzip(final ByteBuffer bytes) throws Exception {
+		
+		String result = null;
+		StringWriter sw = null;
+		InputStream bis = null;
+		InputStream gis = null;
+		InputStreamReader isr = null;
+		
+		try {
+			sw = new StringWriter();
+			bis = new ByteBufferInputStream(bytes);
+			gis = new GZIPInputStream(bis);
+			isr = new InputStreamReader(gis, StandardCharsets.UTF_8);
 
+			final char[] chars = new char[1024];
+			for (int len; (len = isr.read(chars)) > 0; ) {
+				sw.write(chars, 0, len);
+			}
+			sw.flush();
+			result = sw.toString();
+		} finally {
+			close(isr);
+			close(sw);
+		}
+        
+        return result;
+    }
+	
+	/**
+	 * Decompress GZIP byte array into string
+	 * @param bytes
+	 * @return
+	 * @throws Exception
+	 */
 	public static String ungzip(final byte[] bytes) throws Exception {
 		
 		String result = null;
@@ -134,6 +172,12 @@ enum Util {
         return result;
     }
 
+	/**
+	 * Compress string data into byte array 
+	 * @param s
+	 * @return
+	 * @throws Exception
+	 */
     public static byte[] gzip(final String s) throws Exception {
 
     	final ByteArrayOutputStream bos = new ByteArrayOutputStream();

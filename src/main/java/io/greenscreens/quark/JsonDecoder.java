@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015, 2016  Green Screens Ltd.
+ * Copyright (C) 2015, 2022 Green Screens Ltd.
  */
 package io.greenscreens.quark;
 
@@ -7,7 +7,9 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Enumeration;
 import java.util.List;
+import java.util.Objects;
 
 import javax.enterprise.inject.Vetoed;
 
@@ -42,12 +44,16 @@ public final class JsonDecoder<T> {
 
 	private static final ObjectMapper OBJECT_MAPPER;
 
+	/**
+	 * Initialize object mapper
+	 */
 	static {
 		OBJECT_MAPPER = new ObjectMapper();
 		
+		// Use optimizer if available
 		try {
 			final Class<?> clazz = JsonDecoder.class.getClassLoader().loadClass("com.fasterxml.jackson.module.afterburner.AfterburnerModule");
-			if (clazz != null) {
+			if (Objects.nonNull(clazz)) {
 				final Constructor<?> constructor = clazz.getDeclaredConstructor();
 				OBJECT_MAPPER.registerModule((Module) constructor.newInstance());	
 			}
@@ -107,10 +113,16 @@ public final class JsonDecoder<T> {
 
 	}
 
+	/**
+	 * Parse JsonNode into defined class instance
+	 * @param <T>
+	 * @param type
+	 * @param node
+	 * @return
+	 */
 	public static <T> T parse(final Class<T> type, final JsonNode node) {
 
-		if (node == null)
-			return null;
+		if (Objects.isNull(node)) return null;
 
 		if (node.isArray()) {
 			final TypeFactory tf = TypeFactory.defaultInstance();
@@ -121,20 +133,48 @@ public final class JsonDecoder<T> {
 		}
 	}
 
+	/**
+	 * Convert node object to given java class
+	 * @param <T>
+	 * @param type
+	 * @param object
+	 * @return
+	 * @throws JsonProcessingException
+	 */
 	public static <T> T convert(final Class<T> type, final JsonNode object) throws JsonProcessingException {
-		return object == null ? null : OBJECT_MAPPER.treeToValue(object, type);
+		return Objects.isNull(object) ? null : OBJECT_MAPPER.treeToValue(object, type);
 	}
 
+	/**
+	 * Convert node object to given java type
+	 * @param <T>
+	 * @param type
+	 * @param object
+	 * @return
+	 * @throws IOException
+	 */
 	public static <T> T convert(final JavaType type, final JsonNode object) throws IOException {
-		if (object == null)	return null;
-		return OBJECT_MAPPER.readerFor(type).readValue(object);
+		return Objects.isNull(object) ? null : OBJECT_MAPPER.readerFor(type).readValue(object);
 	}
 
+	/**
+	 * Convert array of objects to array of json nodes
+	 * @param <T>
+	 * @param args
+	 * @return
+	 */
 	public static <T> ArrayNode convert(T [] args) {
-		if (args == null)	return null;
-		return OBJECT_MAPPER.valueToTree(args);
+		return Objects.isNull(args) ? null : OBJECT_MAPPER.valueToTree(args);
 	}
 
+	/**
+	 * Convert array of nodes to list of types
+	 * @param <T>
+	 * @param type
+	 * @param node
+	 * @return
+	 * @throws IOException
+	 */
     public static <T> List<T> convert(final Class<T> type, final ArrayNode node) throws IOException {
         final TypeFactory tf = TypeFactory.defaultInstance();
         final JavaType jt = tf.constructCollectionType(ArrayList.class, type);
@@ -148,7 +188,7 @@ public final class JsonDecoder<T> {
 	 * @return true if it is not array
 	 */
 	public final boolean isSingle() {
-		return object != null;
+		return Objects.isNull(object) ? null : object instanceof Enumeration<?>;
 	}
 
 	/**
@@ -170,9 +210,9 @@ public final class JsonDecoder<T> {
 	public final List<T> getObjectList() throws IOException {
 
 		List<T> list = null;
-		if (objectList != null) {
+		if (Objects.nonNull(objectList)) {
 			list = objectList.readAll();
-		} else if (object != null) {
+		} else if (Objects.nonNull(object)) {
 			list = Arrays.asList(object);
 		}
 
@@ -198,12 +238,12 @@ public final class JsonDecoder<T> {
 	 * @throws Exception
 	 */
 	public static JsonNode parse(final String data) throws JsonProcessingException {
-		return data == null ? null : OBJECT_MAPPER.readTree(data);
+		return Objects.isNull(data) ? null : OBJECT_MAPPER.readTree(data);
 	}
 
 	@SuppressWarnings("unchecked")
 	public static <K extends JsonNode> K parseType(final String data) throws JsonProcessingException {
-		return data == null ? null : (K) OBJECT_MAPPER.readTree(data);
+		return Objects.isNull(data) ? null : (K) OBJECT_MAPPER.readTree(data);
 	}
 
 	/**
@@ -215,7 +255,7 @@ public final class JsonDecoder<T> {
 	 * @throws Exception
 	 */
 	public static String stringify(final Object object) throws JsonProcessingException {
-		return object == null ? null : OBJECT_MAPPER.writeValueAsString(object);
+		return Objects.isNull(object) ? null : OBJECT_MAPPER.writeValueAsString(object);
 	}
 
 	/**
@@ -226,15 +266,17 @@ public final class JsonDecoder<T> {
 	 * @return
 	 */
 	public static boolean hasKey(final JsonNode node, final String key) {
-
-		if (node != null) {
-			return node.has(key);
-		}
-
-		return false;
+		return Objects.isNull(node) ? false : node.has(key);	
 	}
 
+	/**
+	 * Check if provided node is empty. Array size is 0 or Object does not contains properties.
+	 * @param node
+	 * @param key
+	 * @return
+	 */
 	public static boolean isEmpty(final JsonNode node, final String key) {
+
 		if (!hasKey(node, key)) return true;
 		
 		final JsonNode valueNode = node.get(key);
@@ -254,22 +296,24 @@ public final class JsonDecoder<T> {
 		return false;
 	}
 
+	/**
+	 * Check if node property is of type array
+	 * @param node
+	 * @param key
+	 * @return
+	 */
 	public static boolean isArray(final JsonNode node, final String key) {
-
-		if (hasKey(node, key)) {
-			return node.get(key).isArray();
-		}
-
-		return false;
+		return hasKey(node, key) ? node.get(key).isArray() : false;	
 	}
 	
+	/**
+	 * Return node property as array
+	 * @param node
+	 * @param key
+	 * @return
+	 */
 	public static ArrayNode getArray(final JsonNode node, final String key) {
-
-		if (isArray(node, key)) {
-			return (ArrayNode) node.get(key);
-		}
-
-		return null;
+		return isArray(node, key) ? (ArrayNode) node.get(key) : null;
 	}
 	
 	/**
@@ -280,14 +324,7 @@ public final class JsonDecoder<T> {
 	 * @return
 	 */
 	public static int getInt(final JsonNode node, final String key) {
-
-		int val = 0;
-
-		if (hasKey(node, key)) {
-			val = node.get(key).asInt(0);
-		}
-
-		return val;
+		return hasKey(node, key) ? node.get(key).asInt(0) : 0;
 	}
 
 	/**
@@ -298,14 +335,7 @@ public final class JsonDecoder<T> {
 	 * @return
 	 */
 	public static long getLong(final JsonNode node, final String key) {
-
-		long val = 0;
-
-		if (hasKey(node, key)) {
-			val = node.get(key).asLong(0);
-		}
-
-		return val;
+		return hasKey(node, key)? node.get(key).asLong(0) : 0l;
 	}
 
 	/**
@@ -316,16 +346,7 @@ public final class JsonDecoder<T> {
 	 * @return
 	 */
 	public static String getStr(final JsonNode node, final String key) {
-
-		String val = null;
-
-		if (hasKey(node, key)) {
-			val = node.get(key).asText();
-		} else {
-			val = "";
-		}
-
-		return val;
+		return hasKey(node, key) ? node.get(key).asText() : "" ;
 	}
 
 	/**
@@ -359,7 +380,7 @@ public final class JsonDecoder<T> {
 	 * @param to
 	 */
 	public static void copy(final ObjectNode from, final ObjectNode to) {
-		if (to != null && from != null) {
+		if (Objects.nonNull(to) && Objects.nonNull(to)) {
 			to.setAll(from);
 		}
 	}

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015, 2016  Green Screens Ltd.
+ * Copyright (C) 2015, 2022 Green Screens Ltd.
  */
 package io.greenscreens.quark.web;
 
@@ -12,7 +12,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.Part;
 
 /**
- * Generic servlet that handle errors without sending full error stack trace to front
+ * Generic servlet that handle errors without sending full error stack trace to the front
  */
 public class QuarkServlet extends HttpServlet {
 	

@@ -1,44 +1,25 @@
 /*
- * Copyright (C) 2015, 2016  Green Screens Ltd.
+ * Copyright (C) 2015, 2012 Green Screens Ltd.
  */
 package io.greenscreens.quark;
 
 import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import javax.enterprise.inject.Vetoed;
 
+/**
+ * Helper class to crate named threads for easier monitoring.  
+ */
 @Vetoed
-public class NamedThreadFactory implements ThreadFactory {
-
-	private static final AtomicInteger poolNumber = new AtomicInteger(1);
-	private final AtomicInteger threadNumber = new AtomicInteger(1);
-	private final String namePrefix;
-	private final int priority;
-	private final boolean daemon;
-	
-	public static NamedThreadFactory get(final String name, final int priority) {
-		return new NamedThreadFactory(name, priority, true);
-	}
-
-	NamedThreadFactory(final String name, final int priority, final boolean daemon) {
-		this.priority = priority;
-		this.daemon = daemon;
-		namePrefix = name + "-" + poolNumber.getAndIncrement() + "-thread-";
-	}
+public class NamedThreadFactory {
 
 	/**
-	 * Create new names thread
+	 * Crate a new named Thread factory with defined processor execution priority.
+	 * @param name
+	 * @param priority
+	 * @return
 	 */
-	@Override
-	public Thread newThread(final Runnable r) {
-
-		final String tName = namePrefix + threadNumber.getAndIncrement();
-		final Thread t = new Thread(r, tName);
-
-		t.setDaemon(daemon);
-		t.setPriority(priority);
-
-		return t;
+	public static ThreadFactory get(final String name, final int priority) {
+		return new NamedThread(name, priority, true);
 	}
+
 }

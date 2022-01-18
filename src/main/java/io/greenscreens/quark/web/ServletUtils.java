@@ -1,8 +1,5 @@
 /*
- * Copyright (C) 2015, 2020  Green Screens Ltd.
- * 
- * https://www.greenscreens.io
- * 
+ * Copyright (C) 2015, 2022 Green Screens Ltd.
  */
 package io.greenscreens.quark.web;
 
@@ -40,7 +37,6 @@ import io.greenscreens.quark.JsonDecoder;
 import io.greenscreens.quark.QuarkUtil;
 import io.greenscreens.quark.ext.ExtJSProtected;
 
-
 /**
  * General http request utils
  */
@@ -49,10 +45,24 @@ public enum ServletUtils {
 	
 	private static final Logger LOG = LoggerFactory.getLogger(ServletUtils.class);
 	
+	/**
+	 * @see ServletUtil.log
+	 * @param e
+	 * @param request
+	 * @param response
+	 */
 	public static void log(final Throwable e, final HttpServletRequest request, final HttpServletResponse response) {
 		log(LOG, e, request, response, true);
 	}
 	
+	/**
+	 * Log and send error response back to requester
+	 * @param logger
+	 * @param e
+	 * @param request
+	 * @param response
+	 * @param details
+	 */
 	public static void log(final Logger logger,final Throwable e, final HttpServletRequest request, final HttpServletResponse response, final boolean details) {
 
 		final String message = QuarkUtil.toMessage(e);
@@ -462,6 +472,13 @@ public enum ServletUtils {
 		return null;
 	}
 
+	/**
+	 * Remove value from servlet context safe. Key is class canonical name.
+	 * @param <T>
+	 * @param context
+	 * @param clazz
+	 * @return
+	 */
 	public static <T> T remove(final ServletContext context, final Class<T> clazz) {
 		if (Objects.nonNull(context) && Objects.nonNull(clazz)) {
 			return remove(context, clazz.getCanonicalName());
@@ -469,6 +486,13 @@ public enum ServletUtils {
 		return null;
 	}
 	
+	/**
+	 * Remove value from servlet context safe. 
+	 * @param <T>
+	 * @param context
+	 * @param key
+	 * @return
+	 */
 	public static <T> T remove(final ServletContext context, final String key) {
 		final T val = get(context, key);
 		if (Objects.nonNull(context) && Objects.nonNull(key)) {
@@ -477,6 +501,13 @@ public enum ServletUtils {
 		return val;
 	}
 	
+	/**
+	 * Remove value from request safe. Key is class canonical name.
+	 * @param <T>
+	 * @param request
+	 * @param clazz
+	 * @return
+	 */
 	public static <T> T remove(final HttpServletRequest request, final Class<T> clazz) {
 		if (Objects.nonNull(request) && Objects.nonNull(clazz)) {
 			return remove(request, clazz.getCanonicalName());
@@ -484,6 +515,13 @@ public enum ServletUtils {
 		return null;
 	}
 	
+	/**
+	 * Remove value from request safe.
+	 * @param <T>
+	 * @param request
+	 * @param key
+	 * @return
+	 */
 	public static <T> T remove(final HttpServletRequest request, final String key) {
 		final T val = get(request, key);
 		if (Objects.nonNull(request) && Objects.nonNull(key)) {
@@ -492,6 +530,13 @@ public enum ServletUtils {
 		return val;
 	}
 
+	/**
+	 * Remove value from session if session exists. Key is value class canonical name
+	 * @param <T>
+	 * @param session
+	 * @param value
+	 * @return
+	 */
 	public static <T> T remove(final HttpSession session, final T value) {
 		if (Objects.nonNull(session) && Objects.nonNull(value)) {
 			return remove(session, value.getClass().getCanonicalName());
@@ -499,6 +544,13 @@ public enum ServletUtils {
 		return null;
 	}
 	
+	/**
+	 * Remove value from session if session exists. Key is class canonical name
+	 * @param <T>
+	 * @param session
+	 * @param clazz
+	 * @return
+	 */
 	public static <T> T remove(final HttpSession session, final Class<T> clazz) {
 		if (Objects.nonNull(session) && Objects.nonNull(clazz)) {
 			return remove(session, clazz.getCanonicalName());
@@ -506,6 +558,13 @@ public enum ServletUtils {
 		return null;
 	}
 	
+	/**
+	 * Remove value from session if session exists 
+	 * @param <T>
+	 * @param session
+	 * @param key
+	 * @return
+	 */
 	public static <T> T remove(final HttpSession session, final String key) {
 		final T val = get(session, key);
 		if (Objects.nonNull(session) && Objects.nonNull(key)) {
@@ -514,11 +573,21 @@ public enum ServletUtils {
 		return val;
 	}
 	
+	/**
+	 * Invalidate session if exists
+	 * @param request
+	 * @return
+	 */
 	public static boolean invalidate(final HttpServletRequest request) {
 		if (Objects.nonNull(request)) return invalidate(request.getSession(false));
 		return false;
 	}
 	
+	/**
+	 * Invalidate session safe
+	 * @param session
+	 * @return
+	 */
 	public static boolean invalidate(final HttpSession session) {
 		if (Objects.nonNull(session)) {
 			session.invalidate();

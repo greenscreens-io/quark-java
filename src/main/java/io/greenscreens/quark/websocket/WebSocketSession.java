@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2015, 2020  Green Screens Ltd.
- *
- * https://www.greenscreens.io
+ * Copyright (C) 2015, 2022 Green Screens Ltd.
  */
 package io.greenscreens.quark.websocket;
 
@@ -56,7 +54,7 @@ public class WebSocketSession implements Session, Comparable<WebSocketSession> {
 
 		this.session = session;
 
-		if (httpSession != null) {
+		if (Objects.nonNull(httpSession)) {
 			WebSocketStorage.store(session, httpSession);
 		}
 	}
@@ -102,11 +100,15 @@ public class WebSocketSession implements Session, Comparable<WebSocketSession> {
 		return ctx;
 	}
 
+	/**
+	 * Send response to a client
+	 * @param wsResponse
+	 * @param async
+	 * @return
+	 */
 	public final boolean sendResponse(final IWebSocketResponse wsResponse, final boolean async) {
 
-		if (wsResponse == null) {
-			return false;
-		}
+		if (Objects.isNull(wsResponse)) return false;
 
 		if (!session.isOpen()) {
 			LOG.warn("Websocket response not sent, session is closed for {}!", this);
@@ -307,9 +309,7 @@ public class WebSocketSession implements Session, Comparable<WebSocketSession> {
 
 		final HttpSession httpSession = getHttpSession();
 
-		if (httpSession == null) {
-			return false;
-		}
+		if (Objects.isNull(httpSession)) return false;
 
 		try {
 			final String attr = (String) httpSession.getAttribute(QuarkConstants.HTTP_SEESION_STATUS);

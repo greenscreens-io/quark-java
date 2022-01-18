@@ -1,26 +1,13 @@
 /*
- * Copyright (C) 2015, 2020  Green Screens Ltd.
- * 
- * https://www.greenscreens.io
- * 
+ * Copyright (C) 2015, 2022 Green Screens Ltd.
  */
 package io.greenscreens.quark;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.StringWriter;
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-
 
 /**
  * Simple util class for string handling
@@ -120,6 +107,12 @@ public enum QuarkUtil {
 		return StringUtil.length(data);
 	}
 
+	/**
+	 * Checks if two string values are equal in safe way, preventing accidental null pointer exception
+	 * @param val1
+	 * @param val2
+	 * @return
+	 */
 	public static boolean isEqual(final String val1, final String val2) {
 		return StringUtil.isEqual(val1, val2);
 	}
@@ -189,81 +182,34 @@ public enum QuarkUtil {
 
 	}
 	
+	/**
+	 * Decompress GZIP byte buffer into string
+	 * @param bytes
+	 * @return
+	 * @throws Exception
+	 */
 	public static String ungzip(final ByteBuffer bytes) throws Exception {
-		
-		String result = null;
-		StringWriter sw = null;
-		InputStream bis = null;
-		InputStream gis = null;
-		InputStreamReader isr = null;
-		
-		try {
-			sw = new StringWriter();
-			bis = new ByteBufferInputStream(bytes);
-			gis = new GZIPInputStream(bis);
-			isr = new InputStreamReader(gis, StandardCharsets.UTF_8);
-
-			final char[] chars = new char[1024];
-			for (int len; (len = isr.read(chars)) > 0; ) {
-				sw.write(chars, 0, len);
-			}
-			sw.flush();
-			result = sw.toString();
-		} finally {
-			close(isr);
-			close(sw);
-		}
-        
-        return result;
+		return Util.ungzip(bytes);
     }
 	
+	/**
+	 * Decompress GZIP byte array into string
+	 * @param bytes
+	 * @return
+	 * @throws Exception
+	 */
 	public static String ungzip(final byte[] bytes) throws Exception {
-		
-		String result = null;
-		StringWriter sw = null;
-		ByteArrayInputStream bis = null;
-		GZIPInputStream gis = null;
-		InputStreamReader isr = null;
-		
-		
-		try {
-			sw = new StringWriter();
-			bis = new ByteArrayInputStream(bytes);
-			gis = new GZIPInputStream(bis);
-			isr = new InputStreamReader(gis, StandardCharsets.UTF_8);
-
-			final char[] chars = new char[1024];
-			for (int len; (len = isr.read(chars)) > 0; ) {
-				sw.write(chars, 0, len);
-			}
-			sw.flush();
-			result = sw.toString();
-		} finally {
-			close(isr);
-			close(sw);
-		}
-        
-        return result;
+		return Util.ungzip(bytes);
     }
 
+	/**
+	 * Compress string data into byte array 
+	 * @param s
+	 * @return
+	 * @throws Exception
+	 */
     public static byte[] gzip(final String s) throws Exception {
-
-    	final ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    	
-        GZIPOutputStream gzip = null;
-        OutputStreamWriter osw = null;
-        
-        try {
-        	gzip = new GZIPOutputStream(bos);
-        	osw = new OutputStreamWriter(gzip, StandardCharsets.UTF_8);
-        	osw.write(s);
-        	osw.flush();        	
-        } finally {
-			close(osw);
-			close(gzip);
-		}
-        
-        return bos.toByteArray();
+        return Util.gzip(s);
     }
 
 	/**
@@ -273,38 +219,46 @@ public enum QuarkUtil {
 	 * @return
 	 */
 	public static String toMessage(final Throwable e) {
-		return toMessage(e, e == null ? "" : e.toString());
+		return Util.toMessage(e);
 	}
-	
+
+	/**
+	 * Convert exception to string value or default value if there is no message in exception 
+	 * @param e
+	 * @param def
+	 * @return
+	 */
 	public static String toMessage(final Throwable e, final String def) {
-
-		if (e == null) {
-			return "";
-		}
-
-		String err = e.getMessage();
-		if (err == null && e.getCause() != null) {
-			err = e.getCause().getMessage();
-		}
-
-		if (err == null) {
-			err = def;
-		}
-
-		if (e instanceof NoClassDefFoundError) {
-			err = String.format("%s : %s", "Class not found", err);
-		}
-		return err;
+		return Util.toMessage(e, def);
 	}
 
+	/**
+	 * Verifies if string is null or empty
+	 * @param val
+	 * @return
+	 */
 	public static boolean isEmpty(final String val) {
 		return StringUtil.isEmpty(val);
 	}
 	
+	public static boolean nonEmpty(final String val) {
+		return !isEmpty(val);
+	}
+	
+	/**
+	 * Verifies if string is HEX data
+	 * @param val
+	 * @return
+	 */
 	public static boolean isHex(final String val) {
 		return StringUtil.isHex(val);
 	}
 
+	/**
+	 * Return time difference from current time
+	 * @param ts
+	 * @return
+	 */
 	public static long timediff(final long ts) {
 		return Util.timediff(ts); 
 	}

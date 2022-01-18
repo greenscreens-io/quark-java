@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2015, 2022 Green Screens Ltd.
+ */
 package io.greenscreens.quark.async;
 
 import java.io.IOException;
@@ -7,6 +10,9 @@ import javax.servlet.AsyncContext;
 import javax.servlet.AsyncEvent;
 import javax.servlet.AsyncListener;
 
+/**
+ * Task for executing async controllers
+ */
 @Vetoed
 public abstract class QuarkAsyncTask implements Runnable, AsyncListener {
 

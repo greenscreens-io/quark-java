@@ -1,8 +1,5 @@
 /*
- * Copyright (C) 2015, 2020  Green Screens Ltd.
- * 
- * https://www.greenscreens.io
- * 
+ * Copyright (C) 2015, 2022 Green Screens Ltd.
  */
 package io.greenscreens.quark.websocket;
 
@@ -12,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Scanner;
 
 import javax.websocket.EncodeException;
@@ -49,7 +47,7 @@ public enum WebsocketUtil {
 
 			final ObjectMapper mapper = JsonDecoder.getJSONEngine();
 
-			if (mapper != null) {
+			if (Objects.nonNull(mapper)) {
 				final IAesKey key = data.getKey();
 				data.setKey(null);
 
@@ -61,7 +59,7 @@ public enum WebsocketUtil {
 			throw new EncodeException(data, e.getMessage(), e);
 		}
 
-		if (response == null) {
+		if (Objects.isNull(response)) {
 			response = "";
 		}
 
@@ -78,9 +76,7 @@ public enum WebsocketUtil {
 	 */
 	private static String encrypt(final String data, final IAesKey crypt) throws IOException {
 
-		if (crypt == null) {
-			return data;
-		}
+		if (Objects.isNull(crypt))return data;
 
 		final byte[] iv = QuarkSecurity.getRandom(crypt.getBlockSize());
 		final String enc = crypt.encrypt(data, iv);
@@ -100,9 +96,7 @@ public enum WebsocketUtil {
 	public static Map<String, String> parseCookies(final List<String> cookies) {
 
 
-		if (cookies == null) {
-			return Collections.emptyMap();
-		}
+		if (Objects.isNull(cookies)) return Collections.emptyMap();
 
 		final Map<String, String> map = new HashMap<>();
 		Scanner scan = null;
@@ -143,7 +137,7 @@ public enum WebsocketUtil {
 		final Map<String, List<String>> map = request.getHeaders();
 		final List<String> params = map.get(key);
 
-		if (params != null && !params.isEmpty()) {
+		if (Objects.nonNull(params) && !params.isEmpty()) {
 			return params.get(0);
 		}
 
@@ -158,7 +152,7 @@ public enum WebsocketUtil {
 	 */
 	public static String findQuery(final HandshakeRequest request, final String name) {
 		final List<String> list = request.getParameterMap().get(name);
-		if (list == null || list.isEmpty()) {
+		if (Objects.isNull(list) || list.isEmpty()) {
 			return null;
 		}
 		return list.get(0);
@@ -177,7 +171,7 @@ public enum WebsocketUtil {
 		String data = WebsocketUtil.findHeader(request, "Accept-Language");
 		Locale locale = Locale.ENGLISH;
 
-		if (data != null) {
+		if (Objects.nonNull(data)) {
 			data = data.split(";")[0];
 			data = data.split(",")[0];
 			locale = new Locale(data);

@@ -1,8 +1,5 @@
 /*
- * Copyright (C) 2015, 2020  Green Screens Ltd.
- * 
- * https://www.greenscreens.io
- * 
+ * Copyright (C) 2015, 2022 Green Screens Ltd.
  */
 package io.greenscreens.quark;
 
@@ -26,6 +23,9 @@ import io.greenscreens.quark.websocket.WebSocketEndpoint;
 import io.greenscreens.quark.websocket.WebSocketService;
 import io.greenscreens.quark.websocket.WebSocketSession;
 
+/**
+ * Custom CDI startup initializator to register injectable resources 
+ */
 @Vetoed
 public class QuarkExtension implements Extension {
 

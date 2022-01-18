@@ -1,14 +1,15 @@
 /*
- * Copyright (C) 2015, 2020  Green Screens Ltd.
- * 
- * https://www.greenscreens.io
- * 
+ * Copyright (C) 2015, 2022 Green Screens Ltd.
  */
 package io.greenscreens.quark.web;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+/**
+ * CDI injectable thread level request/response context.
+ * Used only if Quark is used thorough servlet, not WebSocket 
+ */
 public class QuarkContext {
 
 	private final HttpServletRequest request;	

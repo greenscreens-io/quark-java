@@ -1,8 +1,5 @@
 /*
- * Copyright (C) 2015, 2020  Green Screens Ltd.
- * 
- * https://www.greenscreens.io
- * 
+ * Copyright (C) 2015, 2022 Green Screens Ltd.
  */
 package io.greenscreens.quark.websocket;
 
@@ -68,7 +65,7 @@ public class WebSocketEndpoint {
 	 */
 	public static void broadcast(final IWebSocketResponse message) {
 
-		if (sessions != null) {
+		if (Objects.nonNull(sessions)) {
 
 			LOG.trace("Broadcasting message {}", message);
 
@@ -144,7 +141,7 @@ public class WebSocketEndpoint {
 			LOG.error(msg);
 			LOG.debug(msg, e);
 
-			if (wsession != null) {
+			if (Objects.nonNull(wsession)) {
 				final boolean isCompression = wsession.get(QuarkConstants.QUARK_COMPRESSION);
 				wsession.sendResponse(getErrorResponse(e, message.isBinary(), isCompression), true);
 			}
@@ -268,9 +265,15 @@ public class WebSocketEndpoint {
 		return wsResponse;
 	}
 	
+	/**
+	 * Generate a JSON definition structure of exposed Controllers.
+	 * Used by front Quark Engine to generate JavAScript objects and calls.
+	 * @param session
+	 * @return
+	 */
 	private boolean sendAPI(final WebSocketSession session) {
 		
-		if (beanManagerUtil == null) return false;
+		if (Objects.nonNull(beanManagerUtil)) return false;
 
 		
 		if (!session.contains(QuarkConstants.QUARK_CHALLENGE)) {
@@ -288,7 +291,11 @@ public class WebSocketEndpoint {
 		return true;
 	}
 
-
+	/**
+	 * Process single request
+	 * @param session
+	 * @param message
+	 */
 	private void processSimple(final WebSocketSession session, final WebSocketRequest message) {
 		
 		final WebSocketInstruction cmd = message.getCmd();
@@ -303,6 +310,12 @@ public class WebSocketEndpoint {
 
 	}
 
+	/**
+	 * Process array of requests.
+	 * @param encrypted
+	 * @param session
+	 * @param wsMessage
+	 */
 	private void processData(final boolean encrypted, final WebSocketSession session, final WebSocketRequest wsMessage) {
 
 		final List<ExtJSDirectRequest<JsonNode>> requests = wsMessage.getData();
