@@ -80,20 +80,16 @@ public class QuarkBeanCaller implements Runnable {
 	}
 	
 	/**
-	 * Attach WebSOcket or Servlet context to current thread before controlelr execution 
+	 * Attach WebSOcket or Servlet context to current thread before controller execution 
 	 */
 	protected void attach() {
-		
-		if (!isAsync) return; 
-			
+					
 		if (Objects.nonNull(handler.wsSession)) {
 			QuarkProducer.attachSession(handler.wsSession);
+		} else if (hasAsyncReponse && isVoid) {
+			QuarkProducer.attachAsync(new QuarkAsyncContext(handler));
 		} else {
 			QuarkProducer.attachRequest(QuarkContext.create(handler.httpRequest, handler.httpResponse));
-		}
-
-		if (hasAsyncReponse && isVoid) {
-			QuarkProducer.attachAsync(new QuarkAsyncContext(handler));
 		}
 
 	}
@@ -103,10 +99,10 @@ public class QuarkBeanCaller implements Runnable {
 	 */
 	protected void deattach() {
 		
-		if (!isAsync) return;
-		
 		if (Objects.nonNull(handler.wsSession)) {
 			QuarkProducer.releaseSession();			
+		} else if (hasAsyncReponse && isVoid) {
+			QuarkProducer.releaseAsync();
 		} else {
 			QuarkProducer.releaseRequest();
 		}
