@@ -40,6 +40,7 @@ import io.greenscreens.quark.ext.ExtJSProtected;
 import io.greenscreens.quark.ext.ExtJSResponse;
 import io.greenscreens.quark.ext.annotations.ExtJSDirect;
 import io.greenscreens.quark.security.IAesKey;
+import io.greenscreens.quark.security.Security;
 import io.greenscreens.quark.web.data.WebRequest;
 import io.greenscreens.quark.websocket.WebSocketSession;
 import io.greenscreens.quark.websocket.data.IWebSocketResponse;
@@ -413,8 +414,7 @@ public class QuarkHandler {
 	private IAesKey getAesWs(final ExtEncrypt encrypt) throws IOException {
 		IAesKey aesKey = wsSession.get(QuarkConstants.ENCRYPT_ENGINE);
 		if (Objects.isNull(aesKey)) {
-			aesKey = encrypt.toKey();
-			wsSession.set(QuarkConstants.ENCRYPT_ENGINE, aesKey);
+			aesKey = Security.initWebKey(encrypt.getK());
 		}
 		return aesKey;
 	}
@@ -427,16 +427,23 @@ public class QuarkHandler {
 	 */
 	private IAesKey getAesWeb(final ExtEncrypt encrypt) throws IOException {
 		
-		if (!requireSession) return encrypt.toKey();
+		String publicKey = httpRequest.getHeader(QuarkConstants.WEB_KEY);
+		
+		if (QuarkUtil.isEmpty(publicKey)) {
+			publicKey = ServletUtils.getCookie(httpRequest, QuarkConstants.WEB_KEY);
+		}	
+		
+		final IAesKey webKey = Security.initWebKey(publicKey);
+		if (!requireSession) return webKey;
 		
 		final HttpSession session = getSession();
 		IAesKey aesKey = ServletUtils.get(session, QuarkConstants.ENCRYPT_ENGINE);
 		if (Objects.isNull(aesKey)) {
-			aesKey = encrypt.toKey();
-			ServletUtils.put(session, QuarkConstants.ENCRYPT_ENGINE, aesKey);
+			aesKey = Security.initWebKey(publicKey);
 		}
 		
 		return aesKey;
+
 	}
 
 	/**
@@ -489,7 +496,7 @@ public class QuarkHandler {
 	 */
 	private String decryptData(final ExtEncrypt encrypt) throws IOException {
 		crypt = getAes(encrypt);
-		return QuarkSecurity.decodeRequest(encrypt.getD(), encrypt.getK(), crypt, encrypt.isWebCryptoAPI());
+		return QuarkSecurity.decodeRequest(encrypt.getD(), encrypt.getK(), crypt);
 	}
 
 	/**

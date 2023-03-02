@@ -7,6 +7,7 @@ import java.io.IOException;
 
 import io.greenscreens.quark.security.IAesKey;
 import io.greenscreens.quark.security.Security;
+import io.greenscreens.quark.security.SecurityProvider;
 
 /**
  * Mediator between 2 libs - quark and security
@@ -19,19 +20,18 @@ public enum QuarkSecurity {
 	 */
 	public static void initialize() {
 		SecurityProvider.get();
-		Security.generateRSAKeys();
+		Security.generateAsyncKeys();
 	}
 
 	/**
 	 * Initialize AES from 2x16char hex values.
-	 * Value is split into KEY and IV nda used to creta a key.
+	 * Value is split into KEY and IV and used to create a key.
 	 * @param k
-	 * @param webCryptoAPI
 	 * @return
 	 * @throws IOException
 	 */
-	public static IAesKey initAES(final String k, final boolean webCryptoAPI) throws IOException {
-		return Security.initAES(k, webCryptoAPI);
+	public static IAesKey initAES(final String k) throws IOException {
+		return Security.initAES(k);
 	}
 
 	/**
@@ -39,12 +39,11 @@ public enum QuarkSecurity {
 	 * @param d - encrypted data 
 	 * @param k - encrypted AES key by RSA public key
 	 * @param crypt
-	 * @param webCryptoAPI - when HTTPS is used 
 	 * @return
 	 * @throws IOException
 	 */
-	public static String decodeRequest(final String d, final String k, final IAesKey crypt, final boolean webCryptoAPI) throws IOException {
-		return Security.decodeRequest(d, k, crypt, webCryptoAPI);
+	public static String decodeRequest(final String d, final String k, final IAesKey crypt) throws IOException {
+		return Security.decryptRequest(d, k, crypt);
 	}
 
 	/**
@@ -56,12 +55,12 @@ public enum QuarkSecurity {
 		return Security.getRandom(blockSize);
 	}
 	
-	public static String getRSAPublic(final boolean webCryptoAPI) {
-		return Security.getRSAPublic(webCryptoAPI);
+	public static String getPublic() {
+		return Security.getPublicKey();
 	}
 
-	public static String getRSAVerifier(final boolean webCryptoAPI) {
-		return Security.getRSAVerifier(webCryptoAPI);
+	public static String getVerifier() {
+		return Security.getVerifier();
 	}
 	
 	/**
@@ -70,10 +69,10 @@ public enum QuarkSecurity {
 	 * @return
 	 */
 	public static String signApiKey(final String challenge) {
-		final String keyEnc = Security.getRSAPublic(true);
-		final String keyVer = Security.getRSAVerifier(true);
+		final String keyEnc = Security.getPublicKey();
+		final String keyVer = Security.getVerifier();
 		final String data = String.format("%s%s%s", challenge, keyEnc, keyVer);
-		return Security.sign(data, false, true);
+		return Security.sign(data, false);
 	}
 
 }

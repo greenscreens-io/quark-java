@@ -29,7 +29,6 @@ import io.greenscreens.quark.QuarkUtil;
 import io.greenscreens.quark.cdi.BeanManagerUtil;
 import io.greenscreens.quark.ext.ExtJSDirectRequest;
 import io.greenscreens.quark.ext.ExtJSResponse;
-import io.greenscreens.quark.metric.WebSocketMetric;
 import io.greenscreens.quark.web.QuarkConstants;
 import io.greenscreens.quark.web.QuarkHandler;
 import io.greenscreens.quark.websocket.data.IWebSocketResponse;
@@ -54,8 +53,6 @@ public class WebSocketEndpoint {
 	
 	@Inject
 	Event<WebsocketEvent> webSocketEvent;
-
-	WebSocketMetric metric;
 
 	public WebSocketEndpoint() {
 		super();
@@ -94,7 +91,6 @@ public class WebSocketEndpoint {
 				return;
 			}
 
-			metric.onMessage();
 			LOG.trace("Received message {} \n      for session : {}", message, session);
 			
 			wsession = new WebSocketSession(session);
@@ -159,9 +155,6 @@ public class WebSocketEndpoint {
 	public void onOpen(final Session session, final EndpointConfig config) {
 
 		try {
-
-			metric = new WebSocketMetric();
-			metric.onOpen();
 			
 			LOG.trace("Openning new WebSocket connection : {} ", session);
 			
@@ -227,7 +220,6 @@ public class WebSocketEndpoint {
 
 			QuarkProducer.releaseSession();
 			updateSessions(wsession);
-			metric.onClose();
 		}
 
 	}

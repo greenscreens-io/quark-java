@@ -73,11 +73,10 @@ public final class WebSocketOperations<T> {
 		String data = null;
 
 		if (Objects.isNull(crypt)) {
-			crypt = QuarkSecurity.initAES(encrypt.getK(), encrypt.isWebCryptoAPI());
-			session.set(QuarkConstants.ENCRYPT_ENGINE, crypt);
+			crypt = QuarkSecurity.initAES(encrypt.getK());
 			data = crypt.decrypt(encrypt.getD());
 		} else {
-			data = QuarkSecurity.decodeRequest(encrypt.getD(), encrypt.getK(), crypt, encrypt.isWebCryptoAPI());
+			data = QuarkSecurity.decodeRequest(encrypt.getD(), encrypt.getK(), crypt);
 		}
 
 		return data;

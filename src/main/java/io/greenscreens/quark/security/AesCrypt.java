@@ -8,7 +8,9 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Objects;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -47,11 +49,19 @@ class AesCrypt implements IQuarkKey {
 	}
 		
 	public AesCrypt(final String secretKey) throws IOException {
-		init(secretKey, secretKey);
+		if (Objects.nonNull(secretKey) && secretKey.length() == 32) {
+			init(secretKey.substring(0, 16), secretKey.substring(16, 32));
+		} else {
+			init(secretKey, secretKey);
+		}
 	}
 
 	public AesCrypt(final byte[] secretKey) throws IOException {
-		init(secretKey, secretKey);
+		if (Objects.nonNull(secretKey) && secretKey.length == 32) {
+			init(Arrays.copyOfRange(secretKey, 0, 16), Arrays.copyOfRange(secretKey, 16, 32));
+		} else {
+			init(secretKey, secretKey);
+		}
 	}
 
 	public AesCrypt(final byte[] secretKey, final byte[] vector) throws IOException {
@@ -72,7 +82,7 @@ class AesCrypt implements IQuarkKey {
 
 	private void initSize() {
 		try {
-			cipher = Cipher.getInstance(TRANSFORMATION);
+			cipher = Cipher.getInstance(TRANSFORMATION, SecurityProvider.PROVIDER_NAME);
 			size = cipher.getBlockSize();
 		} catch (Exception e) {
 			final String msg = QuarkUtil.toMessage(e);
@@ -162,7 +172,8 @@ class AesCrypt implements IQuarkKey {
 
 		try {
 			cipher.init(Cipher.ENCRYPT_MODE, keyspec, iv);
-			return cipher.doFinal(padString(text).getBytes(UTF8));
+			return cipher.doFinal(padString(text));
+			//return cipher.doFinal(text.getBytes(UTF8));
 		} catch (InvalidKeyException | InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException e) {
 			throw new IOException(e);
 		}
@@ -199,7 +210,7 @@ class AesCrypt implements IQuarkKey {
 
 		try {
 			cipher.init(Cipher.DECRYPT_MODE, keyspec, iv);
-			return cipher.doFinal(QuarkUtil.hexStringToByteArray(code));
+			return cipher.doFinal(padString(code));
 		} catch (InvalidKeyException | InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException e) {
 			throw new IOException(e);
 		}
@@ -254,8 +265,8 @@ class AesCrypt implements IQuarkKey {
 	 * @param source
 	 * @return
 	 */
-	private String padString(final String source) {
-		return QuarkUtil.padString(source, 16);
+	byte[] padString(final String source) {
+		return QuarkUtil.padString(source, 16).getBytes(UTF8);
 	}
 
 	@Override

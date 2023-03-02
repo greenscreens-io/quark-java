@@ -8,6 +8,8 @@ package io.greenscreens.quark.web;
  */
 public enum QuarkConstants {
     ;
+	
+	public static final String WEB_KEY 				 = "gs-public-key";
     
 	public static final String HTTP_SEESION_STATUS   = "io.greenscreens.quark.status";
    

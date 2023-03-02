@@ -3,13 +3,8 @@
  */
 package io.greenscreens.quark.ext;
 
-import java.io.IOException;
-
 import javax.enterprise.inject.Vetoed;
-
-import io.greenscreens.quark.QuarkSecurity;
 import io.greenscreens.quark.QuarkUtil;
-import io.greenscreens.quark.security.IAesKey;
 
 @Vetoed
 public class ExtEncrypt {
@@ -51,18 +46,10 @@ public class ExtEncrypt {
 		this.t = t;
 	}
 
-	public boolean isWebCryptoAPI() {
-		return "1".equals(t);
-	}
-
 	public boolean isValid() {
 		return !QuarkUtil.isEmpty(d) && !QuarkUtil.isEmpty(k);  
 	}
-	
-	public IAesKey toKey() throws IOException {
-		return QuarkSecurity.initAES(getK(), isWebCryptoAPI());
-	}
-	
+		
 	@Override
 	public String toString() {
 		return "ExtEncrypt [d=" + d + ", k=" + k + ", v=" + v + "]";

@@ -164,19 +164,16 @@ public enum QuarkUtil {
 	 */
 	public static ObjectNode buildAPI(final ArrayNode api, final String challenge) {
 
-		final boolean webCryptoAPI = !StringUtil.isEmpty(challenge);
 		final ObjectNode root = JsonNodeFactory.instance.objectNode();
 		root.set("api", api);
 
-		final String keyEnc = QuarkSecurity.getRSAPublic(webCryptoAPI);
-		final String keyVer = QuarkSecurity.getRSAVerifier(webCryptoAPI);
+		final String keyEnc = QuarkSecurity.getPublic();
+		final String keyVer = QuarkSecurity.getVerifier();
+		final String signature = QuarkSecurity.signApiKey(challenge);
+
 		root.put("keyEnc", keyEnc);
-		root.put("keyVer", keyVer);
-		
-		if (webCryptoAPI) {
-			final String signature = QuarkSecurity.signApiKey(challenge);
-			root.put("signature", signature);
-		}
+		root.put("keyVer", keyVer);		
+		root.put("signature", signature);
 		
 		return root;
 

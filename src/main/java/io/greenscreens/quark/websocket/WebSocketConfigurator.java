@@ -17,6 +17,8 @@ import javax.websocket.server.HandshakeRequest;
 import javax.websocket.server.ServerEndpointConfig;
 
 import io.greenscreens.quark.QuarkUtil;
+import io.greenscreens.quark.security.IAesKey;
+import io.greenscreens.quark.security.Security;
 import io.greenscreens.quark.web.QuarkConstants;
 import io.greenscreens.quark.web.listener.QuarkWebSessionListener;
 
@@ -34,6 +36,11 @@ public class WebSocketConfigurator extends ServerEndpointConfig.Configurator {
 		LANG.add("UTF-8");
 	}
 
+	Map<String, String> coookies(final HandshakeRequest request) {
+		final List<String> cookies = request.getHeaders().get("cookie");
+		return WebsocketUtil.parseCookies(cookies);	
+	}
+	
 	/**
 	 * Find query parameter q, which contains request challenge
 	 * 
@@ -49,6 +56,15 @@ public class WebSocketConfigurator extends ServerEndpointConfig.Configurator {
 	}
 
 	/**
+	 * ECDH browser public key
+	 * @param request
+	 * @return
+	 */
+	String findWebKey(final HandshakeRequest request) {
+		return coookies(request).get(QuarkConstants.WEB_KEY);
+	}
+	
+	/**
 	 * Find session link token based on custom pairing
 	 * 
 	 * @param request
@@ -56,8 +72,7 @@ public class WebSocketConfigurator extends ServerEndpointConfig.Configurator {
 	 */
 	int findSessionToken(final HandshakeRequest request) {
 
-		final List<String> cookies = request.getHeaders().get("cookie");
-		final Map<String, String> map = WebsocketUtil.parseCookies(cookies);
+		final Map<String, String> map = coookies(request);
 
 		String val = map.get("X-Authorization");
 		if (QuarkUtil.nonEmpty(val)) {
@@ -105,9 +120,13 @@ public class WebSocketConfigurator extends ServerEndpointConfig.Configurator {
 		final HttpSession httpSession = findSession(request);
 		final String challenge = findChallenge(request);
 		final String compression = findCompression(request);
+		final String publicKey = findWebKey(request);
+		
 		final Locale locale = WebsocketUtil.getLocale(request);
 		final boolean isCompression = "true".equalsIgnoreCase(compression);
+		final IAesKey aesKey = Security.initWebKey(publicKey);
 		
+		WebSocketStorage.store(sec, QuarkConstants.ENCRYPT_ENGINE, aesKey);
 		WebSocketStorage.store(sec, QuarkConstants.QUARK_PATH, sec.getPath());
 		WebSocketStorage.store(sec, QuarkConstants.QUARK_CHALLENGE, challenge);
 		WebSocketStorage.store(sec, QuarkConstants.QUARK_COMPRESSION, isCompression);

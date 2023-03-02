@@ -12,13 +12,21 @@ import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.Scanner;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -652,6 +660,54 @@ public enum ServletUtils {
 		}
 		
 		return root;
+	}
+	
+
+	public static String getCookie(final HttpServletRequest request, final String key) {
+		if (QuarkUtil.nonEmpty(key) && Objects.nonNull(request.getCookies())) {
+			final List<Cookie> cookies = Arrays.asList(request.getCookies());
+			final Optional<Cookie> cookie = cookies.stream().filter(c -> QuarkConstants.WEB_KEY.equals(c.getName())).findFirst();
+			if (cookie.isPresent()) return cookie.get().getValue();
+		}
+		return null;
+	}	
+
+	/**
+	 * Parse browser received cookie strings
+	 * 
+	 * @param cookies
+	 * @return
+	 */
+	public static Map<String, String> parseCookies(final List<String> cookies) {
+
+
+		if (Objects.isNull(cookies)) return Collections.emptyMap();
+
+		final Map<String, String> map = new HashMap<>();
+		Scanner scan = null;
+		String[] pair = null;
+
+		for (String cookie : cookies) {
+
+			try {
+
+				scan = new Scanner(cookie);
+				scan.useDelimiter(";");
+
+				while (scan.hasNext()) {
+					pair = scan.next().split("=");
+					if (pair.length > 1) {
+						map.put(QuarkUtil.normalize(pair[0]), pair[1]);
+					}
+				}
+
+			} finally {
+				QuarkUtil.close(scan);
+			}
+
+		}
+
+		return Collections.unmodifiableMap(map);
 	}
 	
 	@SuppressWarnings("unchecked")

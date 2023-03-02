@@ -29,11 +29,6 @@ public enum QuarkDecoder {
 	
 	private static final Logger LOG = LoggerFactory.getLogger(QuarkDecoder.class);
 
-	private static boolean isWebCrypto(final HttpServletRequest req) {
-		final String t = req.getParameter("t");
-		return "1".equals(t);
-	}
-
 	/**
 	 * Decode encrypted request from query parameters
 	 * 
@@ -60,7 +55,7 @@ public enum QuarkDecoder {
 	 * @return
 	 * @throws IOException
 	 */
-	public static JsonNode decodeRaw(final String d, final String k, final boolean webCryptoAPI) {
+	public static JsonNode decodeRaw(final String d, final String k) {
 
 		LOG.debug("decodeRaw d: {}, k: {}", d, k);
 
@@ -69,7 +64,7 @@ public enum QuarkDecoder {
 		if (isEncrypted(d, k)) {
 
 			try {
-				final IAesKey crypt = QuarkSecurity.initAES(k, webCryptoAPI);
+				final IAesKey crypt = QuarkSecurity.initAES(k);
 				final String data = crypt.decrypt(d);
 				LOG.debug("decodeRaw decoded : {}", data);
 
@@ -87,12 +82,13 @@ public enum QuarkDecoder {
 	}
 
 	public static JsonNode decodeRawGet(final HttpServletRequest req) {
+
 		final String d = req.getParameter("d");
 		final String k = req.getParameter("k");
 		final String v = req.getParameter("v");
-		final boolean webCryptoAPI = isWebCrypto(req);
-		final JsonNode node = decodeRaw(d, k, webCryptoAPI);
-		if (node != null) ((ObjectNode) node).put("v", v);
+
+		final JsonNode node = decodeRaw(d, k);
+		if (Objects.nonNull(node)) ((ObjectNode) node).put("v", v);
 		return node;
 
 	}
@@ -109,10 +105,9 @@ public enum QuarkDecoder {
 		final String d = map.getParameter("d");
 		final String k = map.getParameter("k");
 		final String v = map.getParameter("v");
-		final boolean webCryptoAPI = "1".equals(map.getParameter("t"));
 
-		final JsonNode node = decodeRaw(d, k, webCryptoAPI);
-		if (node != null) ((ObjectNode) node).put("v", v);
+		final JsonNode node = decodeRaw(d, k);
+		if (Objects.nonNull(node)) ((ObjectNode) node).put("v", v);
 		return node;
 	}
 
@@ -136,11 +131,10 @@ public enum QuarkDecoder {
 			// get node encrypted values
 			final String d = JsonDecoder.getStr(node, "d");
 			final String k = JsonDecoder.getStr(node, "k");
-			final boolean webCryptoAPI = JsonDecoder.getInt(node, "t") == 1;
 			final int v = JsonDecoder.getInt(node, "v");
 			
 			// decode encrypted json
-			node2 = decodeRaw(d, k, webCryptoAPI);
+			node2 = decodeRaw(d, k);
 			if (Objects.nonNull(node2)) node = node2;
 			if (Objects.nonNull(node)) ((ObjectNode) node).put("v", v);
 			
@@ -152,7 +146,7 @@ public enum QuarkDecoder {
 
 		return node;
 	}
-
+	
 	/**
 	 * Check security flag to disable protected controllers
 	 * @param context

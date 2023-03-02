@@ -4,13 +4,10 @@
 package io.greenscreens.quark.websocket;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Scanner;
 
 import javax.websocket.EncodeException;
 import javax.websocket.server.HandshakeRequest;
@@ -25,6 +22,7 @@ import io.greenscreens.quark.websocket.data.IWebSocketResponse;
 import io.greenscreens.quark.websocket.data.WebSocketInstruction;
 import io.greenscreens.quark.JsonDecoder;
 import io.greenscreens.quark.security.IAesKey;
+import io.greenscreens.quark.web.ServletUtils;
 
 /**
  * Internal encoder for WebSocket ExtJS response
@@ -94,35 +92,7 @@ public enum WebsocketUtil {
 	 * @return
 	 */
 	public static Map<String, String> parseCookies(final List<String> cookies) {
-
-
-		if (Objects.isNull(cookies)) return Collections.emptyMap();
-
-		final Map<String, String> map = new HashMap<>();
-		Scanner scan = null;
-		String[] pair = null;
-
-		for (String cookie : cookies) {
-
-			try {
-
-				scan = new Scanner(cookie);
-				scan.useDelimiter(";");
-
-				while (scan.hasNext()) {
-					pair = scan.next().split("=");
-					if (pair.length > 1) {
-						map.put(pair[0], pair[1]);
-					}
-				}
-
-			} finally {
-				QuarkUtil.close(scan);
-			}
-
-		}
-
-		return Collections.unmodifiableMap(map);
+		return ServletUtils.parseCookies(cookies);
 	}
 
 	/**
