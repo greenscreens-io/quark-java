@@ -49,24 +49,21 @@ public class QuarkBeanCaller implements Runnable {
 		this.hasAsyncReponse = hasAsyncResponse();
 	}
 	
+
 	public void call() {
 		
+		final Optional<IDestructibleBeanInstance<?>> bean = getBean();
+		if (bean.isEmpty()) return;		
 		if (isAsync) {
 			handler.getContext();
-			CompletableFuture.runAsync(this);
+			CompletableFuture.runAsync(() -> run(bean.get()));			
 		} else {
-			run();
+			run(bean.get());
 		}
 	}
-
-	@Override
-	public void run() {
-			
-		IDestructibleBeanInstance<?> di = null;
-		
+	
+	void run(final IDestructibleBeanInstance<?> di) {
 		try {
-			attach();
-			di = QuarkEngine.of(BeanManagerUtil.class).getDestructibleBeanInstance(bean);
 			handler.response = call(di);
 		} catch (Exception e) {
 			handler.response = new ExtJSResponse(e, QuarkUtil.toMessage(e));
@@ -76,7 +73,25 @@ public class QuarkBeanCaller implements Runnable {
 			handler.send();
 			deattach();
 		}
-
+	}
+		
+	private Optional<IDestructibleBeanInstance<?>> getBean() {
+		IDestructibleBeanInstance<?> di = null;
+		try {
+			attach();
+			di = QuarkEngine.of(BeanManagerUtil.class).getDestructibleBeanInstance(bean);			
+		} catch (Exception e) {
+			handler.response = new ExtJSResponse(e, QuarkUtil.toMessage(e));
+			QuarkHandlerUtil.printError(e);
+		} finally {
+			if (Objects.isNull(di)) {
+				String msg = String.format("Unknown bean: %s", bean.toString());
+				handler.response = ExtJSResponse.Builder.create().setMessage(msg).build();
+				handler.send();
+				deattach();
+			}			
+		}
+		return Optional.ofNullable(di);
 	}
 	
 	/**
