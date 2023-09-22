@@ -104,7 +104,7 @@ public enum Security {
 	 * @return
 	 * @throws IOException 
 	 */
-	public static IAesKey initAESURL(final String k) throws IOException {
+	public static IAesKey initDerivedKey(final String k) throws IOException {
 
 		final boolean isHex = QuarkUtil.isHex(k);
 		
@@ -122,7 +122,7 @@ public enum Security {
 	public static IAesKey initWebKey(final String publicKey) {
 		if (QuarkUtil.nonEmpty(publicKey)) {
 			try {
-				return Security.initAESURL(publicKey);
+				return Security.initDerivedKey(publicKey);
 			} catch (IOException e) {
 				final String msg = QuarkUtil.toMessage(e);
 				LOG.error(msg);
