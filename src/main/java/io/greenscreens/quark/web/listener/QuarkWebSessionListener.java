@@ -17,6 +17,7 @@ import javax.servlet.http.HttpSessionListener;
 
 import io.greenscreens.quark.web.QuarkConstants;
 import io.greenscreens.quark.web.QuarkHandlerUtil;
+import io.greenscreens.quark.websocket.heartbeat.HeartbeatService;
 
 /**
  * Set session status flags to detect if session is destroyed. 
@@ -34,6 +35,7 @@ public final class QuarkWebSessionListener implements HttpSessionListener, HttpS
 	@Override
 	public void contextDestroyed(final ServletContextEvent event) {
 		QuarkHandlerUtil.releaseValidator();
+		HeartbeatService.terminate();
 	}
 
 	/**
@@ -42,6 +44,7 @@ public final class QuarkWebSessionListener implements HttpSessionListener, HttpS
 	@Override
 	public void contextInitialized(final ServletContextEvent event) {
 		QuarkHandlerUtil.initValidator();
+		HeartbeatService.initialize();
 	}
 	
 	@Override

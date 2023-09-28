@@ -24,6 +24,7 @@ import io.greenscreens.quark.QuarkEngine;
 import io.greenscreens.quark.QuarkUtil;
 import io.greenscreens.quark.websocket.data.IWebSocketResponse;
 import io.greenscreens.quark.websocket.data.WebSocketRequest;
+import io.greenscreens.quark.websocket.heartbeat.HeartbeatService;
 
 
 /**
@@ -51,6 +52,7 @@ public class WebSocketService {
 	@OnOpen
 	public void onOpen(final Session session, final EndpointConfig config) {
 
+		HeartbeatService.registerSession(session);
 		endpoint = Optional.ofNullable(endpoint).orElse(QuarkEngine.getBean(WebSocketEndpoint.class));
 
 		if (Objects.isNull(endpoint)) {
@@ -60,28 +62,39 @@ public class WebSocketService {
 		}
 
 		endpoint.onOpen(session, config);
+		HeartbeatService.registerSession(session);
+		initial(session);
+	}
+
+	@OnClose
+	public void onClose(final Session session, final CloseReason reason) {
+		HeartbeatService.deregisterSession(session);
+		if (Objects.nonNull(endpoint)) endpoint.onClose(session, reason);
+	}
+
+	@OnError
+	public void onError(final Session session, final Throwable t) {
+		if (Objects.nonNull(endpoint)) {
+			endpoint.onError(session, t);			
+		} else {
+			final String msg = QuarkUtil.toMessage(t);
+			LOG.error(msg);
+			LOG.debug(msg, t);			
+		}
+	}
+
+	@OnMessage
+	public void onPongMessage(final PongMessage pong, final Session session) {
+		HeartbeatService.handlePong(session);
+	}
+
+	void initial(final Session session){
 		try {
 			session.getBasicRemote().sendText("{\"msg\":\"WS4IS\"}");
 		} catch (IOException e) {
 			final String msg = QuarkUtil.toMessage(e);
 			LOG.error(msg);
 			LOG.debug(msg, e);
-		}
+		}		
 	}
-
-	@OnClose
-	public void onClose(final Session session, final CloseReason reason) {
-		endpoint.onClose(session, reason);
-	}
-
-	@OnError
-	public void onError(final Session session, final Throwable t) {
-		endpoint.onError(session, t);
-	}
-
-	@OnMessage
-	public void onPongMessage(final PongMessage pong, final Session session) {
-		// not used
-	}
-
 }
