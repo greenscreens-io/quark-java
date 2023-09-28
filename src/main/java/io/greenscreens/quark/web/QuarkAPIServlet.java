@@ -91,7 +91,7 @@ public class QuarkAPIServlet extends QuarkServlet {
 	 * @param paths
 	 */
 	protected void build(final HttpServletRequest request, final HttpServletResponse response, final String[] paths) {
-		final String challenge = request.getHeader("x-time");
+		final String challenge = QuarkUtil.normalize(request.getHeader("x-time"));
 		final BeanManagerUtil bmu = QuarkEngine.getBean(BeanManagerUtil.class);
 		final ArrayNode api = Objects.isNull(paths) ? bmu.getAPI() : bmu.build(paths);
 		final ObjectNode root = QuarkUtil.buildAPI(api, challenge);
