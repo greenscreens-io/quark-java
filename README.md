@@ -18,8 +18,9 @@ Instead of making rest or plain JSON calls, Quark Engine is simplifying this pro
 to call Java Server Classes and methods as they as running locally in the browser without
 programmers worrying about underlying REST/WebSocket data structures.
 
-Supported channels are WebSocket and HTTP/S operations. Data is automatically encrypted
-by the browser Crypto API protecting JSON data structures even TLS/SSL is not used.
+Supported channels are WebSocket and HTTP/S operations. Data can be automatically encrypted
+by the browser Crypto API protecting JSON data structures even TLS/SSL is not used by using
+[CryptoAPI WebAssembly](https://github.com/greenscreens-io/cryptowasm) polyfill.
 
 Base concept is to create Controller classes annotated with Ext* Annotations which will
 instruct CDI engine and provided WebSocket or Servlet what to expose.
@@ -28,12 +29,12 @@ At front-end part, all what is required is to include small JavaScript lib, part
 JavaScript engine is only 7KB in size, and its main purpose is to retrieve signature list of defined exposed
 Java Classes/Methods, then to generate and link internal calling mechanism.
 
-To see how to use it, visit project web page [here](https://www.greenscreens.io/quark).
+To see how to use it, visit project web page [here](https://quark.greenscreens.ltd).
 
 ### Build
 
 1. Clone repository to local drive
-2. Use maven build clean install
+2. Use ```maven build clean install```
 3. Optionally, import demo and io.greenscreens.quark projects into Eclipse
 
-&copy; Green Screens Ltd. 2016 - 2022
+&copy; Green Screens Ltd. 2016 - 2023
