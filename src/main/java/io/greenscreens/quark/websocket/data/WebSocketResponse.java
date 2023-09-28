@@ -1,15 +1,11 @@
 /*
- * Copyright (C) 2015, 2022 Green Screens Ltd.
+ * Copyright (C) 2015, 2023 Green Screens Ltd.
  */
 package io.greenscreens.quark.websocket.data;
 
 import java.io.Serializable;
 
 import javax.enterprise.inject.Vetoed;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
-import io.greenscreens.quark.security.IAesKey;
 import io.greenscreens.quark.web.QuarkConstants;
 
 /**
@@ -28,14 +24,16 @@ public class WebSocketResponse implements IWebSocketResponse, Serializable {
 	private String errMsg;
 	private int errId;
 	private Object data;
-	
-	@JsonIgnore
-	private transient IAesKey key;
-
+		
 	public WebSocketResponse(final WebSocketInstruction cmd) {
 		this.cmd = cmd;
 	}
 
+	public WebSocketResponse(final Object data) {
+		this.cmd = WebSocketInstruction.DATA;
+		this.data = data;
+	}
+	
 	@Override
 	public final String getType() {
 		return type;
@@ -80,21 +78,25 @@ public class WebSocketResponse implements IWebSocketResponse, Serializable {
 	public final WebSocketInstruction getCmd() {
 		return cmd;
 	}
-
-	@Override
-	public IAesKey getKey() {
-		return key;
-	}
-
-	@Override
-	public void setKey(final IAesKey key) {
-		this.key = key;
-	}
-
+	
 	@Override
 	public String toString() {
-		return "WebSocketResponse [type=" + type + ", cmd=" + cmd + ", errMsg=" + errMsg + ", errId=" + errId
-				+ ", data=" + data + ", key=" + key + "]";
+		return "WebSocketResponse [type=" + type + ", cmd=" + cmd + ", errMsg=" + errMsg + ", errId=" + errId + ", data=" + data + "]";
 	}
 
+	public static IWebSocketResponse asData(final Object data) {
+		return new WebSocketResponse(data);
+	}
+	
+	public static IWebSocketResponse asData() {
+		return create(WebSocketInstruction.DATA);
+	}
+
+	public static IWebSocketResponse asError() {
+		return create(WebSocketInstruction.ERR);
+	}
+	
+	public static IWebSocketResponse create(final WebSocketInstruction cmd) {
+		return new WebSocketResponse(cmd);
+	}
 }

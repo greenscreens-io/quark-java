@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015, 2022 Green Screens Ltd.
+ * Copyright (C) 2015, 2023 Green Screens Ltd.
  */
 package io.greenscreens.quark.ext.annotations;
 
@@ -23,9 +23,6 @@ public @interface ExtJSMethod {
 
 	@Nonbinding
 	boolean formHandler() default false;
-
-	@Nonbinding
-	boolean encrypt() default true;
 
 	@Nonbinding
 	boolean validate() default false;

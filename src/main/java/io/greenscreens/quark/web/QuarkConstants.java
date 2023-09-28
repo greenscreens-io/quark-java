@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015, 2022 Green Screens Ltd.
+ * Copyright (C) 2015, 2023 Green Screens Ltd.
  */
 package io.greenscreens.quark.web;
 
@@ -14,13 +14,12 @@ public enum QuarkConstants {
 	public static final String HTTP_SEESION_STATUS   = "io.greenscreens.quark.status";
    
     public static final String ENCRYPT_ENGINE 		 = "io.greenscreens.quark.encrypt_engine";
-    public static final String ENCRYPT_CHANNEL  	 = "io.greenscreens.quark.encrypt_channel";
     
     public static final String QUARK_SESSION     	 = "io.greenscreens.quark.session";
     public static final String QUARK_PATH        	 = "io.greenscreens.quark.path";
     public static final String QUARK_CHALLENGE		 = "io.greenscreens.quark.challenge";
     public static final String QUARK_COMPRESSION 	 = "io.greenscreens.quark.compression";
-    public static final String QUARK_SUBPROTOCOL 	 = "ws4is";
+    public static final String QUARK_SUBPROTOCOL 	 = "quark";
     
     public static final String MESSAGE_TYPE 		 = "ws";
     

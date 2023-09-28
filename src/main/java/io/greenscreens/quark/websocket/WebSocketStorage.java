@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015, 2022 Green Screens Ltd.
+ * Copyright (C) 2015, 2023 Green Screens Ltd.
  */
 package io.greenscreens.quark.websocket;
 
@@ -99,7 +99,7 @@ public enum WebSocketStorage {
 	 * @return
 	 */
 	public static <T> T remove(final EndpointConfig sec, final String key) {
-		final T obj = get(sec, key);
+		final T obj = get(sec, key, null);
 		if (Objects.nonNull(key)) {
 			sec.getUserProperties().remove(key);
 		}
@@ -114,7 +114,11 @@ public enum WebSocketStorage {
 	 * @return
 	 */
 	public static <T> T get(final EndpointConfig sec, final Class<T> key) {
-		if (Objects.nonNull(key)) return get(sec, key.getCanonicalName());
+		return get(sec, key, null);
+	}
+	
+	public static <T> T get(final EndpointConfig sec, final Class<T> key, final T defaults) {
+		if (Objects.nonNull(key)) return get(sec, key.getCanonicalName(), defaults);
 		return null;
 	}
 	
@@ -126,10 +130,14 @@ public enum WebSocketStorage {
 	 * @return
 	 */
 	public static <T> T get(final EndpointConfig sec, final String key) {
+		return get(sec, key, null);
+	}
+	
+	public static <T> T get(final EndpointConfig sec, final String key, final T defaults) {
 		if (Objects.nonNull(key)) {
 			return (T) sec.getUserProperties().get(key);
 		}
-		return  null;
+		return  defaults;
 	}
 	
 	/**

@@ -1,9 +1,8 @@
 /*
- * Copyright (C) 2015, 2022 Green Screens Ltd.
+ * Copyright (C) 2015, 2023 Green Screens Ltd.
  */
 package io.greenscreens.quark.websocket;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.util.Objects;
 import java.util.Optional;
@@ -56,7 +55,7 @@ public class WebSocketService {
 
 		if (Objects.isNull(endpoint)) {
 			LOG.warn("WebSocketEndpoint not injected. If running in servlet only container, CDI framework is needed.");
-			close(session);
+			QuarkUtil.close(session);
 			return;
 		}
 
@@ -83,23 +82,6 @@ public class WebSocketService {
 	@OnMessage
 	public void onPongMessage(final PongMessage pong, final Session session) {
 		// not used
-		final String pongData = QuarkUtil.bufferToHex(pong.getApplicationData());
-		LOG.info("Pong Data : {}", pongData);
-		
-	}
-
-	private void close(Closeable closeable) {
-
-		if (Objects.isNull(closeable)) return;
-
-		try {
-			closeable.close();
-		} catch (IOException e) {
-			final String msg = QuarkUtil.toMessage(e);
-			LOG.error(msg);
-			LOG.debug(msg, e);
-		}
-
 	}
 
 }

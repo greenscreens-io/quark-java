@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015, 2022 Green Screens Ltd.
+ * Copyright (C) 2015, 2023 Green Screens Ltd.
  */
 package io.greenscreens.quark.websocket;
 
@@ -35,7 +35,6 @@ import io.greenscreens.quark.websocket.data.IWebSocketResponse;
 import io.greenscreens.quark.websocket.data.WebSocketInstruction;
 import io.greenscreens.quark.websocket.data.WebSocketRequest;
 import io.greenscreens.quark.websocket.data.WebSocketResponse;
-import io.greenscreens.quark.websocket.data.WebSocketResponseFactory;
 
 /**
  * Internal CDI injectable object used by WebSocket endpoint instance. Used to
@@ -81,6 +80,7 @@ public class WebSocketEndpoint {
 	/*
 	 * PUBLIC SECTION
 	 */
+	
 	public void onMessage(final WebSocketRequest message, final Session session) {
 
 		WebSocketSession wsession = null;
@@ -104,36 +104,9 @@ public class WebSocketEndpoint {
 			
 			if (cmd.isSimple()) {
 				processSimple(wsession, message);
-			} else if (cmd == WebSocketInstruction.ENC) {
-				processData(true, wsession, message);
-			} else if (cmd == WebSocketInstruction.DATA) {
-				processData(false, wsession, message);
 			} else {
-				LOG.warn("Invalid message instruction >> {}", message);
-			}
-			
-			// ECLIPSE COMPILER ISSUE
-			/* 
-			switch (cmd) {
-			case WELCO:
-			case API:
-			case ECHO:
-			case PING:
-			case BYE:
-				processSimple(wsession, message);
-				break;
-			case ENC:
-				processData(true, wsession, message);
-				break;
-			case DATA:
-				processData(false, wsession, message);
-				break;
-			case ERR:
-				break;
-			default:
-				break;
-			}
-			*/
+				processData(wsession, message);
+			} 
 
 		} catch (Exception e) {
 
@@ -142,8 +115,7 @@ public class WebSocketEndpoint {
 			LOG.debug(msg, e);
 
 			if (Objects.nonNull(wsession)) {
-				final boolean isCompression = wsession.get(QuarkConstants.QUARK_COMPRESSION);
-				wsession.sendResponse(getErrorResponse(e, message.isBinary(), isCompression), true);
+				wsession.sendResponse(getErrorResponse(e), true);
 			}
 
 		} finally {
@@ -255,10 +227,9 @@ public class WebSocketEndpoint {
 		}
 	}
 
-	private IWebSocketResponse getErrorResponse(final Exception exception, final boolean isBinary, final boolean isCompression) {
-
+	private IWebSocketResponse getErrorResponse(final Exception exception) {
 		final ExtJSResponse response = new ExtJSResponse(exception, exception.getMessage());
-		final IWebSocketResponse wsResponse = WebSocketResponseFactory.createAsError(isBinary, isCompression);
+		final IWebSocketResponse wsResponse = WebSocketResponse.asError();
 		wsResponse.setData(response);
 		wsResponse.setErrMsg(exception.getMessage());
 		return wsResponse;
@@ -302,9 +273,8 @@ public class WebSocketEndpoint {
 		if (WebSocketInstruction.API == cmd && beanManagerUtil != null) {
 			sendAPI(session);
 		}
-
-		final boolean isCompression = session.get(QuarkConstants.QUARK_COMPRESSION);		
-		final IWebSocketResponse response = WebSocketResponseFactory.create(cmd, message.isBinary(), isCompression);
+			
+		final IWebSocketResponse response = WebSocketResponse.create(cmd);
 		session.sendResponse(response, true);	
 
 	}
@@ -315,16 +285,16 @@ public class WebSocketEndpoint {
 	 * @param session
 	 * @param wsMessage
 	 */
-	private void processData(final boolean encrypted, final WebSocketSession session, final WebSocketRequest wsMessage) {
+	private void processData(final WebSocketSession session, final WebSocketRequest wsMessage) {
 
 		final List<ExtJSDirectRequest<JsonNode>> requests = wsMessage.getData();
 		
 		for (final ExtJSDirectRequest<JsonNode> request : requests) {
-			QuarkHandler.call(session, request, wsMessage.isBinary(), encrypted);
+			QuarkHandler.call(session, request);
 		}
 		
 	}
-	
+
 	public static final class CloseCodeImpl implements CloseCode {
 		@Override
 		public int getCode() {

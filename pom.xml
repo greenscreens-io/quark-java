@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>io.greenscreens</groupId>
   <artifactId>quark</artifactId>
-  <version>4.1.0</version>
+  <version>5.0.0</version>
   <name>Green Screens Quark Engine</name>
   <url>https://www.greenscreens.io/quark</url>
 
@@ -43,8 +43,8 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<maven.compiler.source>1.8</maven.compiler.source>
-		<maven.compiler.target>1.8</maven.compiler.target>
+		<maven.compiler.source>11</maven.compiler.source>
+		<maven.compiler.target>11</maven.compiler.target>
 		<maven.compiler.version>3.8.1</maven.compiler.version>
 		<maven.eclipse.plugin>2.10</maven.eclipse.plugin>
 		<maven.install.plugin>3.0.0-M1</maven.install.plugin>
@@ -53,7 +53,7 @@
 		<maven.war.version>3.3.1</maven.war.version>
 		<maven.proguard.version>2.3.1</maven.proguard.version>
 		<jackson.version>2.14.2</jackson.version>
-		<bcastle.version>1.72</bcastle.version>
+		<bcastle.version>1.76</bcastle.version>
 	</properties>
 
 	<build>

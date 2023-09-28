@@ -1,18 +1,7 @@
 /*
- * Copyright (C) 2015, 2022 Green Screens Ltd.
+ * Copyright (C) 2015, 2023 Green Screens Ltd.
  */
 package io.greenscreens.quark;
-
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.StringWriter;
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -102,101 +91,6 @@ enum Util {
 		}
 		return (T) object;
 	}
-
-	/**
-	 * Decompress GZIP byte buffer into string
-	 * @param bytes
-	 * @return
-	 * @throws Exception
-	 */
-	public static String ungzip(final ByteBuffer bytes) throws Exception {
-		
-		String result = null;
-		StringWriter sw = null;
-		InputStream bis = null;
-		InputStream gis = null;
-		InputStreamReader isr = null;
-		
-		try {
-			sw = new StringWriter();
-			bis = new ByteBufferInputStream(bytes);
-			gis = new GZIPInputStream(bis);
-			isr = new InputStreamReader(gis, StandardCharsets.UTF_8);
-
-			final char[] chars = new char[1024];
-			for (int len; (len = isr.read(chars)) > 0; ) {
-				sw.write(chars, 0, len);
-			}
-			sw.flush();
-			result = sw.toString();
-		} finally {
-			close(isr);
-			close(sw);
-		}
-        
-        return result;
-    }
-	
-	/**
-	 * Decompress GZIP byte array into string
-	 * @param bytes
-	 * @return
-	 * @throws Exception
-	 */
-	public static String ungzip(final byte[] bytes) throws Exception {
-		
-		String result = null;
-		StringWriter sw = null;
-		ByteArrayInputStream bis = null;
-		GZIPInputStream gis = null;
-		InputStreamReader isr = null;
-		
-		
-		try {
-			sw = new StringWriter();
-			bis = new ByteArrayInputStream(bytes);
-			gis = new GZIPInputStream(bis);
-			isr = new InputStreamReader(gis, StandardCharsets.UTF_8);
-
-			final char[] chars = new char[1024];
-			for (int len; (len = isr.read(chars)) > 0; ) {
-				sw.write(chars, 0, len);
-			}
-			sw.flush();
-			result = sw.toString();
-		} finally {
-			close(isr);
-			close(sw);
-		}
-        
-        return result;
-    }
-
-	/**
-	 * Compress string data into byte array 
-	 * @param s
-	 * @return
-	 * @throws Exception
-	 */
-    public static byte[] gzip(final String s) throws Exception {
-
-    	final ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    	
-        GZIPOutputStream gzip = null;
-        OutputStreamWriter osw = null;
-        
-        try {
-        	gzip = new GZIPOutputStream(bos);
-        	osw = new OutputStreamWriter(gzip, StandardCharsets.UTF_8);
-        	osw.write(s);
-        	osw.flush();        	
-        } finally {
-			close(osw);
-			close(gzip);
-		}
-        
-        return bos.toByteArray();
-    }
 
 	/**
 	 * Close any closable objects like stream

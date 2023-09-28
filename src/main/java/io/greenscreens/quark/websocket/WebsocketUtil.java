@@ -1,35 +1,54 @@
 /*
- * Copyright (C) 2015, 2022 Green Screens Ltd.
+ * Copyright (C) 2015, 2023 Green Screens Ltd.
  */
 package io.greenscreens.quark.websocket;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 
 import javax.websocket.EncodeException;
+import javax.websocket.EndpointConfig;
 import javax.websocket.server.HandshakeRequest;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import io.greenscreens.quark.QuarkSecurity;
-import io.greenscreens.quark.QuarkUtil;
-import io.greenscreens.quark.websocket.data.IWebSocketResponse;
-import io.greenscreens.quark.websocket.data.WebSocketInstruction;
+import io.greenscreens.quark.IQuarkKey;
 import io.greenscreens.quark.JsonDecoder;
-import io.greenscreens.quark.security.IAesKey;
+import io.greenscreens.quark.QuarkUtil;
+import io.greenscreens.quark.web.QuarkConstants;
 import io.greenscreens.quark.web.ServletUtils;
+import io.greenscreens.quark.websocket.data.IWebSocketResponse;
+import io.greenscreens.quark.websocket.data.WebSocketRequest;
 
 /**
  * Internal encoder for WebSocket ExtJS response
  */
 public enum WebsocketUtil {
 	;
-
+	
+	final static IQuarkKey key(final EndpointConfig config) throws IOException {
+		return WebSocketStorage.get(config, QuarkConstants.ENCRYPT_ENGINE, null);		
+	}
+	
+	final static boolean isCompression(final EndpointConfig config) throws IOException {
+		return WebSocketStorage.get(config, QuarkConstants.QUARK_COMPRESSION, false);		
+	}
+	
+	final static WebSocketRequest decode(final ByteBuffer buffer) throws IOException {
+		final String message = new String(buffer.array(), StandardCharsets.UTF_8);
+		return decode(message);
+	}
+	
+	final static WebSocketRequest decode(final String message) throws IOException {
+		final JsonDecoder<WebSocketRequest> jd = new JsonDecoder<>(WebSocketRequest.class, message);
+		return jd.getObject();
+	}
+	
 	/**
 	 * Encrypt message for websocket response
 	 * 
@@ -42,47 +61,24 @@ public enum WebsocketUtil {
 		String response = null;
 
 		try {
-
 			final ObjectMapper mapper = JsonDecoder.getJSONEngine();
-
-			if (Objects.nonNull(mapper)) {
-				final IAesKey key = data.getKey();
-				data.setKey(null);
-
-				response = mapper.writeValueAsString(data);
-				response = encrypt(response, key);
-			}
-
+			response = mapper.writeValueAsString(data);
 		} catch (Exception e) {
 			throw new EncodeException(data, e.getMessage(), e);
 		}
 
-		if (Objects.isNull(response)) {
-			response = "";
-		}
-
-		return response;
+		return QuarkUtil.normalize(response);
 	}
 
-	/**
-	 * Encrypt data with AES for encrypted response
-	 * 
-	 * @param data
-	 * @param crypt
-	 * @return
-	 * @throws Exception
-	 */
-	private static String encrypt(final String data, final IAesKey crypt) throws IOException {
+	static boolean isJson(final String message) {
 
-		if (Objects.isNull(crypt))return data;
+		boolean sts = false;
 
-		final byte[] iv = QuarkSecurity.getRandom(crypt.getBlockSize());
-		final String enc = crypt.encrypt(data, iv);
-		final ObjectNode node = JsonNodeFactory.instance.objectNode();
-		node.put("iv", QuarkUtil.bytesToHex(iv));
-		node.put("d", enc);
-		node.put("cmd", WebSocketInstruction.ENC.toString());
-		return JsonDecoder.getJSONEngine().writeValueAsString(node);
+		if (QuarkUtil.nonEmpty(message)) {
+			sts = message.trim().startsWith("{") && message.trim().endsWith("}");
+		}
+
+		return sts;
 	}
 
 	/**

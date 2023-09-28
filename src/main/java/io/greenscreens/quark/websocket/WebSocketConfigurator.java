@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015, 2022 Green Screens Ltd.
+ * Copyright (C) 2015, 2023 Green Screens Ltd.
  */
 package io.greenscreens.quark.websocket;
 
@@ -16,8 +16,8 @@ import javax.websocket.HandshakeResponse;
 import javax.websocket.server.HandshakeRequest;
 import javax.websocket.server.ServerEndpointConfig;
 
+import io.greenscreens.quark.IQuarkKey;
 import io.greenscreens.quark.QuarkUtil;
-import io.greenscreens.quark.security.IAesKey;
 import io.greenscreens.quark.security.Security;
 import io.greenscreens.quark.web.QuarkConstants;
 import io.greenscreens.quark.web.listener.QuarkWebSessionListener;
@@ -110,45 +110,29 @@ public class WebSocketConfigurator extends ServerEndpointConfig.Configurator {
 	 * modifyHandshake() is called before getEndpointInstance()!
 	 */
 	@Override
-	public void modifyHandshake(final ServerEndpointConfig sec, final HandshakeRequest request,
-			final HandshakeResponse response) {
-
-		super.modifyHandshake(sec, request, response);
-
-		response.getHeaders().put("Accept-Language", LANG);
+	public void modifyHandshake(final ServerEndpointConfig sec, final HandshakeRequest request,	final HandshakeResponse response) {
 
 		final HttpSession httpSession = findSession(request);
 		final String challenge = findChallenge(request);
 		final String compression = findCompression(request);
 		final String publicKey = findWebKey(request);
-		
+
 		final Locale locale = WebsocketUtil.getLocale(request);
 		final boolean isCompression = "true".equalsIgnoreCase(compression);
-		final IAesKey aesKey = Security.initWebKey(publicKey);
+		final IQuarkKey aesKey = Security.initWebKey(publicKey);
+
+		super.modifyHandshake(sec, request, response);
+		response.getHeaders().put("Accept-Language", LANG);	
 		
 		WebSocketStorage.store(sec, QuarkConstants.ENCRYPT_ENGINE, aesKey);
 		WebSocketStorage.store(sec, QuarkConstants.QUARK_PATH, sec.getPath());
 		WebSocketStorage.store(sec, QuarkConstants.QUARK_CHALLENGE, challenge);
 		WebSocketStorage.store(sec, QuarkConstants.QUARK_COMPRESSION, isCompression);
-		WebSocketStorage.store(sec, Locale.class.getCanonicalName(), locale);
-		WebSocketStorage.store(sec, HttpSession.class.getCanonicalName(), httpSession);
+		WebSocketStorage.store(sec, Locale.class, locale);
+		WebSocketStorage.store(sec, HttpSession.class, httpSession);
 		if (Objects.nonNull(httpSession)) {
-			WebSocketStorage.store(sec, ServletContext.class.getCanonicalName(), httpSession.getServletContext());
+			WebSocketStorage.store(sec, ServletContext.class, httpSession.getServletContext());
 		}
 	}
 	
-	/**
-	 * Store data to websocket user data
-	 * 
-	 * @param sec
-	 * @param key
-	 * @param value
-	 */
-	public void store(final ServerEndpointConfig sec, final String key, final Object value) {
-		if (QuarkUtil.nonEmpty(key)  && Objects.nonNull(value)) {
-			sec.getUserProperties().put(key, value);
-		}
-	}
-
-
 }

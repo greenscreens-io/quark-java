@@ -1,11 +1,8 @@
 /*
- * Copyright (C) 2015, 2022 Green Screens Ltd.
+ * Copyright (C) 2015, 2023 Green Screens Ltd.
  */
 package io.greenscreens.quark;
 
-import java.io.IOException;
-
-import io.greenscreens.quark.security.IAesKey;
 import io.greenscreens.quark.security.Security;
 import io.greenscreens.quark.security.SecurityProvider;
 
@@ -23,29 +20,10 @@ public enum QuarkSecurity {
 		Security.generateAsyncKeys();
 	}
 
-	/**
-	 * Initialize AES from 2x16char hex values.
-	 * Value is split into KEY and IV and used to create a key.
-	 * @param k
-	 * @return
-	 * @throws IOException
-	 */
-	public static IAesKey initAES(final String k) throws IOException {
-		return Security.initAES(k);
+	public static IQuarkKey initWebKey(final String publicKey) {
+		return Security.initWebKey(publicKey);
 	}
-
-	/**
-	 * Decode Quark Web API encrypted request
-	 * @param d - encrypted data 
-	 * @param k - encrypted AES key by RSA public key
-	 * @param crypt
-	 * @return
-	 * @throws IOException
-	 */
-	public static String decodeRequest(final String d, final String k, final IAesKey crypt) throws IOException {
-		return Security.decryptRequest(d, k, crypt);
-	}
-
+	
 	/**
 	 * Generate random bytes of a given size
 	 * @param blockSize
@@ -74,5 +52,5 @@ public enum QuarkSecurity {
 		final String data = String.format("%s%s%s", challenge, keyEnc, keyVer);
 		return Security.sign(data, false);
 	}
-
+	
 }

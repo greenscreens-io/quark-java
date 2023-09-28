@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015, 2022 Green Screens Ltd.
+ * Copyright (C) 2015, 2023 Green Screens Ltd.
  */
 package io.greenscreens.quark.web;
 
@@ -16,6 +16,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import io.greenscreens.quark.QuarkUtil;
 import io.greenscreens.quark.QuarkEngine;
+import io.greenscreens.quark.QuarkStream;
 import io.greenscreens.quark.cdi.BeanManagerUtil;
 
 /**
@@ -37,14 +38,28 @@ public class QuarkAPIServlet extends QuarkServlet {
 		build(request, response, null);
 	}
 
+	protected boolean isScript(final HttpServletRequest request) {
+		final String path = request.getServletPath();
+		return path.contains(".js");
+	}
+
+	protected boolean isModule(final HttpServletRequest request) {
+		final String path = request.getServletPath();
+		return path.contains(".mjs");
+	}
+	
+	protected boolean isEngine(final HttpServletRequest request) {
+		return isScript(request) || isModule(request);
+	}
+	
 	protected void script(final HttpServletRequest request, final HttpServletResponse response) throws IOException {
 		response.setContentType("text/javascript");
 		final ClassLoader loader = QuarkAPIServlet.class.getClassLoader();
-		final boolean esm =  "true".equalsIgnoreCase(request.getParameter("esm"));
+		final boolean esm =  isModule(request);
 		final String resource = getScript(esm);
 		final InputStream inputStream = loader.getResourceAsStream(resource);
 		if (Objects.nonNull(inputStream)) {
-			ServletUtils.stream(inputStream, response.getOutputStream());
+			QuarkStream.stream(inputStream, response.getOutputStream());
 			inputStream.close();					
 		}
 	}
@@ -55,7 +70,7 @@ public class QuarkAPIServlet extends QuarkServlet {
 		final String resource = getMap(request);
 		final InputStream inputStream = loader.getResourceAsStream(resource);
 		if (Objects.nonNull(inputStream)) {
-			ServletUtils.stream(inputStream, response.getOutputStream());
+			QuarkStream.stream(inputStream, response.getOutputStream());
 			inputStream.close();					
 		}
 	}
@@ -66,7 +81,7 @@ public class QuarkAPIServlet extends QuarkServlet {
 	}
 
 	private String getScript(final boolean esm) {
-		return esm ? "quark.esm.min.js" : "quark.min.js";
+		return esm ? "io.greenscreens.quark.esm.min.js" : "io.greenscreens.quark.min.js";
 	}
 	
 	/**
@@ -80,12 +95,14 @@ public class QuarkAPIServlet extends QuarkServlet {
 		final BeanManagerUtil bmu = QuarkEngine.getBean(BeanManagerUtil.class);
 		final ArrayNode api = Objects.isNull(paths) ? bmu.getAPI() : bmu.build(paths);
 		final ObjectNode root = QuarkUtil.buildAPI(api, challenge);
-		ServletUtils.sendResponse(response, root);
+		final boolean compress = ServletUtils.supportGzip(request);
+		ServletUtils.sendResponse(response, root, compress);
 	}
 	
-	protected void services(final HttpServletResponse response) {
+	protected void services(final HttpServletRequest request, final HttpServletResponse response) {
 		final List<String> list = QuarkEngine.getBean(BeanManagerUtil.class).services();
-		ServletUtils.sendResponse(response, list);
+		final boolean compress = ServletUtils.supportGzip(request);
+		ServletUtils.sendResponse(response, list, compress);
 	}
 	
 	/**
@@ -97,9 +114,9 @@ public class QuarkAPIServlet extends QuarkServlet {
 	}
 
 	@Override
-	protected void onDelete(HttpServletRequest request, HttpServletResponse response) throws IOException {
+	protected void onDelete(final HttpServletRequest request, final HttpServletResponse response) throws IOException {
 		ServletUtils.remove(request.getSession(false), QuarkConstants.ENCRYPT_ENGINE);
-		ServletUtils.writeResponse(response, "{}");
+		ServletUtils.writeResponse(response, "{}", false);
 	}
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015, 2022 Green Screens Ltd.
+ * Copyright (C) 2015, 2023 Green Screens Ltd.
  */
 package io.greenscreens.quark;
 
@@ -13,7 +13,7 @@ import javax.enterprise.inject.Vetoed;
  * Used internally by compression tools
  */
 @Vetoed
-class ByteBufferInputStream extends InputStream {
+public class ByteBufferInputStream extends InputStream {
 
     ByteBuffer buf;
 

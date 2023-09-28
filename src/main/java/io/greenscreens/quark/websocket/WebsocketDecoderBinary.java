@@ -1,8 +1,9 @@
 /*
- * Copyright (C) 2015, 2022 Green Screens Ltd.
+ * Copyright (C) 2015, 2023 Green Screens Ltd.
  */
 package io.greenscreens.quark.websocket;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import javax.enterprise.inject.Vetoed;
@@ -13,7 +14,8 @@ import javax.websocket.EndpointConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.greenscreens.quark.JsonDecoder;
+import io.greenscreens.quark.IQuarkKey;
+import io.greenscreens.quark.QuarkStream;
 import io.greenscreens.quark.QuarkUtil;
 import io.greenscreens.quark.websocket.data.WebSocketRequest;
 
@@ -24,45 +26,36 @@ import io.greenscreens.quark.websocket.data.WebSocketRequest;
 public class WebsocketDecoderBinary implements Decoder.Binary<WebSocketRequest> {
 
 	private static final Logger LOG = LoggerFactory.getLogger(WebsocketDecoderBinary.class);
+	EndpointConfig config = null;
 
-	
 	@Override
-	public boolean willDecode(final ByteBuffer buff) {
-		return true;
+	public void init(final EndpointConfig cfg) {
+		config = cfg;
 	}
-	
-	
-	@Override
-	public WebSocketRequest decode(final ByteBuffer buffer) throws DecodeException {
-
-		String message = null;
-		WebSocketRequest wsMessage = null;
-
-		try {
-			message = QuarkUtil.ungzip(buffer);
-			final JsonDecoder<WebSocketRequest> jd = new JsonDecoder<>(WebSocketRequest.class, message);
-			wsMessage = jd.getObject();
-			wsMessage.setBinary(true);			
-		} catch (Exception e) {
-			final String msg = QuarkUtil.toMessage(e);
-			LOG.error(msg);
-			LOG.debug(msg, e);
-			throw new DecodeException(message, msg, e);
-		}
-
-		return wsMessage;
-	}
-
 
 	@Override
 	public void destroy() {
-		// not used
+		config = null;
 	}
 
 	@Override
-	public void init(final EndpointConfig arg0) {
-		// not used
+	public boolean willDecode(final ByteBuffer buffer) {
+		return QuarkStream.isGSStream(buffer);
 	}
 
-
+	@Override
+	public WebSocketRequest decode(final ByteBuffer buffer) throws DecodeException {		
+		try {
+			final IQuarkKey key = WebsocketUtil.key(config);
+			final ByteBuffer data = QuarkStream.unwrap(buffer, key);
+			final String message = QuarkStream.asString(data);
+			return WebsocketUtil.decode(message);
+		} catch (IOException e) {
+			final String msg = QuarkUtil.toMessage(e);
+			LOG.error(msg);
+			LOG.debug(msg, e);
+			throw new DecodeException(buffer, msg, e);
+		}
+	}
+	
 }

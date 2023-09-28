@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015, 2022 Green Screens Ltd.
+ * Copyright (C) 2015, 2023 Green Screens Ltd.
  */
 package io.greenscreens.quark.web;
 
@@ -24,11 +24,7 @@ public class QuarkServlet extends HttpServlet {
 	protected Part getPart(final HttpServletRequest request, final String name) throws IOException {		
 		return ServletUtils.getPart(request, name);
 	}
-	
-	protected MultipartMap getMultipartMap(final HttpServletRequest request) throws IOException {
-		return ServletUtils.getPut(request, this);
-	}
-	
+
 	protected void updateHeaders(final HttpServletResponse response) {
 		response.setHeader("X-Content-Type-Options", "'nosniff'");
 	}

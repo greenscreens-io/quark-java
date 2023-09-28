@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015, 2022 Green Screens Ltd.
+ * Copyright (C) 2015, 2023 Green Screens Ltd.
  */
 package io.greenscreens.quark.websocket;
 
@@ -17,12 +17,12 @@ import io.greenscreens.quark.websocket.data.WebSocketResponse;
 public class WebsocketEncoder implements Encoder.Text<WebSocketResponse> {
 
 	@Override
-	public final void destroy() {
+	public void init(final EndpointConfig arg0) {
 		// not used
 	}
 
 	@Override
-	public final void init(final EndpointConfig arg0) {
+	public void destroy() {
 		// not used
 	}
 

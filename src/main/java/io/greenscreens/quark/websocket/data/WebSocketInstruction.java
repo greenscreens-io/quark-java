@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015, 2022 Green Screens Ltd.
+ * Copyright (C) 2015, 2023 Green Screens Ltd.
  */
 package io.greenscreens.quark.websocket.data;
 
@@ -15,9 +15,7 @@ public enum WebSocketInstruction {
     BYE("bye"), 
     ERR("err"), 
     DATA("data"),
-    ENC("enc"),
     INS("ins"), // internal instruction
-    ECHO("echo"),
     PING("ping")
 	;
 
@@ -39,6 +37,6 @@ public enum WebSocketInstruction {
 
 	// fix for eclipse compiler - switch issue
 	public boolean isSimple() {
-		return this == WELCO || this == API || this == ECHO || this == PING || this == BYE;
+		return this == WELCO || this == API || this == PING || this == BYE;
 	}
 }

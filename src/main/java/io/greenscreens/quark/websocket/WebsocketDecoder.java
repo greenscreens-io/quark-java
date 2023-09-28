@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015, 2022 Green Screens Ltd.
+ * Copyright (C) 2015, 2023 Green Screens Ltd.
  */
 package io.greenscreens.quark.websocket;
 
@@ -11,7 +11,6 @@ import javax.websocket.EndpointConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.greenscreens.quark.JsonDecoder;
 import io.greenscreens.quark.QuarkUtil;
 import io.greenscreens.quark.websocket.data.WebSocketRequest;
 
@@ -22,6 +21,16 @@ import io.greenscreens.quark.websocket.data.WebSocketRequest;
 public class WebsocketDecoder implements Decoder.Text<WebSocketRequest> {
 
 	private static final Logger LOG = LoggerFactory.getLogger(WebsocketDecoder.class);
+	
+	@Override
+	public void init(final EndpointConfig arg0) {
+		// not used
+	}
+
+	@Override
+	public void destroy() {
+		// not used
+	}
 
 	@Override
 	public final WebSocketRequest decode(final String message) throws DecodeException {
@@ -30,9 +39,7 @@ public class WebsocketDecoder implements Decoder.Text<WebSocketRequest> {
 		LOG.trace("WebSocket request {}", message);
 
 		try {
-			final JsonDecoder<WebSocketRequest> jd = new JsonDecoder<>(WebSocketRequest.class, message);
-			wsMessage = jd.getObject();
-			wsMessage.setBinary(false);
+			wsMessage = WebsocketUtil.decode(message);
 		} catch (Exception e) {
 			final String msg = QuarkUtil.toMessage(e);
 			LOG.error(msg);
@@ -45,24 +52,7 @@ public class WebsocketDecoder implements Decoder.Text<WebSocketRequest> {
 
 	@Override
 	public final boolean willDecode(final String message) {
-
-		boolean decode = false;
-
-		if (QuarkUtil.nonEmpty(message)) {
-			decode = message.trim().startsWith("{") && message.trim().endsWith("}");
-		}
-
-		return decode;
-	}
-
-	@Override
-	public void destroy() {
-		// not used
-	}
-
-	@Override
-	public void init(final EndpointConfig arg0) {
-		// not used
+		return WebsocketUtil.isJson(message);
 	}
 
 }

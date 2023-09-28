@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015, 2022 Green Screens Ltd.
+ * Copyright (C) 2015, 2023 Green Screens Ltd.
  */
 package io.greenscreens.quark.websocket;
 
@@ -33,7 +33,6 @@ import io.greenscreens.quark.web.QuarkConstants;
 import io.greenscreens.quark.websocket.data.IWebSocketResponse;
 import io.greenscreens.quark.websocket.data.WebSocketInstruction;
 import io.greenscreens.quark.websocket.data.WebSocketResponse;
-import io.greenscreens.quark.security.IAesKey;
 
 /**
  * Class for holding WebSocket session data. Purpose of this class is similar to
@@ -123,19 +122,12 @@ public class WebSocketSession implements Session, Comparable<WebSocketSession> {
 
 		boolean success = true;
 
-		try {
-			final boolean isEncrypted = WebSocketStorage.contains(session, QuarkConstants.ENCRYPT_CHANNEL);
-			if (isEncrypted) {
-				final IAesKey aes = WebSocketStorage.get(session, QuarkConstants.ENCRYPT_ENGINE);
-				wsResponse.setKey(aes);	
-			}
-			
+		try {		
 			if (async) {
 				session.getAsyncRemote().sendObject(wsResponse);
 			} else {
 				session.getBasicRemote().sendObject(wsResponse);
-			}							
-
+			}
 		} catch (IllegalStateException e) {
 			// session invalidated
 			LOG.warn(e.getMessage());

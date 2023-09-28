@@ -1,7 +1,9 @@
 /*
- * Copyright (C) 2015, 2022 Green Screens Ltd.
+ * Copyright (C) 2015, 2023 Green Screens Ltd.
  */
 package io.greenscreens.quark.ext;
+
+import java.util.Objects;
 
 import javax.enterprise.inject.Vetoed;
 
@@ -24,7 +26,7 @@ public class ExtJSDirectResponse<T> {
 
 		this.result = response;
 
-		if (request != null) {
+		if (Objects.nonNull(request)) {
 			this.action = request.getAction();
 			this.method = request.getMethod();
 			this.tid = request.getTid();

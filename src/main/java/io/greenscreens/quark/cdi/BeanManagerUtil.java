@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015, 2022 Green Screens Ltd.
+ * Copyright (C) 2015, 2023 Green Screens Ltd.
  */
 package io.greenscreens.quark.cdi;
 
@@ -213,9 +213,6 @@ public class BeanManagerUtil {
 				methodsNode.add(objNode);				
 				objNode.put("name", extJSMethod.value());
 				objNode.put("len", method.getParameterCount());
-				if (!extJSMethod.encrypt()) {
-					objNode.put("encrypt", false);
-				}
 				if (extJSMethod.async()) {
 					objNode.put("async", extJSMethod.async());	
 				}

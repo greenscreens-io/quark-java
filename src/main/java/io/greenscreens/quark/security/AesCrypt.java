@@ -1,20 +1,18 @@
 /*
- * Copyright (C) 2015, 2022 Green Screens Ltd.
+ * Copyright (C) 2015, 2023 Green Screens Ltd.
  */
 package io.greenscreens.quark.security;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
+import java.nio.ByteBuffer;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.Objects;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.ShortBufferException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import javax.enterprise.inject.Vetoed;
@@ -22,7 +20,6 @@ import javax.enterprise.inject.Vetoed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.greenscreens.quark.IQuarkKey;
 import io.greenscreens.quark.QuarkUtil;
 
 
@@ -30,57 +27,23 @@ import io.greenscreens.quark.QuarkUtil;
  * AEC encryption & Decryption utility
  */
 @Vetoed
-class AesCrypt implements IQuarkKey {
+class AesCrypt implements IAesKey {
 
 	private static final Logger LOG = LoggerFactory.getLogger(AesCrypt.class);
 
-	private static final Charset ASCII = StandardCharsets.US_ASCII;
-	private static final Charset UTF8 = StandardCharsets.UTF_8;
 	private static final String TRANSFORMATION = "AES/CTR/NoPadding";
 	
 	private Cipher cipher;
 
-	private IvParameterSpec ivspec;
 	private SecretKeySpec keyspec;
 	private int size;
-	
-	public AesCrypt(final String secretKey, final String vector) throws IOException {
-		init(secretKey, vector);
-	}
-		
-	public AesCrypt(final String secretKey) throws IOException {
-		if (Objects.nonNull(secretKey) && secretKey.length() == 32) {
-			init(secretKey.substring(0, 16), secretKey.substring(16, 32));
-		} else {
-			init(secretKey, secretKey);
-		}
-	}
 
 	public AesCrypt(final byte[] secretKey) throws IOException {
-		if (Objects.nonNull(secretKey) && secretKey.length == 32) {
-			init(Arrays.copyOfRange(secretKey, 0, 16), Arrays.copyOfRange(secretKey, 16, 32));
-		} else {
-			init(secretKey, secretKey);
-		}
-	}
-
-	public AesCrypt(final byte[] secretKey, final byte[] vector) throws IOException {
-		init(secretKey, vector);
-	}
-	
-	void init(final String secretKey, final String vector) throws IOException {
 		setSecretKey(secretKey);
-		setIv(vector);
 		initSize();
 	}
 
-	void init(final byte[] secretKey, final byte[] vector) throws IOException {
-		setSecretKey(secretKey);
-		setIv(vector);
-		initSize();
-	}
-
-	private void initSize() {
+	private void initSize() throws IOException {
 		try {
 			cipher = Cipher.getInstance(TRANSFORMATION, SecurityProvider.PROVIDER_NAME);
 			size = cipher.getBlockSize();
@@ -88,204 +51,97 @@ class AesCrypt implements IQuarkKey {
 			final String msg = QuarkUtil.toMessage(e);
 			LOG.error(msg);
 			LOG.debug(msg, e);
+			throw new IOException(e);
 		}
 	}
 	
 	@Override
 	public boolean isValid() {
-		return size > 0 && keyspec != null && ivspec != null;
+		return size > 0 && Objects.nonNull(keyspec);
 	}
 
-	/**
-	 * Set key used to encrypt data
-	 * 
-	 * @param secretKey
-	 * @throws IOException 
-	 */
-	@Override
-	public void setSecretKey(final String secretKey) throws IOException {
-		if (secretKey == null || secretKey.length() != 16) {
-			throw new IOException("Invalid AES key length");
-		}
-		keyspec = new SecretKeySpec(secretKey.getBytes(ASCII), "AES");
-	}
 
 	/**
-	 * Set key used to encrypt data, length must be 16 bytes
+	 * Set key used to encrypt data, length must be 32 bytes
 	 *
 	 * @param secretKey
 	 * @throws IOException 
 	 */
 	@Override
 	public void setSecretKey(final byte[] secretKey) throws IOException {
-		if (secretKey == null || secretKey.length != 16) {
+		if (Objects.isNull(secretKey) || secretKey.length != 32) {
 			throw new IOException("Invalid AES key length");
 		}
 		keyspec = new SecretKeySpec(secretKey, "AES");
 	}
+
+	@Override
+	public byte[] encrypt(final byte[] data, final byte[] iv) throws IOException {
+		return encrypt(data, new IvParameterSpec(iv));
+	}
+
+	@Override
+	public byte[] decrypt(final byte[] data, final byte[] iv) throws IOException {
+		return decrypt(data, new IvParameterSpec(iv));
+	}
+
+	@Override
+	public ByteBuffer encrypt(final ByteBuffer data, final byte[] iv) throws IOException {
+		return encrypt(data, new IvParameterSpec(iv));
+	}
+
+	@Override
+	public ByteBuffer decrypt(final ByteBuffer data, final byte[] iv) throws IOException {
+		return decrypt(data, new IvParameterSpec(iv));
+	}
 	
-	/**
-	 * Set Initialization vector to encrypt data to prevent same hash for same
-	 * passwords
-	 * 
-	 * @param iv
-	 */
 	@Override
-	public void setIv(final String iv) {
-		ivspec = new IvParameterSpec(iv.getBytes(ASCII));
-	}
-
-	/**
-	 * Set Initialization vector to encrypt data to prevent same hash for same
-	 * passwords
-	 * 
-	 * @param iv
-	 */
-	@Override
-	public void setIv(final byte[] iv) {
-		ivspec = new IvParameterSpec(iv);
-	}
-
-	/**
-	 * Encrypt string and return raw byte's
-	 * 
-	 * @param text
-	 * @return
-	 * @throws Exception
-	 */
-	@Override
-	public byte[] encryptData(final String text) throws IOException {
-		return encryptData(text, ivspec);
-	}
-
-	@Override
-	public byte[] encryptData(final String text, final byte[] iv) throws IOException {
-		return encryptData(text, new IvParameterSpec(iv));
-	}
-
-	@Override
-	public byte[] encryptData(final String text, final IvParameterSpec iv) throws IOException {
-
-		if (text == null || text.length() == 0) {
-			throw new IOException("Empty string");
-		}
+	public byte[] encrypt(final byte[] data, final IvParameterSpec ivSpec) throws IOException {
 
 		try {
-			cipher.init(Cipher.ENCRYPT_MODE, keyspec, iv);
-			return cipher.doFinal(padString(text));
-			//return cipher.doFinal(text.getBytes(UTF8));
-		} catch (InvalidKeyException | InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException e) {
-			throw new IOException(e);
-		}
-	}
-
-	/**
-	 * Decrypt hex encoded data to byte array
-	 * 
-	 * @param code
-	 * @return
-	 * @throws Exception
-	 */
-	@Override
-	public byte[] decryptData(final String code) throws IOException {
-		return decryptData(code, ivspec);
-	}
-
-	@Override
-	public byte[] decryptData(final String code, final String iv) throws IOException {
-		return decryptData(code, iv.getBytes());
-	}
-
-	@Override
-	public byte[] decryptData(final String code, final byte[] iv) throws IOException {
-		return decryptData(code, new IvParameterSpec(iv));
-	}
-
-	@Override
-	public byte[] decryptData(final String code, final IvParameterSpec iv) throws IOException {
-
-		if (code == null || code.length() == 0) {
-			throw new IOException("Empty string");
-		}
-
-		try {
-			cipher.init(Cipher.DECRYPT_MODE, keyspec, iv);
-			return cipher.doFinal(padString(code));
-		} catch (InvalidKeyException | InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException e) {
-			throw new IOException(e);
-		}
-		
-	}
-
-	@Override
-	public byte[] decryptData(final byte[] data, final byte[] iv) throws IOException {
-		return decryptData(data, new IvParameterSpec(iv));
-	}
-
-	@Override
-	public byte[] decryptData(final byte[] data, final IvParameterSpec iv) throws IOException {
-
-		try {
-			cipher.init(Cipher.DECRYPT_MODE, keyspec, iv);
-			return cipher.doFinal(data);
-		} catch (InvalidKeyException | InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException e) {
-			throw new IOException(e);
-		}
-	}
-
-	/**
-	 * Encrypts string to hex string
-	 */
-	@Override
-	public String encrypt(final String text) throws IOException {
-		return QuarkUtil.bytesToHex(encryptData(text));
-	}
-
-	@Override
-	public String encrypt(final String text, final byte[] iv) throws IOException {
-		return QuarkUtil.bytesToHex(encryptData(text, new IvParameterSpec(iv)));
-	}
-
-	@Override
-	public String encrypt(final String text, IvParameterSpec iv) throws IOException {
-		return QuarkUtil.bytesToHex(encryptData(text, iv));
-	}
-
-	/**
-	 * Decrypts hex string to string value
-	 */
-	@Override
-	public String decrypt(final String text) throws IOException {
-		return new String(decryptData(text), UTF8);
-	}
-
-	/**
-	 * Blank padding for AES algorithm
-	 * 
-	 * @param source
-	 * @return
-	 */
-	byte[] padString(final String source) {
-		return QuarkUtil.padString(source, 16).getBytes(UTF8);
-	}
-
-	@Override
-	public byte[] decrypt(final byte[] data) throws IOException {
-		return decryptData(data, ivspec);
-	}
-
-	@Override
-	public byte[] encrypt(final byte[] data) throws IOException {
-
-		try {
-			cipher.init(Cipher.ENCRYPT_MODE, keyspec, ivspec);
+			cipher.init(Cipher.ENCRYPT_MODE, keyspec, ivSpec);
 			return cipher.doFinal(data);
 		} catch (IllegalBlockSizeException | BadPaddingException | InvalidKeyException | InvalidAlgorithmParameterException e) {
 			throw new IOException(e);
 		}
 
 	}
+	
+	@Override
+	public byte[] decrypt(final byte[] data, final IvParameterSpec ivSpec) throws IOException {
+		try {
+			cipher.init(Cipher.DECRYPT_MODE, keyspec, ivSpec);
+			return cipher.doFinal(data);
+		} catch (IllegalBlockSizeException | BadPaddingException | InvalidKeyException | InvalidAlgorithmParameterException e) {
+			throw new IOException(e);
+		}
+	}
 
+	@Override
+	public ByteBuffer encrypt(final ByteBuffer data, final IvParameterSpec ivSpec) throws IOException {
+		final ByteBuffer result = ByteBuffer.allocate(data.limit());
+		try {
+			cipher.init(Cipher.ENCRYPT_MODE, keyspec, ivSpec);
+			cipher.doFinal(data, result);
+		} catch (IllegalBlockSizeException | InvalidKeyException | InvalidAlgorithmParameterException | ShortBufferException | BadPaddingException  e) {
+			throw new IOException(e);
+		}
+		return result;
+	}
+
+	@Override
+	public ByteBuffer decrypt(final ByteBuffer data, final IvParameterSpec ivSpec) throws IOException {
+		final ByteBuffer result = ByteBuffer.allocate(data.limit());
+		try {
+			cipher.init(Cipher.DECRYPT_MODE, keyspec, ivSpec);
+			cipher.doFinal(data, result);
+			result.rewind();
+		} catch (IllegalBlockSizeException | InvalidKeyException | InvalidAlgorithmParameterException | ShortBufferException | BadPaddingException  e) {
+			throw new IOException(e);
+		}
+		return result;
+	}
+	
 	@Override
 	public int getBlockSize() {
 		return size;
@@ -294,10 +150,6 @@ class AesCrypt implements IQuarkKey {
 	@Override
 	public Cipher getCipher() {
 		return cipher;
-	}
-
-	static final void pro() {
-		Collections.emptyList().stream().filter(s -> s.equals("")).findFirst();
 	}
 
 }

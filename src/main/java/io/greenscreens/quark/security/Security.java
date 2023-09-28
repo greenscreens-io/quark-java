@@ -1,24 +1,15 @@
 /*
- * Copyright (C) 2015, 2022 Green Screens Ltd.
+ * Copyright (C) 2015, 2023 Green Screens Ltd.
  */
 package io.greenscreens.quark.security;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
-import java.security.PrivateKey;
-import java.security.PublicKey;
 import java.security.SecureRandom;
-import java.security.spec.InvalidKeySpecException;
-import java.util.Arrays;
-import java.util.Objects;
 
 import javax.crypto.Cipher;
-import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 import org.slf4j.Logger;
@@ -39,9 +30,6 @@ public enum Security {
 
 	private static final Logger LOG = LoggerFactory.getLogger(Security.class);
 
-	private static final Charset ASCII = StandardCharsets.US_ASCII;
-	private static final Charset UTF8 = StandardCharsets.UTF_8;	
-
 	private static byte RMTCH = 1;
 	private static final SecureRandom SECURE_RANDOM;
 	
@@ -55,17 +43,6 @@ public enum Security {
 		} catch (NoSuchAlgorithmException e) {
 			return new SecureRandom();
 		}
-	}
-	
-	/**
-	 * Get initialization vector for AES
-	 * 
-	 * @param value
-	 * @return
-	 */
-	public static IvParameterSpec getIV(final String value) {
-		final String aesIV = value.substring(0, 16);
-		return new IvParameterSpec(aesIV.getBytes(ASCII));
 	}
 	
 	/**
@@ -104,25 +81,16 @@ public enum Security {
 	 * @return
 	 * @throws IOException 
 	 */
-	public static IAesKey initDerivedKey(final String k) throws IOException {
-
-		final boolean isHex = QuarkUtil.isHex(k);
-		
-		final byte[] aesData = SharedSecret.generate(k, AsyncKey.getPrivateKey(), isHex);
-
-		if (Objects.isNull(aesData) || aesData.length < 32) {
-			throw new IOException("Ivalid AES encryption key!");
-		}
-
-		final byte[] aesKey = Arrays.copyOfRange(aesData, 0, 16);
-		final byte[] aesIV = Arrays.copyOfRange(aesData, 16, 32);
-		return new AesCrypt(aesKey, aesIV);
+	static IAesKey initAESURL(final String k) throws IOException {
+		final boolean isHex = QuarkUtil.isHex(k);	
+		final byte[] aesKey = SharedSecret.generate(k, AsyncKey.getPrivateKey(), isHex);
+		return new AesCrypt(aesKey);
 	}
 
 	public static IAesKey initWebKey(final String publicKey) {
 		if (QuarkUtil.nonEmpty(publicKey)) {
 			try {
-				return Security.initDerivedKey(publicKey);
+				return Security.initAESURL(publicKey);
 			} catch (IOException e) {
 				final String msg = QuarkUtil.toMessage(e);
 				LOG.error(msg);
@@ -131,21 +99,7 @@ public enum Security {
 		} 
 		return null;
 	}
-	
-	/**
-	 * Init AES from password
-	 * 
-	 * @param secretKey
-	 * @return
-	 * @throws IOException 
-	 */
-	public static IAesKey initAES(final String secretKey) throws IOException {
-		return new AesCrypt(secretKey);
-	}
-	
-	public static IAesKey initAES(final byte [] secretKey) throws IOException {
-		return new AesCrypt(secretKey);
-	}
+
 	
 	/**
 	 * Generate new Async key
@@ -157,23 +111,7 @@ public enum Security {
 	}
 
 	/**
-	 * Load RSA keys from PEM format
-	 * 
-	 * @param publicKey
-	 * @param privateKey
-	 * @throws NoSuchAlgorithmException 
-	 * @throws InvalidKeySpecException 
-	 * @throws NoSuchProviderException 
-	 * @throws Exception
-	 */
-	public static void setAsyncKeys(final String publicKey, final String privateKey) throws InvalidKeySpecException, NoSuchAlgorithmException, NoSuchProviderException {
-		final PublicKey pubKey = AsyncKeyUtil.getPublicKey(publicKey);
-		final PrivateKey privKey = AsyncKeyUtil.getPrivateKey(privateKey);
-		AsyncKey.setKeys(pubKey, privKey);
-	}
-
-	/**
-	 * Get active RSA public key in PEM format
+	 * Get active public key in PEM format
 	 * 
 	 * @return
 	 */
@@ -186,16 +124,14 @@ public enum Security {
 	}
 
 	/**
-	 * Get active RSA private key in PEM format
-	 * 
-	 * @return
+	 * Get active private key in PEM format
 	 */
 	public static String getPrivateKey() {
 		return AsyncKey.getPrivateEncoder(true);
 	}
 
 	/**
-	 * Sign data with RSA key
+	 * Sign data with Async key
 	 * 
 	 * @param data
 	 * @return
@@ -235,26 +171,6 @@ public enum Security {
 
 		return msg;
 	}
-
-	/**
-	 * Decode url encrypted request
-	 * 
-	 * @param d     - data encrypted with AES
-	 * @param k     - AES IV encrypted with RSA, used to decrypt d
-	 * @param crypt
-	 * @return
-	 * @throws Exception
-	 */
-	public static String decryptRequest(final String d, final String k, final IAesKey crypt) throws IOException {
-		final byte[] raw = convert(d);
-		final byte[] iv = convert(k);
-		final byte[] decoded = crypt.decryptData(raw, iv);
-		return new String(decoded, UTF8);		
-	}
-
-	public static byte [] convert(final String data) {
-		return QuarkUtil.hexStringToByteArray(data);
-	} 
 			
 	public static byte [] decrypt(final byte [] data, final SecretKeySpec secret, final String algo) {
 		byte [] value = null;

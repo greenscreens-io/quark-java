@@ -1,11 +1,9 @@
 /*
- * Copyright (C) 2015, 2022 Green Screens Ltd.
+ * Copyright (C) 2015, 2023 Green Screens Ltd.
  */
 package io.greenscreens.quark.websocket;
 
-import java.io.IOException;
 import java.lang.reflect.Method;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -21,24 +19,15 @@ import javax.servlet.http.HttpSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-
-import io.greenscreens.quark.JsonDecoder;
-import io.greenscreens.quark.security.IAesKey;
 import io.greenscreens.quark.QuarkEngine;
-import io.greenscreens.quark.QuarkSecurity;
 import io.greenscreens.quark.QuarkUtil;
 import io.greenscreens.quark.cdi.BeanManagerUtil;
 import io.greenscreens.quark.cdi.IDestructibleBeanInstance;
-import io.greenscreens.quark.ext.ExtEncrypt;
 import io.greenscreens.quark.ext.ExtJSDirectRequest;
 import io.greenscreens.quark.ext.ExtJSDirectResponse;
 import io.greenscreens.quark.ext.ExtJSProtected;
 import io.greenscreens.quark.ext.ExtJSResponse;
 import io.greenscreens.quark.ext.annotations.ExtJSDirect;
-import io.greenscreens.quark.web.QuarkConstants;
 import io.greenscreens.quark.web.QuarkErrors;
 import io.greenscreens.quark.web.QuarkHandlerUtil;
 import io.greenscreens.quark.web.ServletUtils;
@@ -58,116 +47,6 @@ public final class WebSocketOperations<T> {
 		this.requiredSession = requiredSession;
 	}
 
-	/**
-	 * Decrypt RSA/AES data from web, but only if AES in session is not found If new
-	 * AES, store to session
-	 * 
-	 * @param session
-	 * @param encrypt
-	 * @return
-	 * @throws Exception
-	 */
-	private String decryptData(final WebSocketSession session, final ExtEncrypt encrypt) throws IOException {
-
-		IAesKey crypt = session.get(QuarkConstants.ENCRYPT_ENGINE);
-		String data = null;
-
-		if (Objects.isNull(crypt)) {
-			crypt = QuarkSecurity.initAES(encrypt.getK());
-			data = crypt.decrypt(encrypt.getD());
-		} else {
-			data = QuarkSecurity.decodeRequest(encrypt.getD(), encrypt.getK(), crypt);
-		}
-
-		return data;
-	}
-
-	/**
-	 * Decrypt encrypted JSON data and continue as normal
-	 * 
-	 * @param request
-	 * @param session
-	 * @param uri
-	 * @return
-	 */	
-	public ExtJSDirectResponse<T> processEncrypted(final ExtJSDirectRequest<T> request, final WebSocketSession session, final String uri) {
-
-		ExtJSDirectResponse<T> directResponse = null;
-		ExtJSResponse response = null;
-		boolean err = false;
-
-		try {
-
-			final List<T> data = request.getData();
-			final int size = Objects.isNull(data) ? 0 : data.size();
-
-			if (size == 0) {
-				response = new ExtJSResponse(false, QuarkErrors.E0000.getMessage());
-				response.setCode(QuarkErrors.E0000.getCode());
-			} else {
-
-				final Object paramData = data.get(0);
-
-				if (paramData instanceof JsonNode) {
-
-					decodeData(data, session);					
-					directResponse = process(request, session.getContext(), session.getHttpSession(), uri);
-
-				} else {
-					response = new ExtJSResponse(false, QuarkErrors.E0000.getMessage());
-					response.setCode(QuarkErrors.E0000.getCode());
-				}
-			}
-
-		} catch (Exception e) {
-
-			err = true;
-
-			final String msg = QuarkUtil.toMessage(e);
-			LOG.error(msg);
-			LOG.debug(msg, e);
-			response = new ExtJSResponse(e, msg);
-
-		} finally {
-
-			if (Objects.isNull(directResponse)) {
-				directResponse = new ExtJSDirectResponse<>(request, response);
-				if (err) {
-					directResponse.setType(WebSocketInstruction.ERR.getText());
-				}
-			}
-		}
-
-		return directResponse;
-	}
-
-	@SuppressWarnings("unchecked")
-	private void decodeData(final List<T> data, final WebSocketSession session) throws IOException {
-
-		final Object paramData = data.get(0);
-
-		data.clear();
-
-		final JsonNode jnode = (JsonNode) paramData;
-		final ObjectMapper mapper = JsonDecoder.getJSONEngine();
-		final ExtEncrypt encrypt = mapper.treeToValue(jnode, ExtEncrypt.class);
-		final String json = decryptData(session, encrypt);
-		final JsonNode node = JsonDecoder.parse(json);
-
-		if (node.isArray()) {
-
-			final ArrayNode arr = (ArrayNode) node;
-			final Iterator<JsonNode> it = arr.iterator();
-
-			while (it.hasNext()) {
-				data.add((T) it.next());
-			}
-
-		} else {
-			data.add((T) node);
-		}
-
-	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public ExtJSDirectResponse<T> process(final ExtJSDirectRequest<T> request, final ServletContext ctx,  final HttpSession httpSession, final String uri) {

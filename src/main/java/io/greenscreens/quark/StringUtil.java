@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015, 2022 Green Screens Ltd.
+ * Copyright (C) 2015, 2023 Green Screens Ltd.
  */
 package io.greenscreens.quark;
 
@@ -61,27 +61,6 @@ enum StringUtil {
 	 */
 	public static boolean isEmpty(final String val) {
 		return normalize(val).isEmpty();
-	}
-
-	/**
-	 * Blank padding for AES algorithm
-	 *
-	 * @param source
-	 * @return
-	 */
-	public static String padString(final String source, int size) {
-
-		final char paddingChar = ' ';
-		final int x = source.length() % size;
-		final int padLength = size - x;
-
-		final StringBuffer sb = new StringBuffer(source);
-
-		for (int i = 0; i < padLength; i++) {
-			sb.append(paddingChar);
-		}
-
-		return sb.toString();
 	}
 	
 }

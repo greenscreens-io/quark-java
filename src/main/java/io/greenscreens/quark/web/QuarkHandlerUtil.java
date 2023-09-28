@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015, 2022 Green Screens Ltd.
+ * Copyright (C) 2015, 2023 Green Screens Ltd.
  */
 package io.greenscreens.quark.web;
 
@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-
 import javax.enterprise.inject.spi.AnnotatedMethod;
 import javax.enterprise.inject.spi.AnnotatedParameter;
 import javax.enterprise.inject.spi.AnnotatedType;
@@ -25,10 +24,10 @@ import javax.enterprise.inject.spi.Bean;
 import javax.servlet.http.HttpSession;
 import javax.validation.ConstraintViolation;
 import javax.validation.ElementKind;
-import javax.validation.Validation;
-import javax.validation.ValidatorFactory;
 import javax.validation.Path.Node;
 import javax.validation.Path.ParameterNode;
+import javax.validation.Validation;
+import javax.validation.ValidatorFactory;
 import javax.validation.executable.ExecutableValidator;
 
 import org.slf4j.Logger;
@@ -37,12 +36,9 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import io.greenscreens.quark.JsonDecoder;
 import io.greenscreens.quark.QuarkEngine;
-import io.greenscreens.quark.QuarkSecurity;
 import io.greenscreens.quark.QuarkUtil;
 import io.greenscreens.quark.cdi.Required;
 import io.greenscreens.quark.ext.ExtJSDirectRequest;
@@ -51,8 +47,6 @@ import io.greenscreens.quark.ext.ExtJSResponse;
 import io.greenscreens.quark.ext.annotations.ExtJSActionLiteral;
 import io.greenscreens.quark.ext.annotations.ExtJSMethod;
 import io.greenscreens.quark.ext.annotations.ExtName;
-import io.greenscreens.quark.security.IAesKey;
-import io.greenscreens.quark.websocket.data.WebSocketInstruction;
 
 /**
  * Internal reflection util that handle JSON t oControlelr mappings.  
@@ -247,16 +241,9 @@ public enum QuarkHandlerUtil {
 	 * @return
 	 */
 	public static Method toMethod(final AnnotatedMethod<?> method) {
-		
-		if (Objects.isNull(method)) return null;
-		
+		if (Objects.isNull(method)) return null;		
 		final Method javaMethod = method.getJavaMember();
-
-		if (javaMethod.isAccessible()) {
-			// if (javaMethod.canAccess(beanInstance)) {
-			javaMethod.setAccessible(true);
-		}
-		
+		javaMethod.trySetAccessible();
 		return javaMethod;
 	}
 	
@@ -432,28 +419,6 @@ public enum QuarkHandlerUtil {
 	public static boolean isValidHttpSession(final HttpSession session) {
 		final String attr = ServletUtils.get(session, QuarkConstants.HTTP_SEESION_STATUS);
 		return Boolean.TRUE.toString().equalsIgnoreCase(attr);
-	}
-	
-	/**
-	 * Encrypt response JSON into encrypted JSON format
-	 * 
-	 * @param request
-	 * @param data
-	 * @return
-	 * @throws Exception
-	 */
-	public static final ObjectNode encrypt(final IAesKey key, final String data) throws IOException {
-
-		if (Objects.isNull(key))
-			return JsonNodeFactory.instance.objectNode();
-
-		final byte[] iv = QuarkSecurity.getRandom(key.getBlockSize());
-		final String enc = key.encrypt(data, iv);
-		final ObjectNode node = JsonNodeFactory.instance.objectNode();
-		node.put("iv", QuarkUtil.bytesToHex(iv));
-		node.put("d", enc);
-		node.put("cmd", WebSocketInstruction.ENC.toString());
-		return node;
 	}
 
 	/**

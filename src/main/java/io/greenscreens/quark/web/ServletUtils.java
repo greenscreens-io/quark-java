@@ -1,17 +1,14 @@
 /*
- * Copyright (C) 2015, 2022 Green Screens Ltd.
+ * Copyright (C) 2015, 2023 Green Screens Ltd.
  */
 package io.greenscreens.quark.web;
 
-import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.nio.ByteBuffer;
-import java.nio.channels.Channels;
-import java.nio.channels.ReadableByteChannel;
-import java.nio.channels.WritableByteChannel;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
@@ -21,13 +18,13 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Scanner;
+import java.util.zip.GZIPOutputStream;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
@@ -41,7 +38,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import io.greenscreens.quark.ByteBufferInputStream;
 import io.greenscreens.quark.JsonDecoder;
+import io.greenscreens.quark.QuarkCompression;
+import io.greenscreens.quark.QuarkDecompression;
+import io.greenscreens.quark.QuarkStream;
 import io.greenscreens.quark.QuarkUtil;
 import io.greenscreens.quark.ext.ExtJSProtected;
 
@@ -107,21 +108,35 @@ public enum ServletUtils {
 	 */
 	public static String getBodyAsString(final HttpServletRequest request) throws IOException {
 
-		final StringBuilder sb = new StringBuilder();
-		final BufferedReader reader = request.getReader();
-
-		try {
-			String line;
-			while ((line = reader.readLine()) != null) {
-				sb.append(line).append('\n');
-			}
-		} finally {
-			reader.close();
+		final boolean isCompress = supportGzip(request);
+		final InputStream is = request.getInputStream();
+		
+		if (isCompress) {
+			return QuarkDecompression.asString(is, true);
+		} else {
+			return QuarkStream.asString(is, true);
 		}
-
-		return sb.toString();
 	}
 
+	public static ByteBuffer getBodyAsBuffer(final HttpServletRequest request) throws IOException {
+
+		final boolean isCompress = supportGzip(request);
+		final InputStream is = request.getInputStream();
+
+		if (isCompress) {
+			return QuarkDecompression.asBuffer(is, true);
+		} else {
+			return QuarkStream.asBuffer(is, true);
+		}
+
+	}
+	
+	
+	public static boolean supportGzip(final HttpServletRequest request) {
+		final String val = QuarkUtil.normalize(request.getHeader("Content-Encoding"));
+		return val.indexOf("gzip") != -1;
+	}
+	
 	/**
 	 * Set browser no caching flags
 	 */
@@ -166,17 +181,6 @@ public enum ServletUtils {
 			throw new IOException(e);
 		}
 		return part;
-	}
-
-	public static MultipartMap getPut(final HttpServletRequest request, final HttpServlet servlet) throws IOException {
-		
-		MultipartMap map = null;
-		try {
-			map = new MultipartMap(request, servlet);
-		} catch (ServletException e) {
-			throw new IOException(e);
-		}
-		return map;
 	}
 
 	/**
@@ -239,27 +243,27 @@ public enum ServletUtils {
 		return root;
 	}
 
-	public static <T> void sendResponse(final HttpServletResponse response, final T obj) {
+	public static <T> void sendResponse(final HttpServletResponse response, final T obj, final boolean compress) {
 		
 		String json = null;
 
 		try {
 			json = JsonDecoder.stringify(obj);
 			response.setContentType("application/json");
-			writeResponse(response, json);
+			writeResponse(response, json, compress);
 		} catch (JsonProcessingException e) {
 			LOG.error("Failed to encode messages as JSON: {}", json, e);
 			final ObjectNode jsonObject = ServletUtils.getResponse(false, e.getMessage());
-			sendResponse(response, jsonObject);
+			sendResponse(response, jsonObject, compress);
 		}
 	}
 
 	/**
 	 * Set json response data
 	 */
-	public static void sendResponse(final HttpServletResponse resp, final JsonNode json) {
+	public static void sendResponse(final HttpServletResponse resp, final JsonNode json, final boolean compress) {
 		resp.setContentType("application/json;charset=utf-8");
-		writeResponse(resp, json.toString());
+		writeResponse(resp, json.toString(), compress);
 	}
 
 	/**
@@ -267,24 +271,43 @@ public enum ServletUtils {
 	 * @param resp
 	 * @param message
 	 */
-	public static void sendResponse(final HttpServletResponse resp, final String message) {
+	public static void sendResponse(final HttpServletResponse resp, final String message, final boolean compress) {
 		resp.setContentType("text/plain;charset=utf-8");
-		writeResponse(resp, message);
+		writeResponse(resp, message, compress);
 	}
 
+	public static void sendResponse(final HttpServletResponse resp, final ByteBuffer message, final boolean compress) {
+		resp.setContentType("application/octet-stream");
+		writeResponse(resp, message, compress);
+	}
+
+	public static void sendResponse(final HttpServletResponse resp, final byte[] message, final boolean compress) {
+		resp.setContentType("application/octet-stream");
+		writeResponse(resp, message, compress);
+	}
+	
 	/**
 	 * Generic string write
 	 * @param resp
 	 * @param message
 	 */
-	public static void writeResponse(final HttpServletResponse resp, final String message) {
+	public static void writeResponse(final HttpServletResponse resp, final String message, final boolean compress) {
 		
 		try {
 			if (resp.isCommitted()) return;
-			resp.setContentLength(message.length());
-			final PrintWriter out = resp.getWriter();			
+			PrintWriter out = null; 
+					
+			if (compress) {
+				resp.setHeader("Content-Encoding", "gzip");
+				final OutputStream outStream = resp.getOutputStream();
+			    out = new PrintWriter(new GZIPOutputStream(outStream), false);
+			} else {				
+				resp.setContentLength(message.length());
+				out = resp.getWriter();			
+			}
 			out.print(QuarkUtil.normalize(message));
-			out.flush();		
+			out.flush();
+			out.close();
         } catch (IOException e) {
         	final String msg = QuarkUtil.toMessage(e);
 			LOG.error(msg);
@@ -292,22 +315,40 @@ public enum ServletUtils {
         }
 	}
 
-	public static long stream(final InputStream input, final OutputStream output) throws IOException {
-	    try (
-	        final ReadableByteChannel inputChannel = Channels.newChannel(input);
-	        final WritableByteChannel outputChannel = Channels.newChannel(output);
-	    ) {
-	        final ByteBuffer buffer = ByteBuffer.allocateDirect(10240);
-	        long size = 0;
+	public static void writeResponse(final HttpServletResponse resp, final ByteBuffer message, final boolean compress) {
+		if (resp.isCommitted()) return;		
+		final ByteBufferInputStream inStream = new ByteBufferInputStream(message);
+		writeResponse(resp, inStream, message.remaining(), compress);
+	}
+	
+	public static void writeResponse(final HttpServletResponse resp, final byte[] message, final boolean compress) {
+		if (resp.isCommitted()) return;
+		final ByteArrayInputStream inStream = new ByteArrayInputStream(message);
+		writeResponse(resp, inStream, message.length, compress);
+	}
+	
+	public static void writeResponse(final HttpServletResponse resp, final InputStream inStream, final int length, final boolean compress) {
+		
+		try {
+			if (resp.isCommitted()) return;
+					
+			final OutputStream outStream = resp.getOutputStream();
 
-	        while (inputChannel.read(buffer) != -1) {
-	            buffer.flip();
-	            size += outputChannel.write(buffer);
-	            buffer.clear();
-	        }
-
-	        return size;
-	    }
+			if (compress) {
+				resp.setHeader("Content-Encoding", "gzip");
+				QuarkCompression.stream(inStream, outStream, false);
+			} else {				
+				resp.setContentLength(length);
+				QuarkStream.stream(inStream, outStream);
+			}
+			
+			outStream.flush();
+			outStream.close();
+        } catch (IOException e) {
+        	final String msg = QuarkUtil.toMessage(e);
+			LOG.error(msg);
+			LOG.debug(msg, e);
+        }
 	}
 	
 	/**
@@ -321,18 +362,9 @@ public enum ServletUtils {
 	}
 	
 	public static void sendError(final HttpServletResponse response, final int code, final String message) {
-		try {
-			if (!response.isCommitted()) {
-				response.setStatus(code);
-				final PrintWriter writer = response.getWriter();
-				writer.write(QuarkUtil.normalize(message));
-				writer.flush();
-				//response.sendError(code, StringUtil.normalize(message));
-			}
-		} catch (IOException e) {
-			final String msg = QuarkUtil.toMessage(e);
-			LOG.error(msg);
-			LOG.debug(msg, e);
+		if (!response.isCommitted()) {
+			response.setStatus(code);
+			writeResponse(response, message, false);
 		}
 	}
 

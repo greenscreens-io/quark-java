@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015, 2022 Green Screens Ltd.
+ * Copyright (C) 2015, 2023 Green Screens Ltd.
  */
 package io.greenscreens.quark.websocket.data;
 
@@ -28,8 +28,6 @@ public class WebSocketRequest {
 
 	// list of commands - batch
 	private List<ExtJSDirectRequest<JsonNode>> data;
-
-	private boolean binary = false;
 	
 	public final WebSocketInstruction getCmd() {
 		return cmd;
@@ -75,13 +73,6 @@ public class WebSocketRequest {
 		this.data = data;
 	}
 
-	public boolean isBinary() {
-		return binary;
-	}
-
-	public void setBinary(boolean binary) {
-		this.binary = binary;
-	}
 
 	@Override
 	public String toString() {

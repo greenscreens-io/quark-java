@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015, 2022 Green Screens Ltd.
+ * Copyright (C) 2015, 2023 Green Screens Ltd.
  */
 package io.greenscreens.quark;
 
@@ -147,16 +147,6 @@ public enum QuarkUtil {
 	}
 
 	/**
-	 * Blank padding for AES algorithm
-	 * 
-	 * @param source
-	 * @return
-	 */
-	public static String padString(final String source, int size) {
-		return StringUtil.padString(source, size);
-	}
-
-	/**
 	 * Create API response object
 	 * 
 	 * @param api
@@ -178,36 +168,6 @@ public enum QuarkUtil {
 		return root;
 
 	}
-	
-	/**
-	 * Decompress GZIP byte buffer into string
-	 * @param bytes
-	 * @return
-	 * @throws Exception
-	 */
-	public static String ungzip(final ByteBuffer bytes) throws Exception {
-		return Util.ungzip(bytes);
-    }
-	
-	/**
-	 * Decompress GZIP byte array into string
-	 * @param bytes
-	 * @return
-	 * @throws Exception
-	 */
-	public static String ungzip(final byte[] bytes) throws Exception {
-		return Util.ungzip(bytes);
-    }
-
-	/**
-	 * Compress string data into byte array 
-	 * @param s
-	 * @return
-	 * @throws Exception
-	 */
-    public static byte[] gzip(final String s) throws Exception {
-        return Util.gzip(s);
-    }
 
 	/**
 	 * Null safe Exception error message
