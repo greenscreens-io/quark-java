@@ -14,6 +14,7 @@ import javax.inject.Inject;
 import javax.servlet.http.HttpSession;
 import javax.websocket.CloseReason;
 import javax.websocket.CloseReason.CloseCode;
+import javax.websocket.EncodeException;
 import javax.websocket.EndpointConfig;
 import javax.websocket.Session;
 
@@ -24,6 +25,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import io.greenscreens.quark.JsonDecoder;
 import io.greenscreens.quark.QuarkProducer;
 import io.greenscreens.quark.QuarkUtil;
 import io.greenscreens.quark.cdi.BeanManagerUtil;
@@ -243,7 +245,7 @@ public class WebSocketEndpoint {
 	 */
 	private boolean sendAPI(final WebSocketSession session) {
 		
-		if (Objects.nonNull(beanManagerUtil)) return false;
+		if (Objects.isNull(beanManagerUtil)) return false;
 
 		
 		if (!session.contains(QuarkConstants.QUARK_CHALLENGE)) {
@@ -257,7 +259,18 @@ public class WebSocketEndpoint {
 		final ObjectNode root = QuarkUtil.buildAPI(api, challenge); 
 		wsResposne.setData(root);		
 		
-		session.sendResponse(wsResposne, true);
+		// API definition must be send as string to prevent encryption
+		// before client initialized keys 
+		try {
+			final String json = JsonDecoder.stringify(wsResposne);
+			session.getBasicRemote().sendObject(json);
+		} catch (IOException | EncodeException e) {
+			final String msg = QuarkUtil.toMessage(e);
+			LOG.error(msg);
+			LOG.debug(msg, e);
+		}
+		
+		//session.sendResponse(wsResposne, true);
 		return true;
 	}
 
@@ -270,7 +283,7 @@ public class WebSocketEndpoint {
 		
 		final WebSocketInstruction cmd = message.getCmd();
 				
-		if (WebSocketInstruction.API == cmd && beanManagerUtil != null) {
+		if (WebSocketInstruction.API == cmd && Objects.nonNull(beanManagerUtil)) {
 			sendAPI(session);
 		}
 			

@@ -11,12 +11,12 @@ import com.fasterxml.jackson.annotation.JsonValue;
 public enum WebSocketInstruction {
 
     WELCO("welco"), 
-    API("api"),
+    PING("ping"),
     BYE("bye"), 
+    API("api"),
     ERR("err"), 
-    DATA("data"),
     INS("ins"), // internal instruction
-    PING("ping")
+    DATA("data"),
 	;
 
 	private final String text;
@@ -37,6 +37,6 @@ public enum WebSocketInstruction {
 
 	// fix for eclipse compiler - switch issue
 	public boolean isSimple() {
-		return this == WELCO || this == API || this == PING || this == BYE;
+		return this.ordinal() < ERR.ordinal();
 	}
 }

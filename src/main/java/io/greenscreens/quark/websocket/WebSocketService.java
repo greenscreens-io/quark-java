@@ -46,7 +46,8 @@ public class WebSocketService {
 
 	@OnMessage
 	public void onMessage(final WebSocketRequest message, final Session session) {
-		endpoint.onMessage(message, session);
+		HeartbeatService.updateSession(session);
+		if (Objects.nonNull(endpoint)) endpoint.onMessage(message, session);
 	}
 
 	@OnOpen
