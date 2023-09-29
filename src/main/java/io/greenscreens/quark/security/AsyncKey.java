@@ -4,6 +4,7 @@
 package io.greenscreens.quark.security;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.KeyPair;
@@ -15,9 +16,10 @@ import java.security.PublicKey;
 import java.security.Signature;
 import java.security.SignatureException;
 import java.util.Base64;
-import java.util.Collections;
 import java.util.Objects;
 
+import org.bouncycastle.asn1.ASN1Integer;
+import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.jce.ECNamedCurveTable;
 import org.bouncycastle.jce.spec.ECNamedCurveParameterSpec;
 import org.slf4j.Logger;
@@ -40,7 +42,8 @@ enum AsyncKey {
 	private static String pemVERSGN = null;
 	private static String pemPrivENCDEC = null;
 
-	private static final String WEB_MODE = "SHA384withECDSA";
+	private static final int BitSize = 384; 
+	private static final String ALGO = "SHA384withECDSA";
 
 	/**
 	 * Initialize Async key
@@ -157,16 +160,26 @@ enum AsyncKey {
 	}
 
 	/**
-	 * Convert signature to format for Web Crypto API
+	 * Convert signature from ASN1 to R|S format for Web Crypto API
 	 * 
 	 * @param signedData
 	 * @return
 	 * @throws IOException
 	 * @throws Exception
 	 */
-	static byte[] signConvert(byte[] signedData) throws IOException {
-		final int len = Transcoder.getSignatureByteArrayLength(384);
-		return Transcoder.transcodeSignatureToConcat(signedData, len);
+	static byte[] signConvert(final byte[] signedData) throws IOException {
+		
+		final ASN1Sequence seq = (ASN1Sequence) ASN1Sequence.fromByteArray(signedData);
+		
+		final byte[] r = ASN1Integer.getInstance(seq.getObjectAt(0)).getPositiveValue().toByteArray();
+		final byte[] s = ASN1Integer.getInstance(seq.getObjectAt(1)).getPositiveValue().toByteArray();
+				
+		final int byteSize = BitSize / 8;
+		final ByteBuffer buffer = ByteBuffer.allocate(48*2);
+		buffer.put(r, r.length - byteSize, byteSize);
+		buffer.put(s, s.length - byteSize, byteSize);
+		
+		return buffer.array();
 	}
 
 	/**
@@ -178,7 +191,7 @@ enum AsyncKey {
 	 * @throws InvalidAlgorithmParameterException 
 	 */
 	static Signature getSignature() throws NoSuchAlgorithmException, NoSuchProviderException, InvalidAlgorithmParameterException {
-		return Signature.getInstance(WEB_MODE, SecurityProvider.PROVIDER_NAME);
+		return Signature.getInstance(ALGO, SecurityProvider.PROVIDER_NAME);
 	}
 
 	/**
@@ -202,7 +215,6 @@ enum AsyncKey {
 		signature.update(challenge);
 		signature.update(AsyncKeyUtil.flatten(pemENCDEC).getBytes());
 		signature.update(AsyncKeyUtil.flatten(pemVERSGN).getBytes());
-
 		final byte[] signedData = signature.sign();
 		return signConvert(signedData);
 	}
@@ -409,6 +421,7 @@ enum AsyncKey {
 		final byte[] signatureBin = Base64.getDecoder().decode(signature);
 		return verify(dataBin, signatureBin);
 	}
+
 
 	/**
 	 * Generic verify for bytes
