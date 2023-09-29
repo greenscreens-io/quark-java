@@ -18,6 +18,9 @@ import java.util.zip.GZIPOutputStream;
  */
 public enum QuarkCompression {
 	;
+¸
+	// GZIP Compression level - 3 is enough for text data; performance increase by 4x
+	public static int LEVEL = 3;
 
 	public static byte[] asBytes(final byte[] data) throws IOException {
         return asBytes(new ByteArrayInputStream(data), true);
@@ -63,12 +66,12 @@ public enum QuarkCompression {
 
     	byte [] result = null;
     	ByteArrayOutputStream bos = null;
-        GZIPOutputStream gzip = null;
+        OutputStream gzip = null;
         OutputStreamWriter osw = null;
 
         try {
         	bos = new ByteArrayOutputStream();
-        	gzip = new GZIPOutputStream(bos);
+        	gzip = new QuarkCompressionStream(bos, LEVEL);
         	osw = new OutputStreamWriter(gzip, StandardCharsets.UTF_8);
         	osw.write(s);
         	osw.flush();      
@@ -84,10 +87,10 @@ public enum QuarkCompression {
 
     public static void stream(final InputStream inStream, final OutputStream outStream, final boolean autoClose) throws IOException {
 
-        GZIPOutputStream gzip = null;
+        OutputStream gzip = null;
 
         try {
-        	gzip = new GZIPOutputStream(outStream);
+			gzip = new QuarkCompressionStream(bos, LEVEL);
         	inStream.transferTo(gzip);
         	gzip.flush();
         } finally {
