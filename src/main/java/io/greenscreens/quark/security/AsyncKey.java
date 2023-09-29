@@ -175,7 +175,7 @@ enum AsyncKey {
 		final byte[] s = ASN1Integer.getInstance(seq.getObjectAt(1)).getPositiveValue().toByteArray();
 				
 		final int byteSize = BitSize / 8;
-		final ByteBuffer buffer = ByteBuffer.allocate(48*2);
+		final ByteBuffer buffer = ByteBuffer.allocate(byteSize*2);
 		buffer.put(r, r.length - byteSize, byteSize);
 		buffer.put(s, s.length - byteSize, byteSize);
 		
