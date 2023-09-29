@@ -44,7 +44,13 @@ class AesCrypt implements IAesKey {
 
 	private void initSize() throws IOException {
 		try {
-			cipher = Cipher.getInstance(TRANSFORMATION, SecurityProvider.PROVIDER_NAME);
+			/**
+			 * Use SunJCE as it might support hardware AES-NI.
+			 * BouncyCastle does not support it. - ~250.000 calc/sec
+			 * Hardware AES-NI is about 10x faster - ~2 million calc/sec
+			 */			
+			// cipher = Cipher.getInstance(TRANSFORMATION, SecurityProvider.PROVIDER_NAME);
+			cipher = Cipher.getInstance(TRANSFORMATION, "SunJCE");
 			size = cipher.getBlockSize();
 		} catch (Exception e) {
 			final String msg = QuarkUtil.toMessage(e);
