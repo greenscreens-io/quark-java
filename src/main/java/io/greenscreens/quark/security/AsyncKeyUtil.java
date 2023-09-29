@@ -113,8 +113,4 @@ enum AsyncKeyUtil {
 		return toPrivatePem(key.getPrivate());
 	}
 
-	static final void pro() {
-		Collections.emptyList().stream().filter(s -> s.equals("")).findFirst();
-	}
-
 }

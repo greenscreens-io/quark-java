@@ -433,8 +433,4 @@ enum AsyncKey {
 		return sig.verify(signature);
 	}
 
-	static final void pro() {
-		Collections.emptyList().stream().filter(s -> s.equals("")).findFirst();
-	}
-
 }
