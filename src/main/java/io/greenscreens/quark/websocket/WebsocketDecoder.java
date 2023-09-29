@@ -3,10 +3,10 @@
  */
 package io.greenscreens.quark.websocket;
 
-import javax.enterprise.inject.Vetoed;
-import javax.websocket.DecodeException;
-import javax.websocket.Decoder;
-import javax.websocket.EndpointConfig;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.websocket.DecodeException;
+import jakarta.websocket.Decoder;
+import jakarta.websocket.EndpointConfig;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

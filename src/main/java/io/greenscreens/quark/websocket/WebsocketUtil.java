@@ -11,9 +11,9 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 
-import javax.websocket.EncodeException;
-import javax.websocket.EndpointConfig;
-import javax.websocket.server.HandshakeRequest;
+import jakarta.websocket.EncodeException;
+import jakarta.websocket.EndpointConfig;
+import jakarta.websocket.server.HandshakeRequest;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 

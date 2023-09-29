@@ -7,15 +7,15 @@ import java.io.IOException;
 import java.util.Objects;
 import java.util.Optional;
 
-import javax.inject.Inject;
-import javax.websocket.CloseReason;
-import javax.websocket.EndpointConfig;
-import javax.websocket.OnClose;
-import javax.websocket.OnError;
-import javax.websocket.OnMessage;
-import javax.websocket.OnOpen;
-import javax.websocket.PongMessage;
-import javax.websocket.Session;
+import jakarta.inject.Inject;
+import jakarta.websocket.CloseReason;
+import jakarta.websocket.EndpointConfig;
+import jakarta.websocket.OnClose;
+import jakarta.websocket.OnError;
+import jakarta.websocket.OnMessage;
+import jakarta.websocket.OnOpen;
+import jakarta.websocket.PongMessage;
+import jakarta.websocket.Session;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

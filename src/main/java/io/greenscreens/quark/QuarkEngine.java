@@ -5,9 +5,9 @@ package io.greenscreens.quark;
 
 import java.lang.annotation.Annotation;
 
-import javax.enterprise.inject.Instance;
-import javax.enterprise.inject.spi.BeanManager;
-import javax.enterprise.inject.spi.CDI;
+import jakarta.enterprise.inject.Instance;
+import jakarta.enterprise.inject.spi.BeanManager;
+import jakarta.enterprise.inject.spi.CDI;
 
 /**
  * Base core of Quark engine, used to instantiate controllers within CDI engine.

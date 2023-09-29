@@ -5,9 +5,9 @@ package io.greenscreens.quark;
 
 import java.util.Objects;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.inject.Produces;
-import javax.servlet.http.HttpSession;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Produces;
+import jakarta.servlet.http.HttpSession;
 
 import io.greenscreens.quark.async.QuarkAsyncContext;
 import io.greenscreens.quark.web.QuarkContext;

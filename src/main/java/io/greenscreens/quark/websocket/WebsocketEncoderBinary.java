@@ -6,10 +6,10 @@ package io.greenscreens.quark.websocket;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-import javax.enterprise.inject.Vetoed;
-import javax.websocket.EncodeException;
-import javax.websocket.Encoder;
-import javax.websocket.EndpointConfig;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.websocket.EncodeException;
+import jakarta.websocket.Encoder;
+import jakarta.websocket.EndpointConfig;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

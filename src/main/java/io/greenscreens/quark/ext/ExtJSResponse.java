@@ -5,8 +5,7 @@ package io.greenscreens.quark.ext;
 
 import java.io.Serializable;
 import java.util.Objects;
-
-import javax.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.Vetoed;
 
 /**
  * ExtJs standard response structure used by other extended response classes

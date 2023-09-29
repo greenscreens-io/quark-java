@@ -9,14 +9,14 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentSkipListSet;
 
-import javax.enterprise.event.Event;
-import javax.inject.Inject;
-import javax.servlet.http.HttpSession;
-import javax.websocket.CloseReason;
-import javax.websocket.CloseReason.CloseCode;
-import javax.websocket.EncodeException;
-import javax.websocket.EndpointConfig;
-import javax.websocket.Session;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
+import jakarta.servlet.http.HttpSession;
+import jakarta.websocket.CloseReason;
+import jakarta.websocket.CloseReason.CloseCode;
+import jakarta.websocket.EncodeException;
+import jakarta.websocket.EndpointConfig;
+import jakarta.websocket.Session;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

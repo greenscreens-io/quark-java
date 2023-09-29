@@ -3,7 +3,7 @@
  */
 package io.greenscreens.quark.web.data;
 
-import javax.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.Vetoed;
 
 import com.fasterxml.jackson.databind.JsonNode;
 

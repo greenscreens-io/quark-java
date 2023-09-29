@@ -3,9 +3,9 @@
  */
 package io.greenscreens.quark.ext.annotations;
 
-import javax.enterprise.inject.Vetoed;
-import javax.enterprise.util.AnnotationLiteral;
-import javax.enterprise.util.Nonbinding;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.enterprise.util.AnnotationLiteral;
+import jakarta.enterprise.util.Nonbinding;
 
 /**
  * Internally used annotation wrapper used by CDI to find targeted bean methods

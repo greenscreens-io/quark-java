@@ -3,10 +3,10 @@
  */
 package io.greenscreens.quark.websocket;
 
-import javax.enterprise.inject.Vetoed;
-import javax.websocket.EncodeException;
-import javax.websocket.Encoder;
-import javax.websocket.EndpointConfig;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.websocket.EncodeException;
+import jakarta.websocket.Encoder;
+import jakarta.websocket.EndpointConfig;
 
 import io.greenscreens.quark.websocket.data.WebSocketResponse;
 

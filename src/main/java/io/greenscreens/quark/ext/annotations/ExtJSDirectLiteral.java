@@ -3,8 +3,8 @@
  */
 package io.greenscreens.quark.ext.annotations;
 
-import javax.enterprise.inject.Vetoed;
-import javax.enterprise.util.AnnotationLiteral;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.enterprise.util.AnnotationLiteral;
 
 /**
  * Internally used annotation wrapper used by CDI to find targeted beans

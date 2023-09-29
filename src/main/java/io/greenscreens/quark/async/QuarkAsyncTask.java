@@ -5,10 +5,10 @@ package io.greenscreens.quark.async;
 
 import java.io.IOException;
 
-import javax.enterprise.inject.Vetoed;
-import javax.servlet.AsyncContext;
-import javax.servlet.AsyncEvent;
-import javax.servlet.AsyncListener;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.AsyncContext;
+import jakarta.servlet.AsyncEvent;
+import jakarta.servlet.AsyncListener;
 
 /**
  * Task for executing async controllers

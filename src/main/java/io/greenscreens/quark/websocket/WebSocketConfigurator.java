@@ -9,12 +9,12 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 
-import javax.enterprise.inject.Vetoed;
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpSession;
-import javax.websocket.HandshakeResponse;
-import javax.websocket.server.HandshakeRequest;
-import javax.websocket.server.ServerEndpointConfig;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.http.HttpSession;
+import jakarta.websocket.HandshakeResponse;
+import jakarta.websocket.server.HandshakeRequest;
+import jakarta.websocket.server.ServerEndpointConfig;
 
 import io.greenscreens.quark.IQuarkKey;
 import io.greenscreens.quark.QuarkUtil;

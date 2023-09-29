@@ -1,6 +1,9 @@
  
 # [Quark Engine Java ](https://quark.greenscreens.ltd/).
 
+## v6.0.0. (2023.Q3)
+ - Switch to Java Jakarta
+
 ## v5.0.0. (2023.Q3)
  - Switch to binary transfer mode 
  - Added WebSocket Heartbeat

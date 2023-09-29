@@ -4,7 +4,7 @@
 package io.greenscreens.quark;
 
 import java.util.concurrent.ThreadFactory;
-import javax.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.Vetoed;
 
 /**
  * Helper class to crate named threads for easier monitoring.  

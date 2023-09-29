@@ -3,7 +3,7 @@
  */
 package io.greenscreens.quark.cdi;
 
-import javax.enterprise.inject.spi.Bean;
+import jakarta.enterprise.inject.spi.Bean;
 
 /**
  * Definition for self-destructable beans - controllers

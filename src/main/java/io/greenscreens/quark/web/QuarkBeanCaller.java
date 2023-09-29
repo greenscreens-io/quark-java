@@ -10,9 +10,9 @@ import java.lang.reflect.Method;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
-import javax.enterprise.inject.Vetoed;
-import javax.enterprise.inject.spi.Bean;
-import javax.inject.Inject;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.spi.Bean;
+import jakarta.inject.Inject;
 
 import io.greenscreens.quark.QuarkEngine;
 import io.greenscreens.quark.QuarkProducer;

@@ -3,8 +3,8 @@
  */
 package io.greenscreens.quark.websocket;
 
-import javax.enterprise.inject.Vetoed;
-import javax.websocket.CloseReason;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.websocket.CloseReason;
 
 /**
  * Class holding event data

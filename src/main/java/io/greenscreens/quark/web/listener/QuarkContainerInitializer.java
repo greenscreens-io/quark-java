@@ -5,10 +5,10 @@ package io.greenscreens.quark.web.listener;
 
 import java.util.Set;
 
-import javax.enterprise.inject.Vetoed;
-import javax.servlet.ServletContainerInitializer;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.ServletContainerInitializer;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
 
 /**
  * Programmatically initialize Quark engine web elements

@@ -6,7 +6,7 @@ package io.greenscreens.quark.websocket.heartbeat;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-import javax.websocket.Session;
+import jakarta.websocket.Session;
 
 /**
  * Session data

@@ -4,10 +4,10 @@
 package io.greenscreens.quark.async;
 
 import java.util.Objects;
-import javax.servlet.AsyncContext;
-import javax.servlet.AsyncListener;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.AsyncContext;
+import jakarta.servlet.AsyncListener;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import io.greenscreens.quark.ext.ExtJSResponse;
 import io.greenscreens.quark.web.QuarkHandler;

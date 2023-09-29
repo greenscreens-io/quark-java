@@ -15,13 +15,12 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.ShortBufferException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-import javax.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.Vetoed;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.greenscreens.quark.QuarkUtil;
-
 
 /**
  * AEC encryption & Decryption utility

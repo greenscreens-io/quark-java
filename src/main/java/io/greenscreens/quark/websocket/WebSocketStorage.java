@@ -5,8 +5,8 @@ package io.greenscreens.quark.websocket;
 
 import java.util.Objects;
 
-import javax.websocket.EndpointConfig;
-import javax.websocket.Session;
+import jakarta.websocket.EndpointConfig;
+import jakarta.websocket.Session;
 
 import io.greenscreens.quark.QuarkUtil;
 

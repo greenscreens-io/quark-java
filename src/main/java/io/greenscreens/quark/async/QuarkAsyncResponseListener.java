@@ -5,12 +5,12 @@ package io.greenscreens.quark.async;
 
 import java.io.IOException;
 
-import javax.enterprise.inject.Vetoed;
-import javax.servlet.AsyncEvent;
-import javax.servlet.AsyncListener;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.servlet.AsyncEvent;
+import jakarta.servlet.AsyncListener;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
 
 import io.greenscreens.quark.QuarkProducer;
 import io.greenscreens.quark.ext.ExtJSResponse;

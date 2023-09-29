@@ -4,8 +4,7 @@
 package io.greenscreens.quark.ext;
 
 import java.util.Objects;
-
-import javax.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.Vetoed;
 
 /**
  * Internal Engine class which wraps requests/responses between web and server

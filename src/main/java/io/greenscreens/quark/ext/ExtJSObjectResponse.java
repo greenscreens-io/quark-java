@@ -3,7 +3,7 @@
  */
 package io.greenscreens.quark.ext;
 
-import javax.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.Vetoed;
 
 /**
  * ExtJs standard response structure used by other extended response classes

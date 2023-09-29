@@ -4,8 +4,7 @@
 package io.greenscreens.quark.ext;
 
 import java.util.List;
-
-import javax.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.Vetoed;
 
 /**
  * Class representing ExtJS Direct request. It is used for decoding received

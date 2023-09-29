@@ -5,8 +5,8 @@ package io.greenscreens.quark.websocket.data;
 
 import java.io.Serializable;
 
-import javax.enterprise.inject.Vetoed;
 import io.greenscreens.quark.web.QuarkConstants;
+import jakarta.enterprise.inject.Vetoed;
 
 /**
  * Object to be converted into JSON structure. {type :'ws' , sid : session_id ,

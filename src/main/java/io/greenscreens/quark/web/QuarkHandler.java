@@ -11,16 +11,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import javax.enterprise.inject.Vetoed;
-import javax.enterprise.inject.spi.AnnotatedMethod;
-import javax.enterprise.inject.spi.AnnotatedParameter;
-import javax.enterprise.inject.spi.AnnotatedType;
-import javax.enterprise.inject.spi.Bean;
-import javax.servlet.AsyncContext;
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.spi.AnnotatedMethod;
+import jakarta.enterprise.inject.spi.AnnotatedParameter;
+import jakarta.enterprise.inject.spi.AnnotatedType;
+import jakarta.enterprise.inject.spi.Bean;
+import jakarta.servlet.AsyncContext;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -363,7 +363,7 @@ public class QuarkHandler {
 		final Class<?> beanClass = bean.getBeanClass();
 
 		final AnnotatedType<?> annType = QuarkEngine.getBeanManager().createAnnotatedType(beanClass);
-		final AnnotatedMethod selectedMethod = QuarkHandlerUtil.findMethod(request, annType);
+		final AnnotatedMethod<AnnotatedParameter<?>> selectedMethod = QuarkHandlerUtil.findMethod(request, annType);
 		final ExtJSDirect direct = beanClass.getAnnotation(ExtJSDirect.class);
 
 		boolean error = checkForError(selectedMethod, direct, uri);
@@ -377,7 +377,7 @@ public class QuarkHandler {
 				error = true;
 				response = QuarkHandlerUtil.getError(QuarkErrors.E8888);
 			} else {
-				final List<AnnotatedParameter<?>> paramList = selectedMethod.getParameters();
+				final List<AnnotatedParameter<AnnotatedParameter<?>>> paramList = selectedMethod.getParameters();
 				final Object[] params = QuarkHandlerUtil.fillParams(request, paramList);
 
 				error = QuarkHandlerUtil.isParametersInvalid(paramList, params);

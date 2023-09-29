@@ -4,8 +4,7 @@
 package io.greenscreens.quark.ext;
 
 import java.util.Collection;
-
-import javax.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.Vetoed;
 
 /**
  * ExtJS array response structure.

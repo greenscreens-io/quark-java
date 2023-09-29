@@ -17,18 +17,18 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-import javax.enterprise.inject.spi.AnnotatedMethod;
-import javax.enterprise.inject.spi.AnnotatedParameter;
-import javax.enterprise.inject.spi.AnnotatedType;
-import javax.enterprise.inject.spi.Bean;
-import javax.servlet.http.HttpSession;
-import javax.validation.ConstraintViolation;
-import javax.validation.ElementKind;
-import javax.validation.Path.Node;
-import javax.validation.Path.ParameterNode;
-import javax.validation.Validation;
-import javax.validation.ValidatorFactory;
-import javax.validation.executable.ExecutableValidator;
+import jakarta.enterprise.inject.spi.AnnotatedMethod;
+import jakarta.enterprise.inject.spi.AnnotatedParameter;
+import jakarta.enterprise.inject.spi.AnnotatedType;
+import jakarta.enterprise.inject.spi.Bean;
+import jakarta.servlet.http.HttpSession;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ElementKind;
+import jakarta.validation.Path.Node;
+import jakarta.validation.Path.ParameterNode;
+import jakarta.validation.Validation;
+import jakarta.validation.ValidatorFactory;
+import jakarta.validation.executable.ExecutableValidator;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -91,7 +91,7 @@ public enum QuarkHandlerUtil {
 	 * @return
 	 * @throws IOException
 	 */
-	public static <T> Object[] fillParams(final ExtJSDirectRequest<T> request, final List<AnnotatedParameter<?>> methodParams)	throws IOException {
+	public static <T> Object[] fillParams(final ExtJSDirectRequest<T> request, final List<AnnotatedParameter<AnnotatedParameter<?>>> methodParams)	throws IOException {
 
 		final int paramSize = methodParams.size();
 		final int incomingParamsSize = request.getData() == null ? 0 : request.getData().size();
@@ -205,7 +205,7 @@ public enum QuarkHandlerUtil {
 	 * @param params
 	 * @return
 	 */
-	public static boolean isParametersInvalid(final List<AnnotatedParameter<?>> paramList, final Object[] params) {
+	public static boolean isParametersInvalid(final List<AnnotatedParameter<AnnotatedParameter<?>>> paramList, final Object[] params) {
 
 		boolean sts = false;
 		Required req = null;

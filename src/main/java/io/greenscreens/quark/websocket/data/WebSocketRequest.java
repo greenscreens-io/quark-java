@@ -5,7 +5,7 @@ package io.greenscreens.quark.websocket.data;
 
 import java.util.List;
 
-import javax.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.Vetoed;
 
 import com.fasterxml.jackson.databind.JsonNode;
 

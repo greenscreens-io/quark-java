@@ -22,9 +22,9 @@ import org.slf4j.LoggerFactory;
 import io.greenscreens.quark.NamedThreadFactory;
 import io.greenscreens.quark.QuarkUtil;
 
-import javax.websocket.CloseReason;
-import javax.websocket.CloseReason.CloseCodes;
-import javax.websocket.Session;
+import jakarta.websocket.CloseReason;
+import jakarta.websocket.CloseReason.CloseCodes;
+import jakarta.websocket.Session;
 
 
 /**

@@ -31,6 +31,10 @@ Java Classes/Methods, then to generate and link internal calling mechanism.
 
 To see how to use it, visit project web page [here](https://quark.greenscreens.ltd).
 
+### Important!!!
+ - To use "javax" version for older Java EE8 servers, use Quark 5.0.0.
+ - To use "jakarta" version for Java Jakarta EE, use Quar 6.0.0. or newer.
+
 ### Build
 
 1. Clone repository to local drive

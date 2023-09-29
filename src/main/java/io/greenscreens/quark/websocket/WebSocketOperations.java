@@ -8,13 +8,13 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
-import javax.enterprise.inject.Vetoed;
-import javax.enterprise.inject.spi.AnnotatedMethod;
-import javax.enterprise.inject.spi.AnnotatedParameter;
-import javax.enterprise.inject.spi.AnnotatedType;
-import javax.enterprise.inject.spi.Bean;
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpSession;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.spi.AnnotatedMethod;
+import jakarta.enterprise.inject.spi.AnnotatedParameter;
+import jakarta.enterprise.inject.spi.AnnotatedType;
+import jakarta.enterprise.inject.spi.Bean;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.http.HttpSession;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,7 +51,6 @@ public final class WebSocketOperations<T> {
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public ExtJSDirectResponse<T> process(final ExtJSDirectRequest<T> request, final ServletContext ctx,  final HttpSession httpSession, final String uri) {
 
-		
 		final boolean isDisabled = ServletUtils.isDisabled(ctx);
 		ExtJSDirectResponse<T> directResponse = null;
 		ExtJSResponse response = null;
@@ -76,7 +75,7 @@ public final class WebSocketOperations<T> {
 				if (isProtected && isDisabled) {
 					response = QuarkHandlerUtil.getError(QuarkErrors.E8888);
 				} else {
-					final List<AnnotatedParameter<?>> paramList = selectedMethod.getParameters();
+					final List<AnnotatedParameter<AnnotatedParameter<?>>> paramList = selectedMethod.getParameters();
 					final Object[] params = QuarkHandlerUtil.fillParams(request, paramList);
 
 					error = QuarkHandlerUtil.isParametersInvalid(paramList, params);

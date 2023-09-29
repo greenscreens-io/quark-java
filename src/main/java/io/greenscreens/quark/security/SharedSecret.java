@@ -14,7 +14,6 @@ import java.security.NoSuchProviderException;
 import java.security.SecureRandom;
 import java.security.spec.ECGenParameterSpec;
 import java.util.Base64;
-import java.util.Collections;
 import java.util.Base64.Decoder;
 
 import javax.crypto.KeyAgreement;
