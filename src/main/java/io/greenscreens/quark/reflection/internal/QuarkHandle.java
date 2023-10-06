@@ -24,6 +24,7 @@ import jakarta.enterprise.inject.spi.Bean;
  */
 final class QuarkHandle implements IQuarkHandle {
 
+	private final static Class<?> ARG_TYPE = (new Object[] {}).getClass();
 	private final static AtomicInteger counter = new AtomicInteger(); 
 	
 	final int id = counter.incrementAndGet();
@@ -57,7 +58,7 @@ final class QuarkHandle implements IQuarkHandle {
 	@Override
 	public MethodHandle methodHandle() throws NoSuchMethodException, IllegalAccessException {
 		if (Objects.isNull(methodHandle)) {
-			methodHandle = QuarkMapper.toHandle(method);
+			methodHandle = QuarkMapper.toHandle(method).asSpreader(1, ARG_TYPE, method.getParameterCount());
 		}
 		return methodHandle;
 	}

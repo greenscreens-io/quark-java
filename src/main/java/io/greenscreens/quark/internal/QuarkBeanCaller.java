@@ -129,7 +129,7 @@ public class QuarkBeanCaller implements Runnable {
 	private ExtJSResponse call(final IDestructibleBeanInstance<?> bean) throws NoSuchMethodException, Throwable {
 		final Object beanInstance = bean.getInstance();
 		QuarkValidator.validateParameters(beanHandle, beanInstance, params); 
-		final Object obj = methodHandle().bindTo(beanInstance).invokeWithArguments(params);
+		final Object obj = methodHandle().invoke(beanInstance, params);
 		if (asAsync()) return null;
 		return QuarkHandlerUtil.toResponse(obj, beanHandle);		
 	}
