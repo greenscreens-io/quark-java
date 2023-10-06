@@ -3,10 +3,17 @@
  */
 package io.greenscreens.quark.websocket;
 
-import java.io.IOException;
 import java.util.Objects;
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import io.greenscreens.quark.QuarkEngine;
+import io.greenscreens.quark.utils.QuarkUtil;
+import io.greenscreens.quark.websocket.data.IWebSocketResponse;
+import io.greenscreens.quark.websocket.data.WebSocketRequest;
+import io.greenscreens.quark.websocket.heartbeat.HeartbeatService;
 import jakarta.inject.Inject;
 import jakarta.websocket.CloseReason;
 import jakarta.websocket.EndpointConfig;
@@ -16,15 +23,6 @@ import jakarta.websocket.OnMessage;
 import jakarta.websocket.OnOpen;
 import jakarta.websocket.PongMessage;
 import jakarta.websocket.Session;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import io.greenscreens.quark.QuarkEngine;
-import io.greenscreens.quark.QuarkUtil;
-import io.greenscreens.quark.websocket.data.IWebSocketResponse;
-import io.greenscreens.quark.websocket.data.WebSocketRequest;
-import io.greenscreens.quark.websocket.heartbeat.HeartbeatService;
 
 
 /**
@@ -64,7 +62,6 @@ public class WebSocketService {
 
 		endpoint.onOpen(session, config);
 		HeartbeatService.registerSession(session);
-		initial(session);
 	}
 
 	@OnClose
@@ -89,13 +86,4 @@ public class WebSocketService {
 		HeartbeatService.handlePong(session);
 	}
 
-	void initial(final Session session){
-		try {
-			session.getBasicRemote().sendText("{\"msg\":\"WS4IS\"}");
-		} catch (IOException e) {
-			final String msg = QuarkUtil.toMessage(e);
-			LOG.error(msg);
-			LOG.debug(msg, e);
-		}		
-	}
 }

@@ -14,8 +14,7 @@ import jakarta.enterprise.inject.Vetoed;
 @Vetoed
 public class ExtJSDirectResponse<T> {
 
-	private String action;
-	private String method;
+	private Integer mid;
 	private String type;
 	private String tid = "-1";
 	private Object result;
@@ -26,28 +25,19 @@ public class ExtJSDirectResponse<T> {
 		this.result = response;
 
 		if (Objects.nonNull(request)) {
-			this.action = request.getAction();
-			this.method = request.getMethod();
+			this.mid = request.getHandle();
 			this.tid = request.getTid();
 			this.type = request.getType();
 		}
 
 	}
 
-	public final String getAction() {
-		return action;
+	public Integer getMid() {
+		return mid;
 	}
 
-	public final void setAction(final String action) {
-		this.action = action;
-	}
-
-	public final String getMethod() {
-		return method;
-	}
-
-	public final void setMethod(final String method) {
-		this.method = method;
+	public void setMid(Integer mid) {
+		this.mid = mid;
 	}
 
 	public final String getType() {
@@ -76,7 +66,7 @@ public class ExtJSDirectResponse<T> {
 
 	@Override
 	public String toString() {
-		return "ExtJSDirectResponse [action=" + action + ", method=" + method + ", type=" + type + ", tid=" + tid + ", result=" + result + "]";
+		return "ExtJSDirectResponse [mid=" + mid + ", type=" + type + ", tid=" + tid + ", result=" + result + "]";
 	}
 
 }

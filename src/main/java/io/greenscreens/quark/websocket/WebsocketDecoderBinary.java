@@ -14,9 +14,9 @@ import jakarta.websocket.EndpointConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.greenscreens.quark.IQuarkKey;
-import io.greenscreens.quark.QuarkStream;
-import io.greenscreens.quark.QuarkUtil;
+import io.greenscreens.quark.security.IQuarkKey;
+import io.greenscreens.quark.stream.QuarkStream;
+import io.greenscreens.quark.utils.QuarkUtil;
 import io.greenscreens.quark.websocket.data.WebSocketRequest;
 
 /**

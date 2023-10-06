@@ -5,7 +5,7 @@ package io.greenscreens.quark.websocket.data;
 
 import java.io.Serializable;
 
-import io.greenscreens.quark.web.QuarkConstants;
+import io.greenscreens.quark.internal.QuarkConstants;
 import jakarta.enterprise.inject.Vetoed;
 
 /**

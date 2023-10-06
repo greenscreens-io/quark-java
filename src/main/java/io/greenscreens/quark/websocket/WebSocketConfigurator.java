@@ -15,11 +15,10 @@ import jakarta.servlet.http.HttpSession;
 import jakarta.websocket.HandshakeResponse;
 import jakarta.websocket.server.HandshakeRequest;
 import jakarta.websocket.server.ServerEndpointConfig;
-
-import io.greenscreens.quark.IQuarkKey;
-import io.greenscreens.quark.QuarkUtil;
-import io.greenscreens.quark.security.Security;
-import io.greenscreens.quark.web.QuarkConstants;
+import io.greenscreens.quark.internal.QuarkConstants;
+import io.greenscreens.quark.security.IQuarkKey;
+import io.greenscreens.quark.security.QuarkSecurity;
+import io.greenscreens.quark.utils.QuarkUtil;
 import io.greenscreens.quark.web.listener.QuarkWebSessionListener;
 
 /**
@@ -119,7 +118,7 @@ public class WebSocketConfigurator extends ServerEndpointConfig.Configurator {
 
 		final Locale locale = WebsocketUtil.getLocale(request);
 		final boolean isCompression = "true".equalsIgnoreCase(compression);
-		final IQuarkKey aesKey = Security.initWebKey(publicKey);
+		final IQuarkKey aesKey = QuarkSecurity.initWebKey(publicKey);
 
 		super.modifyHandshake(sec, request, response);
 		response.getHeaders().put("Accept-Language", LANG);	

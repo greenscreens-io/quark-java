@@ -20,7 +20,7 @@ import jakarta.enterprise.inject.Vetoed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.greenscreens.quark.QuarkUtil;
+import io.greenscreens.quark.utils.QuarkUtil;
 
 /**
  * AEC encryption & Decryption utility
@@ -31,7 +31,7 @@ class AesCrypt implements IAesKey {
 	private static final Logger LOG = LoggerFactory.getLogger(AesCrypt.class);
 
 	private static final String TRANSFORMATION = "AES/CTR/NoPadding";
-
+	
 	/**
 	 * Use SunJCE as it might support hardware AES-NI.
 	 * BouncyCastle does not support it. - ~250.000 calc/sec
@@ -39,7 +39,7 @@ class AesCrypt implements IAesKey {
 	 */			
 	private static final String PROVIDER = "SunJCE"; 
 	//private static final String PROVIDER = SecurityProvider.PROVIDER_NAME;
-		
+	
 	private Cipher cipher;
 
 	private SecretKeySpec keyspec;

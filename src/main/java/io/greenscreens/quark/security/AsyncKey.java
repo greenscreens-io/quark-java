@@ -25,7 +25,7 @@ import org.bouncycastle.jce.spec.ECNamedCurveParameterSpec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.greenscreens.quark.QuarkUtil;
+import io.greenscreens.quark.utils.QuarkUtil;
 
 
 /**
@@ -92,26 +92,6 @@ enum AsyncKey {
 	}
 
 	/**
-	 * Set new keys (support for dynamic web encryption)
-	 * 
-	 * @param pubKey
-	 * @param privKey
-	 */
-	static void setKeys(final PublicKey pubKey, final PrivateKey privKey) {
-
-		try {
-			keyPairENCDEC = new KeyPair(pubKey, privKey);
-			pemENCDEC = AsyncKeyUtil.toPublicPem(keyPairENCDEC);
-			pemPrivENCDEC = AsyncKeyUtil.toPrivatePem(keyPairENCDEC);
-			initVerificator();
-		} catch (Exception e) {
-			final String msg = QuarkUtil.toMessage(e);
-			LOG.error(msg);
-			LOG.debug(msg, e);
-		}
-	}
-
-	/**
 	 * Expose private key
 	 * 
 	 * @return
@@ -130,7 +110,7 @@ enum AsyncKey {
 	}
 
 	/**
-	 * Get Public RSA key in PEM format
+	 * Get Public key in PEM format
 	 * 
 	 * @param flat
 	 * @return
@@ -140,7 +120,7 @@ enum AsyncKey {
 	}
 
 	/**
-	 * Get Private RSA key in PEM format
+	 * Get Private key in PEM format
 	 * 
 	 * @param flat
 	 * @return
@@ -150,7 +130,7 @@ enum AsyncKey {
 	}
 
 	/**
-	 * Get Public RSA key in PEM format for Signing
+	 * Get Public key in PEM format for Signing
 	 * 
 	 * @param flat
 	 * @return
@@ -175,7 +155,7 @@ enum AsyncKey {
 		final byte[] s = ASN1Integer.getInstance(seq.getObjectAt(1)).getPositiveValue().toByteArray();
 				
 		final int byteSize = BitSize / 8;
-		final ByteBuffer buffer = ByteBuffer.allocate(byteSize*2);
+		final ByteBuffer buffer = ByteBuffer.allocate(48*2);
 		buffer.put(r, r.length - byteSize, byteSize);
 		buffer.put(s, s.length - byteSize, byteSize);
 		

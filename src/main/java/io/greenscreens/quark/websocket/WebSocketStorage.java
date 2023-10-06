@@ -5,10 +5,9 @@ package io.greenscreens.quark.websocket;
 
 import java.util.Objects;
 
+import io.greenscreens.quark.utils.QuarkUtil;
 import jakarta.websocket.EndpointConfig;
 import jakarta.websocket.Session;
-
-import io.greenscreens.quark.QuarkUtil;
 
 /**
  * Helper class to store data into WebSocket session

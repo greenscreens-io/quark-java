@@ -20,16 +20,6 @@ import java.util.Optional;
 import java.util.Scanner;
 import java.util.zip.GZIPOutputStream;
 
-import jakarta.servlet.ServletContext;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.ServletRequest;
-import jakarta.servlet.ServletResponse;
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
-import jakarta.servlet.http.Part;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,13 +28,19 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import io.greenscreens.quark.ByteBufferInputStream;
-import io.greenscreens.quark.JsonDecoder;
-import io.greenscreens.quark.QuarkCompression;
-import io.greenscreens.quark.QuarkDecompression;
-import io.greenscreens.quark.QuarkStream;
-import io.greenscreens.quark.QuarkUtil;
-import io.greenscreens.quark.ext.ExtJSProtected;
+import io.greenscreens.quark.internal.QuarkConstants;
+import io.greenscreens.quark.internal.QuarkHandlerUtil;
+import io.greenscreens.quark.stream.QuarkStream;
+import io.greenscreens.quark.utils.QuarkJson;
+import io.greenscreens.quark.utils.QuarkUtil;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.Part;
 
 /**
  * General http request utils
@@ -92,11 +88,29 @@ public enum ServletUtils {
 	public static void closeAll(final HttpSession session) {
     	final Enumeration<String> keys = session.getAttributeNames();
     	while (keys.hasMoreElements()) {
-    		Object obj = remove(session, keys.nextElement());
+    		Object obj = ServletStorage.remove(session, keys.nextElement());
     		if (obj instanceof AutoCloseable) {
     			QuarkUtil.close((AutoCloseable) obj);
     		}
     	}
+	}
+	
+	/**
+	 * SAfe check if HTTP session is still valid
+	 * @param session
+	 * @return
+	 */
+	public static boolean isValidHttpSession(final HttpSession session) {
+		final String attr = ServletStorage.get(session, QuarkConstants.HTTP_SEESION_STATUS);
+		return Boolean.TRUE.toString().equalsIgnoreCase(attr);
+	}
+	
+	public static String getPublicKey(final HttpServletRequest request) {
+		String publicKey = request.getHeader(QuarkConstants.WEB_KEY);		
+		if (QuarkUtil.isEmpty(publicKey)) {
+			publicKey = ServletUtils.getCookie(request, QuarkConstants.WEB_KEY);
+		}	
+		return publicKey;
 	}
 	
 	/**
@@ -108,11 +122,11 @@ public enum ServletUtils {
 	 */
 	public static String getBodyAsString(final HttpServletRequest request) throws IOException {
 
-		final boolean isCompress = supportGzip(request);
+		final boolean isCompress = isGzipped(request);
 		final InputStream is = request.getInputStream();
 		
 		if (isCompress) {
-			return QuarkDecompression.asString(is, true);
+			return QuarkStream.decompressAsString(is);
 		} else {
 			return QuarkStream.asString(is, true);
 		}
@@ -120,22 +134,30 @@ public enum ServletUtils {
 
 	public static ByteBuffer getBodyAsBuffer(final HttpServletRequest request) throws IOException {
 
-		final boolean isCompress = supportGzip(request);
+		final boolean isCompress = isGzipped(request);
 		final InputStream is = request.getInputStream();
 
 		if (isCompress) {
-			return QuarkDecompression.asBuffer(is, true);
+			return QuarkStream.decompressAsBuffer(is);
 		} else {
 			return QuarkStream.asBuffer(is, true);
 		}
 
 	}
-	
+
+	public static boolean isGzipped(final HttpServletRequest request) {
+		return isGzip(request, "Content-Encoding");
+	}
 	
 	public static boolean supportGzip(final HttpServletRequest request) {
-		final String val = QuarkUtil.normalize(request.getHeader("Content-Encoding"));
-		return val.indexOf("gzip") != -1;
+		return isGzip(request, "Accept-Encoding");
 	}
+	
+	static boolean isGzip(final HttpServletRequest request, final String key) {
+		final String val1 = QuarkUtil.normalize(request.getHeader(key));
+		return val1.indexOf("gzip") != -1;
+	}
+	
 	
 	/**
 	 * Set browser no caching flags
@@ -164,7 +186,7 @@ public enum ServletUtils {
 			json = ServletUtils.getBodyAsString(request);
 
 			// parse json text to encrypted json object
-			node = JsonDecoder.parse(json);
+			node = QuarkJson.parse(json);
 
 		} catch (Exception e) {
 			throw new IOException(e);
@@ -183,77 +205,18 @@ public enum ServletUtils {
 		return part;
 	}
 
-	/**
-	 * Send public key and server timestamp
-	 * 
-	 * @param sts
-	 * @param err
-	 * @return
-	 */
-	public static ObjectNode getResponse() {
-		return getResponse(true, null, null);
-	}
-
-	/**
-	 * Create JSON error response in engine JSON format
-	 * 
-	 * @param error
-	 * @return
-	 */
-	public static ObjectNode getResponse(final QuarkErrors error) {
-
-		if (Objects.isNull(error)) return getResponse();
-
-		return getResponse(false, error.getString(), error.getCode());
-	}
-
-	/**
-	 * Create JSON response in engine JSON format
-	 * 
-	 * @param sts
-	 * @param error
-	 * @return
-	 */
-	public static ObjectNode getResponse(final boolean sts, final String error) {
-		return getResponse(sts, error, QuarkErrors.E9999.getCode());
-	}
-
-	/**
-	 * Create JSON response in engine JSON format
-	 * 
-	 * @param sts
-	 * @param err
-	 * @param code
-	 * @return
-	 */
-	public static ObjectNode getResponse(final boolean sts, final String err, final String code) {
-
-		final JsonNodeFactory factory = JsonNodeFactory.instance;
-		final ObjectNode root = factory.objectNode();
-
-		root.put("success", sts);
-		root.put("ver", 0);
-		root.put("ts", System.currentTimeMillis());
-
-		if (!sts) {
-			root.put("error", err);
-			root.put("code", code);
-		}
-
-		return root;
-	}
-
 	public static <T> void sendResponse(final HttpServletResponse response, final T obj, final boolean compress) {
 		
 		String json = null;
 
 		try {
-			json = JsonDecoder.stringify(obj);
+			json = QuarkJson.stringify(obj);
 			response.setContentType("application/json");
 			writeResponse(response, json, compress);
 		} catch (JsonProcessingException e) {
 			LOG.error("Failed to encode messages as JSON: {}", json, e);
-			final ObjectNode jsonObject = ServletUtils.getResponse(false, e.getMessage());
+			final String msg = QuarkUtil.toMessage(e);
+			final ObjectNode jsonObject = QuarkHandlerUtil.getResponse(false, msg);
 			sendResponse(response, jsonObject, compress);
 		}
 	}
@@ -317,7 +280,7 @@ public enum ServletUtils {
 
 	public static void writeResponse(final HttpServletResponse resp, final ByteBuffer message, final boolean compress) {
 		if (resp.isCommitted()) return;		
-		final ByteBufferInputStream inStream = new ByteBufferInputStream(message);
+		final InputStream inStream = QuarkStream.asStream(message);
 		writeResponse(resp, inStream, message.remaining(), compress);
 	}
 	
@@ -336,7 +299,7 @@ public enum ServletUtils {
 
 			if (compress) {
 				resp.setHeader("Content-Encoding", "gzip");
-				QuarkCompression.stream(inStream, outStream, false);
+				QuarkStream.compress(inStream, outStream);
 			} else {				
 				resp.setContentLength(length);
 				QuarkStream.stream(inStream, outStream);
@@ -422,197 +385,6 @@ public enum ServletUtils {
 		return ext;
 	}
 
-	public static <T> T get(final HttpServletRequest request, final Class<T> clazz) {
-		if (Objects.nonNull(request) && Objects.nonNull(clazz)) {
-			return get(request, clazz.getCanonicalName());
-		}
-		return null;
-	}
-
-	public static <T> T get(final HttpSession session, final Class<T> clazz) {
-		if (Objects.nonNull(session) && Objects.nonNull(clazz)) {
-			return get(session, clazz.getCanonicalName());
-		}
-		return null;
-	}
-	
-	public static <T> T get(final ServletContext context, final Class<T> clazz) {
-		if (Objects.nonNull(context) && Objects.nonNull(clazz)) {
-			return get(context, clazz.getCanonicalName());
-		}
-		return null;
-	}
-
-	@SuppressWarnings("unchecked")
-	public static <T> T get(final HttpServletRequest request, final String key) {
-		if (Objects.nonNull(request) && Objects.nonNull(key)) {
-			return (T) request.getAttribute(key);
-		}
-		return null;
-	}
-	
-	@SuppressWarnings("unchecked")
-	public static <T> T get(final HttpSession session, final String key) {
-		if (Objects.nonNull(session) && Objects.nonNull(key)) {
-			return (T) session.getAttribute(key);
-		}
-		return null;
-	}
-	
-	@SuppressWarnings("unchecked")
-	public static <T> T get(final ServletContext context, final String key) {
-		if (Objects.nonNull(context) && Objects.nonNull(key)) {
-			return (T) context.getAttribute(key);
-		}
-		return null;
-	}
-
-	public static <T> T put(final HttpServletRequest request, final T value) {
-		if (Objects.nonNull(request) && Objects.nonNull(value)) {
-			return put(request, value.getClass().getCanonicalName(), value);
-		}
-		return null;
-	}
-		
-	public static <T> T put(final HttpServletRequest request, final Class<T> clazz, final T value) {
-		if (Objects.nonNull(request) && Objects.nonNull(clazz)) {
-			return put(request, clazz.getCanonicalName(), value);
-		}
-		return null;
-	}
-	
-	public static <T> T put(final HttpServletRequest request, final String key, final T value) {
-		if (request != null && key!= null && value != null) {
-			request.setAttribute(key, value);
-			return value; 
-		}
-		return null;
-	}
-	
-	
-	public static <T> T put(final HttpSession session, final T value) {
-		if (Objects.nonNull(session) && Objects.nonNull(value)) {
-			return put(session, value.getClass().getCanonicalName(), value);
-		}
-		return null;
-	}
-		
-	public static <T> T put(final HttpSession session, final Class<T> clazz, final T value) {
-		if (Objects.nonNull(session) && Objects.nonNull(clazz)) {
-			return put(session, clazz.getCanonicalName(), value);
-		}
-		return null;
-	}
-	
-	public static <T> T put(final HttpSession session, final String key, final T value) {
-		if (Objects.nonNull(session) && Objects.nonNull(key) && Objects.nonNull(value)) {
-			session.setAttribute(key, value);
-			return value; 
-		}
-		return null;
-	}
-
-	/**
-	 * Remove value from servlet context safe. Key is class canonical name.
-	 * @param <T>
-	 * @param context
-	 * @param clazz
-	 * @return
-	 */
-	public static <T> T remove(final ServletContext context, final Class<T> clazz) {
-		if (Objects.nonNull(context) && Objects.nonNull(clazz)) {
-			return remove(context, clazz.getCanonicalName());
-		}
-		return null;
-	}
-	
-	/**
-	 * Remove value from servlet context safe. 
-	 * @param <T>
-	 * @param context
-	 * @param key
-	 * @return
-	 */
-	public static <T> T remove(final ServletContext context, final String key) {
-		final T val = get(context, key);
-		if (Objects.nonNull(context) && Objects.nonNull(key)) {
-			context.removeAttribute(key);
-		}
-		return val;
-	}
-	
-	/**
-	 * Remove value from request safe. Key is class canonical name.
-	 * @param <T>
-	 * @param request
-	 * @param clazz
-	 * @return
-	 */
-	public static <T> T remove(final HttpServletRequest request, final Class<T> clazz) {
-		if (Objects.nonNull(request) && Objects.nonNull(clazz)) {
-			return remove(request, clazz.getCanonicalName());
-		}
-		return null;
-	}
-	
-	/**
-	 * Remove value from request safe.
-	 * @param <T>
-	 * @param request
-	 * @param key
-	 * @return
-	 */
-	public static <T> T remove(final HttpServletRequest request, final String key) {
-		final T val = get(request, key);
-		if (Objects.nonNull(request) && Objects.nonNull(key)) {
-			request.removeAttribute(key);
-		}
-		return val;
-	}
-
-	/**
-	 * Remove value from session if session exists. Key is value class canonical name
-	 * @param <T>
-	 * @param session
-	 * @param value
-	 * @return
-	 */
-	public static <T> T remove(final HttpSession session, final T value) {
-		if (Objects.nonNull(session) && Objects.nonNull(value)) {
-			return remove(session, value.getClass().getCanonicalName());
-		}
-		return null;
-	}
-	
-	/**
-	 * Remove value from session if session exists. Key is class canonical name
-	 * @param <T>
-	 * @param session
-	 * @param clazz
-	 * @return
-	 */
-	public static <T> T remove(final HttpSession session, final Class<T> clazz) {
-		if (Objects.nonNull(session) && Objects.nonNull(clazz)) {
-			return remove(session, clazz.getCanonicalName());
-		}
-		return null;
-	}
-	
-	/**
-	 * Remove value from session if session exists 
-	 * @param <T>
-	 * @param session
-	 * @param key
-	 * @return
-	 */
-	public static <T> T remove(final HttpSession session, final String key) {
-		final T val = get(session, key);
-		if (Objects.nonNull(session) && Objects.nonNull(key)) {
-			session.removeAttribute(key);
-		}
-		return val;
-	}
-	
 	/**
 	 * Invalidate session if exists
 	 * @param request
@@ -634,27 +406,6 @@ public enum ServletUtils {
 			return true;
 		}
 		return false;
-	}
-	
-	/**
-	 * Check if Quark API processing is disabled
-	 * @param context
-	 * @return
-	 */
-	public static boolean isDisabled(final ServletContext context) {
-		final String key = ExtJSProtected.class.getCanonicalName();
-		final Boolean o1 = ServletUtils.get(context, key);
-		return Objects.nonNull(o1) && o1.booleanValue();
-	}
-	
-	/**
-	 * Enable or disable Quark API Processsing
-	 * @param context
-	 * @param sts
-	 */
-	public static void setDisabled(final ServletContext context, final boolean sts) {
-		final String key = ExtJSProtected.class.getCanonicalName();
-		context.setAttribute(key, sts ? Boolean.TRUE : Boolean.FALSE);
 	}
 	
 	/**
@@ -698,7 +449,7 @@ public enum ServletUtils {
 	public static String getCookie(final HttpServletRequest request, final String key) {
 		if (QuarkUtil.nonEmpty(key) && Objects.nonNull(request.getCookies())) {
 			final List<Cookie> cookies = Arrays.asList(request.getCookies());
-			final Optional<Cookie> cookie = cookies.stream().filter(c -> QuarkConstants.WEB_KEY.equals(c.getName())).findFirst();
+			final Optional<Cookie> cookie = cookies.stream().filter(c -> key.equals(c.getName())).findFirst();
 			if (cookie.isPresent()) return cookie.get().getValue();
 		}
 		return null;

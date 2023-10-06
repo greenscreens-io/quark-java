@@ -14,9 +14,8 @@ import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.HttpSessionActivationListener;
 import jakarta.servlet.http.HttpSessionEvent;
 import jakarta.servlet.http.HttpSessionListener;
-
-import io.greenscreens.quark.web.QuarkConstants;
-import io.greenscreens.quark.web.QuarkHandlerUtil;
+import io.greenscreens.quark.internal.QuarkConstants;
+import io.greenscreens.quark.internal.QuarkValidator;
 import io.greenscreens.quark.websocket.heartbeat.HeartbeatService;
 
 /**
@@ -34,7 +33,7 @@ public final class QuarkWebSessionListener implements HttpSessionListener, HttpS
 	 */
 	@Override
 	public void contextDestroyed(final ServletContextEvent event) {
-		QuarkHandlerUtil.releaseValidator();
+		QuarkValidator.releaseValidator();
 		HeartbeatService.terminate();
 	}
 
@@ -43,7 +42,7 @@ public final class QuarkWebSessionListener implements HttpSessionListener, HttpS
 	 */
 	@Override
 	public void contextInitialized(final ServletContextEvent event) {
-		QuarkHandlerUtil.initValidator();
+		QuarkValidator.initValidator();
 		HeartbeatService.initialize();
 	}
 	

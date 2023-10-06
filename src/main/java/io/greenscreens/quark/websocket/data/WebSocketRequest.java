@@ -10,7 +10,7 @@ import jakarta.enterprise.inject.Vetoed;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import io.greenscreens.quark.ext.ExtJSDirectRequest;
-import io.greenscreens.quark.web.QuarkConstants;
+import io.greenscreens.quark.internal.QuarkConstants;
 
 /**
  * Class used to map JSON structure describing ExtJS WebSocket request.

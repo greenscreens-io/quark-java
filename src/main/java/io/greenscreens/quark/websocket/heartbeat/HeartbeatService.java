@@ -19,9 +19,8 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.greenscreens.quark.NamedThreadFactory;
-import io.greenscreens.quark.QuarkUtil;
-
+import io.greenscreens.quark.utils.NamedThreadFactory;
+import io.greenscreens.quark.utils.QuarkUtil;
 import jakarta.websocket.CloseReason;
 import jakarta.websocket.CloseReason.CloseCodes;
 import jakarta.websocket.Session;

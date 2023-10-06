@@ -14,13 +14,10 @@ import java.util.Objects;
 import jakarta.websocket.EncodeException;
 import jakarta.websocket.EndpointConfig;
 import jakarta.websocket.server.HandshakeRequest;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import io.greenscreens.quark.IQuarkKey;
-import io.greenscreens.quark.JsonDecoder;
-import io.greenscreens.quark.QuarkUtil;
-import io.greenscreens.quark.web.QuarkConstants;
+import io.greenscreens.quark.internal.QuarkConstants;
+import io.greenscreens.quark.security.IQuarkKey;
+import io.greenscreens.quark.utils.QuarkJson;
+import io.greenscreens.quark.utils.QuarkUtil;
 import io.greenscreens.quark.web.ServletUtils;
 import io.greenscreens.quark.websocket.data.IWebSocketResponse;
 import io.greenscreens.quark.websocket.data.WebSocketRequest;
@@ -45,8 +42,7 @@ public enum WebsocketUtil {
 	}
 	
 	final static WebSocketRequest decode(final String message) throws IOException {
-		final JsonDecoder<WebSocketRequest> jd = new JsonDecoder<>(WebSocketRequest.class, message);
-		return jd.getObject();
+		return QuarkJson.parse(WebSocketRequest.class, message);
 	}
 	
 	/**
@@ -61,8 +57,7 @@ public enum WebsocketUtil {
 		String response = null;
 
 		try {
-			final ObjectMapper mapper = JsonDecoder.getJSONEngine();
-			response = mapper.writeValueAsString(data);
+			response = QuarkJson.stringify(data);
 		} catch (Exception e) {
 			throw new EncodeException(data, e.getMessage(), e);
 		}

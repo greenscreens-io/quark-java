@@ -25,7 +25,7 @@ import org.bouncycastle.jce.spec.ECPublicKeySpec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.greenscreens.quark.QuarkUtil;
+import io.greenscreens.quark.utils.QuarkUtil;
 
 import org.bouncycastle.jce.spec.ECPrivateKeySpec;
 
@@ -48,24 +48,24 @@ enum SharedSecret {
 		return kpgen;
 	}
 	
-	public static byte[] savePublicKey(final PublicKey key) throws Exception {
+	public static byte[] fromPublicKey(final PublicKey key) throws Exception {
 		final ECPublicKey eckey = (ECPublicKey) key;
 		return eckey.getQ().getEncoded(true);
 	}
 
-	public static PublicKey loadPublicKey(final byte[] data) throws Exception {
+	public static PublicKey toPublicKey(final byte[] data) throws Exception {
 		final ECParameterSpec params = ECNamedCurveTable.getParameterSpec(CIPHER);
 		final ECPublicKeySpec pubKey = new ECPublicKeySpec(params.getCurve().decodePoint(data), params);
 		final KeyFactory kf = getKeyFactory();
 		return kf.generatePublic(pubKey);
 	}
 
-	public static byte[] savePrivateKey(final PrivateKey key) throws Exception {
+	public static byte[] fromPrivateKey(final PrivateKey key) throws Exception {
 		final ECPrivateKey eckey = (ECPrivateKey) key;
 		return eckey.getD().toByteArray();
 	}
 
-	public static PrivateKey loadPrivateKey(final byte[] data) throws Exception {
+	public static PrivateKey toPrivateKey(final byte[] data) throws Exception {
 		final ECParameterSpec params = ECNamedCurveTable.getParameterSpec(CIPHER);
 		final ECPrivateKeySpec prvkey = new ECPrivateKeySpec(new BigInteger(data), params);
 		final KeyFactory kf = getKeyFactory();
@@ -73,7 +73,7 @@ enum SharedSecret {
 	}
 
 	public static byte[] doECDH(final byte[] dataPrv, final byte[] dataPub) throws Exception {
-		return doECDH(loadPrivateKey(dataPrv), loadPublicKey(dataPub));
+		return doECDH(toPrivateKey(dataPrv), toPublicKey(dataPub));
 	}
 	
 	public static byte[] doECDH(final PrivateKey privateKey, final PublicKey publicKey) throws Exception {
@@ -136,7 +136,7 @@ enum SharedSecret {
 		byte[] data = null;
 
 		try {
-			PublicKey pk = SharedSecret.loadPublicKey(buffer);
+			final PublicKey pk = SharedSecret.toPublicKey(buffer);
 			data = SharedSecret.doECDH(key, pk);
 		} catch (Exception e) {
 			final String msg = QuarkUtil.toMessage(e);

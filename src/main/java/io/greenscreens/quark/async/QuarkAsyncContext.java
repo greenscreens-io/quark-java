@@ -8,9 +8,8 @@ import jakarta.servlet.AsyncContext;
 import jakarta.servlet.AsyncListener;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-
 import io.greenscreens.quark.ext.ExtJSResponse;
-import io.greenscreens.quark.web.QuarkHandler;
+import io.greenscreens.quark.internal.QuarkHandler;
 
 /**
  * Thread level context class holder for servlet parameters
@@ -27,7 +26,7 @@ public final class QuarkAsyncContext {
 		this.quarkHandler = quarkHandler;
 		this.asyncContext = quarkHandler.getContext();
 		if (Objects.nonNull(asyncContext)) {
-			asyncContext.addListener(QuarkAsyncResponseListener.create());
+			asyncContext.addListener(QuarkAsyncListener.create());
 		}
 	}
 	

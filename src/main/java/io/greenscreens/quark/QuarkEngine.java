@@ -4,6 +4,7 @@
 package io.greenscreens.quark;
 
 import java.lang.annotation.Annotation;
+import java.util.Objects;
 
 import jakarta.enterprise.inject.Instance;
 import jakarta.enterprise.inject.spi.BeanManager;
@@ -25,7 +26,7 @@ public enum QuarkEngine {
 
 		final CDI<Object> cdi = CDI.current();
 		
-		if (cdi != null) {
+		if (Objects.nonNull(cdi)) {
 			return cdi.getBeanManager();
 		}
 		
@@ -35,9 +36,9 @@ public enum QuarkEngine {
 	public static <T> T getBean(final Class<T> cls) {
 
 		final CDI<Object> cdi = CDI.current();
-		if (cdi != null) {
+		if (Objects.nonNull(cdi)) {
 			final Instance<T> inst = cdi.select(cls);
-			if (inst != null) {
+			if (Objects.nonNull(inst)) {
 				return inst.get();
 			}
 		}

@@ -14,9 +14,12 @@ import jakarta.websocket.EndpointConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.greenscreens.quark.IQuarkKey;
-import io.greenscreens.quark.QuarkStream;
-import io.greenscreens.quark.QuarkUtil;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import io.greenscreens.quark.security.IQuarkKey;
+import io.greenscreens.quark.stream.QuarkStream;
+import io.greenscreens.quark.utils.QuarkUtil;
+import io.greenscreens.quark.websocket.data.WebSocketInstruction;
 import io.greenscreens.quark.websocket.data.WebSocketResponse;
 
 /**
@@ -43,12 +46,15 @@ public class WebsocketEncoderBinary implements Encoder.Binary<WebSocketResponse>
 	public final ByteBuffer encode(final WebSocketResponse data) throws EncodeException {
 		
 		ByteBuffer buff = null;
+		ObjectNode node = null;
 		
 		try {
+			final boolean isAPI = data.getCmd() == WebSocketInstruction.API ;			
 			final String wsmsg = WebsocketUtil.encode(data);
 			final IQuarkKey key = WebsocketUtil.key(config);
-			final boolean compression = WebsocketUtil.isCompression(config);
-			buff = QuarkStream.wrap(wsmsg, key, compression);
+			final boolean compression = WebsocketUtil.isCompression(config);		
+			if (isAPI) node = (ObjectNode) data.getData();
+			buff = QuarkStream.wrap(wsmsg, key, compression, node);
 		} catch (IOException e) {
 			final String msg = QuarkUtil.toMessage(e);
 			LOG.error(msg);

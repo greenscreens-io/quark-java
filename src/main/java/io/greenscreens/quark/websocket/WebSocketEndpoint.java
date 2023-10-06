@@ -25,14 +25,14 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import io.greenscreens.quark.JsonDecoder;
 import io.greenscreens.quark.QuarkProducer;
-import io.greenscreens.quark.QuarkUtil;
 import io.greenscreens.quark.cdi.BeanManagerUtil;
 import io.greenscreens.quark.ext.ExtJSDirectRequest;
 import io.greenscreens.quark.ext.ExtJSResponse;
-import io.greenscreens.quark.web.QuarkConstants;
-import io.greenscreens.quark.web.QuarkHandler;
+import io.greenscreens.quark.internal.QuarkBuilder;
+import io.greenscreens.quark.internal.QuarkConstants;
+import io.greenscreens.quark.internal.QuarkHandler;
+import io.greenscreens.quark.utils.QuarkUtil;
 import io.greenscreens.quark.websocket.data.IWebSocketResponse;
 import io.greenscreens.quark.websocket.data.WebSocketInstruction;
 import io.greenscreens.quark.websocket.data.WebSocketRequest;
@@ -253,17 +253,14 @@ public class WebSocketEndpoint {
 		}
 		
 		final String challenge = session.get(QuarkConstants.QUARK_CHALLENGE);
-		final WebSocketResponse wsResposne = new WebSocketResponse(WebSocketInstruction.API);		
+		final WebSocketResponse wsResponse = new WebSocketResponse(WebSocketInstruction.API);		
 		
 		final ArrayNode api = beanManagerUtil.getAPI();
-		final ObjectNode root = QuarkUtil.buildAPI(api, challenge); 
-		wsResposne.setData(root);		
+		final ObjectNode root = QuarkBuilder.buildAPI(api, challenge); 
+		wsResponse.setData(root);		
 		
-		// API definition must be send as string to prevent encryption
-		// before client initialized keys 
 		try {
-			final String json = JsonDecoder.stringify(wsResposne);
-			session.getBasicRemote().sendObject(json);
+			session.getBasicRemote().sendObject(wsResponse);
 		} catch (IOException | EncodeException e) {
 			final String msg = QuarkUtil.toMessage(e);
 			LOG.error(msg);

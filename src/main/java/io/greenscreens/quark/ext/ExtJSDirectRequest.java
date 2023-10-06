@@ -15,36 +15,18 @@ import jakarta.enterprise.inject.Vetoed;
 @Vetoed
 public class ExtJSDirectRequest<T> {
 
-	private String action;
-	private String method;
-	private String namespace;
+	private int handle;
 	private String type;
 	private String tid;
 	private long ts;
 	private List<T> data;
-
-	public final String getNamespace() {
-		return namespace;
+	
+	public int getHandle() {
+		return handle;
 	}
 
-	public final void setNamespace(final String namespace) {
-		this.namespace = namespace;
-	}
-
-	public final String getAction() {
-		return action;
-	}
-
-	public final void setAction(final String action) {
-		this.action = action;
-	}
-
-	public final String getMethod() {
-		return method;
-	}
-
-	public final void setMethod(final String method) {
-		this.method = method;
+	public void setHandle(final int handle) {
+		this.handle = handle;
 	}
 
 	public final String getType() {
@@ -92,8 +74,7 @@ public class ExtJSDirectRequest<T> {
 
 	@Override
 	public String toString() {
-		return "ExtJSDirectRequest [action=" + action + ", method=" + method + ", namespace=" + namespace + ", type="
-				+ type + ", tid=" + tid + ", data=" + data + "]";
+		return "ExtJSDirectRequest [handle=" + handle + ", type=" + type + ", tid=" + tid + ", ts=" + ts + "]";
 	}
 
 }

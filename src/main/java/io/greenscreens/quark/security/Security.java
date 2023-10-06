@@ -15,7 +15,8 @@ import javax.crypto.spec.SecretKeySpec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.greenscreens.quark.QuarkUtil;
+import io.greenscreens.quark.utils.QuarkUtil;
+import jakarta.enterprise.inject.Vetoed;
 
 /**
  * Helper class for handling encryption One can use
@@ -25,7 +26,8 @@ import io.greenscreens.quark.QuarkUtil;
  * and implement encryption / decryption code.
  * 
  */
-public enum Security {
+@Vetoed
+enum Security {
 	;
 
 	private static final Logger LOG = LoggerFactory.getLogger(Security.class);

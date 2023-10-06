@@ -12,10 +12,13 @@ import java.util.Optional;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
+import jakarta.enterprise.inject.Vetoed;
+
 /**
  * Helper class to initialize BoncyCastle encryption provider 
  * if not initialized already. 
  */
+@Vetoed
 public enum SecurityProvider {
 	;
 
