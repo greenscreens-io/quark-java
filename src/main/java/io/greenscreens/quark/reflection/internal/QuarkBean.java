@@ -83,8 +83,9 @@ final class QuarkBean implements IQuarkBean {
 	@Override
 	public boolean accept(final String[] url) {
 		if (Objects.isNull(url)) return false;
-		final List<String> paths = new ArrayList<String>(Arrays.asList(paths()));
-		paths.retainAll(paths);
+		final List<String> paths = new ArrayList<>(Arrays.asList(paths()));
+		final List<String> urls = Arrays.asList(url);
+		paths.retainAll(urls);
 		return !paths.isEmpty();
 	}
 		

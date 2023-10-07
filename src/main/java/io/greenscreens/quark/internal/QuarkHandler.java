@@ -368,7 +368,6 @@ public class QuarkHandler {
 		
 		return error;
 	}
-
 	
 	/**
 	 * Get encryption key 
