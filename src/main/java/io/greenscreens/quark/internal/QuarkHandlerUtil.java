@@ -25,7 +25,9 @@ import io.greenscreens.quark.reflection.IQuarkHandle;
 import io.greenscreens.quark.utils.QuarkJson;
 import io.greenscreens.quark.utils.QuarkUtil;
 import io.greenscreens.quark.utils.ReflectionUtil;
+import io.greenscreens.quark.web.QuarkCookieUtil;
 import jakarta.enterprise.inject.spi.AnnotatedParameter;
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * Internal reflection util that handle JSON t oControlelr mappings.  
@@ -198,4 +200,13 @@ public enum QuarkHandlerUtil {
 
 		return root;
 	}
+	
+	public static String getPublicKey(final HttpServletRequest request) {
+		String publicKey = request.getHeader(QuarkConstants.WEB_KEY);		
+		if (QuarkUtil.isEmpty(publicKey)) {
+			publicKey = QuarkCookieUtil.getCookieValue(request, QuarkConstants.WEB_KEY);
+		}	
+		return publicKey;
+	}
+
 }

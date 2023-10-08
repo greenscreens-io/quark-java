@@ -57,10 +57,10 @@ public enum QuarkBuilder {
 	 * 
 	 * @return
 	 */
-	static public ArrayNode build(final String [] pathsFilter) {
+	static public ArrayNode build(final Collection<String> uri) {
 
 		final ArrayNode root = JsonNodeFactory.instance.arrayNode();
-		final Collection<IQuarkBean> handles = QuarkMapper.filter(pathsFilter);
+		final Collection<IQuarkBean> handles = QuarkMapper.filter(uri);
 		
 		handles.forEach(h -> {
 			

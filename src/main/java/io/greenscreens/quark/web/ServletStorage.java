@@ -60,6 +60,28 @@ public enum ServletStorage {
 		return null;
 	}
 
+	public static <T> T put(final ServletContext context, final T value) {
+		if (Objects.nonNull(context) && Objects.nonNull(value)) {
+			return put(context, value.getClass().getCanonicalName(), value);
+		}
+		return null;
+	}
+		
+	public static <T> T put(final ServletContext context, final Class<T> clazz, final T value) {
+		if (Objects.nonNull(context) && Objects.nonNull(clazz)) {
+			return put(context, clazz.getCanonicalName(), value);
+		}
+		return null;
+	}
+	
+	public static <T> T put(final ServletContext context, final String key, final T value) {
+		if (Objects.nonNull(context) && Objects.nonNull(key) && Objects.nonNull(value)) {
+			context.setAttribute(key, value);
+			return value; 
+		}
+		return null;
+	}
+	
 	public static <T> T put(final HttpServletRequest request, final T value) {
 		if (Objects.nonNull(request) && Objects.nonNull(value)) {
 			return put(request, value.getClass().getCanonicalName(), value);
@@ -75,7 +97,7 @@ public enum ServletStorage {
 	}
 	
 	public static <T> T put(final HttpServletRequest request, final String key, final T value) {
-		if (request != null && key!= null && value != null) {
+		if (Objects.nonNull(request) && Objects.nonNull(key) && Objects.nonNull(value)) {
 			request.setAttribute(key, value);
 			return value; 
 		}

@@ -135,10 +135,6 @@ public enum HeartbeatService {
 		final Session session = heartbeat.getUserSession();
 		try {
 			if (session.isOpen()) {
-				/*
-				final ObjectNode payloadJson = createPingPayload(session); // Maximum allowed payload of 125 bytes only
-				final ByteBuffer payload = ByteBuffer.wrap(payloadJson.toString().getBytes());
-				*/
 				final ByteBuffer payload = ByteBuffer.wrap(LocalDateTime.now().toString().getBytes());
 
 				session.getBasicRemote().sendPing(payload);
@@ -154,15 +150,6 @@ public enum HeartbeatService {
 			LOG.debug(msg, e);
 		}
 	}
-
-	/*
-	private static ObjectNode createPingPayload(final Session session) {
-		final ObjectNode payload = JsonDecoder.createObjectNode();
-		payload.put("sessionId", session.getId());
-		payload.put("pingedAt", LocalDateTime.now().toString());
-		return payload;
-	}
-	*/
 
 	private static boolean hasIdleTimeExpired(final HeartbeatSession heartbeat) {
 		final Long lastWsSessionPingTimeInMillis = heartbeat.getLastMessageOnInMillis().get();

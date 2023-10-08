@@ -6,7 +6,6 @@ package io.greenscreens.quark.reflection.internal;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
-import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.Collections;
@@ -124,9 +123,9 @@ public enum QuarkMapper {
 	 * @param url
 	 * @return
 	 */
-	public static Collection<IQuarkBean> filter(final String[] url) {
-		if (Objects.isNull(url)) return beans();
-		return beans().stream().filter(b -> b.accept(url)).collect(Collectors.toList());
+	public static Collection<IQuarkBean> filter(final Collection<String> uri) {
+		if (Objects.isNull(uri) || uri.isEmpty()) return beans();
+		return beans().stream().filter(b -> b.accept(uri)).collect(Collectors.toList());
 	}
 	
 }

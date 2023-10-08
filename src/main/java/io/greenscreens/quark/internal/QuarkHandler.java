@@ -95,6 +95,14 @@ public class QuarkHandler {
 		this.aes = getAes();
 	}
 		
+	public ServletContext getServletContext() {
+		return ctx;
+	}
+
+	public HttpSession getSession() {
+		return isWebSocket() ? wsSession.getHttpSession() : httpRequest.getSession(requireSession);
+	}
+
 	public WebSocketSession getWsSession() {
 		return wsSession;
 	}
@@ -132,34 +140,19 @@ public class QuarkHandler {
 		return Objects.isNull(state) ? false: state;
 	}
 
-	private Boolean getState(Boolean state, Boolean def) {
+	private Boolean getState(final Boolean state, final Boolean def) {
 		return Objects.isNull(state) ? def : state;		
 	}
 	
 	/**
-	 * Get web session from WebSocket or Servlet depending on request source.
-	 * @return
-	 */
-	private HttpSession getSession() {
-		if (isWebSocket()) {
-			return wsSession.getHttpSession();
-		}
-		return httpRequest.getSession(requireSession);
-	}
-
-	/**
 	 * Main processing
 	 */
 	public void call() {
-
 		try {
-
 			prepare();
-			
 			if (doProcess()) {
 				send();
 			}
-
 		} catch (Exception e) {
 			final String msg = QuarkUtil.toMessage(e);
 			LOG.error(msg);
@@ -167,7 +160,6 @@ public class QuarkHandler {
 			response = new ExtJSResponse(e, msg);
 			send();
 		}
-
 	}
 	
 	/**
@@ -248,28 +240,21 @@ public class QuarkHandler {
 	 * about requester ID so that front end know which callback to call
 	 * @return
 	 */
-	private ExtJSDirectResponse<JsonNode> getResult() {
-		
-		final ExtJSDirectResponse<JsonNode> directResponse = new ExtJSDirectResponse<>(request, response);
-		
+	private ExtJSDirectResponse<JsonNode> getResult() {		
+		final ExtJSDirectResponse<JsonNode> directResponse = new ExtJSDirectResponse<>(request, response);		
 		if (response.isException()) {
 			directResponse.setType(WebSocketInstruction.ERR.getText());
-		}
-		
+		}		
 		return directResponse;
 	} 
 	
 	public AsyncContext getContext() {
-		
 		if (Objects.nonNull(httpRequest)) {
-		
 			if (httpRequest.isAsyncStarted()) {
 				return httpRequest.getAsyncContext();
 			}
-			
 			return httpRequest.startAsync(httpRequest, httpResponse);
 		}
-		
 		return null;
 	}
 	
@@ -368,6 +353,7 @@ public class QuarkHandler {
 		
 		return error;
 	}
+
 	
 	/**
 	 * Get encryption key 
@@ -407,7 +393,7 @@ public class QuarkHandler {
 		IQuarkKey aesKey = ServletStorage.get(session, QuarkConstants.ENCRYPT_ENGINE);
 
 		if (Objects.nonNull(aesKey)) return aesKey; 		
-		final String publicKey = ServletUtils.getPublicKey(httpRequest);			
+		final String publicKey = QuarkHandlerUtil.getPublicKey(httpRequest);			
 		aesKey = QuarkSecurity.initWebKey(publicKey);
 		
 		ServletStorage.put(session, QuarkConstants.ENCRYPT_ENGINE, aesKey);

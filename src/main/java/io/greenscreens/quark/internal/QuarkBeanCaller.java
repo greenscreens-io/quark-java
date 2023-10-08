@@ -68,10 +68,6 @@ public class QuarkBeanCaller implements Runnable {
 
 	}
 	
-	private boolean asAsync() {
-		return beanHandle.isAsyncArgs() && isVoid;
-	}
-	
 	/**
 	 * Attach WebSOcket or Servlet context to current thread before controller execution 
 	 */
@@ -100,6 +96,11 @@ public class QuarkBeanCaller implements Runnable {
 			QuarkProducer.releaseRequest();
 		}
 
+	}
+	
+	
+	private boolean asAsync() {
+		return beanHandle.isAsyncArgs() && isVoid;
 	}
 	
 	private boolean isAsync() {

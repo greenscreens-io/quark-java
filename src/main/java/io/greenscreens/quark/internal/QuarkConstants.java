@@ -10,6 +10,7 @@ public enum QuarkConstants {
     ;
 	
 	public static final String WEB_KEY 				 = "gs-public-key";
+	public static final String CHALLENGE			 = "gs-challenge";
     
 	public static final String HTTP_SEESION_STATUS   = "io.greenscreens.quark.status";
    
@@ -29,3 +30,4 @@ public enum QuarkConstants {
 
 		
 }
+

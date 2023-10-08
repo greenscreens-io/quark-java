@@ -6,6 +6,9 @@ package io.greenscreens.quark.web;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -17,6 +20,7 @@ import io.greenscreens.quark.cdi.BeanManagerUtil;
 import io.greenscreens.quark.internal.QuarkBuilder;
 import io.greenscreens.quark.internal.QuarkConstants;
 import io.greenscreens.quark.internal.QuarkHandler;
+import io.greenscreens.quark.internal.QuarkHandlerUtil;
 import io.greenscreens.quark.security.IQuarkKey;
 import io.greenscreens.quark.security.QuarkSecurity;
 import io.greenscreens.quark.stream.QuarkStream;
@@ -89,18 +93,22 @@ public class QuarkAPIServlet extends QuarkServlet {
 	 * @param paths
 	 * @throws IOException 
 	 */
-	protected void build(final HttpServletRequest request, final HttpServletResponse response, final String[] paths) throws IOException {
-		final ArrayNode api = Objects.nonNull(paths) ? QuarkBuilder.build(paths) : QuarkEngine.getBean(BeanManagerUtil.class).getAPI();
-		final String challenge = QuarkUtil.normalize(request.getHeader("gs-challenge"));		
+	protected void build(final HttpServletRequest request, final HttpServletResponse response, final Collection<String> uri) throws IOException {
+		final ArrayNode api = Objects.isNull(uri) || uri.isEmpty() ? QuarkEngine.getBean(BeanManagerUtil.class).getAPI() : QuarkBuilder.build(uri);
+		final String challenge = QuarkUtil.normalize(request.getHeader(QuarkConstants.CHALLENGE));
 		final ObjectNode root = QuarkBuilder.buildAPI(api, challenge);
 		final boolean compress = ServletUtils.supportGzip(request);
 		// ServletUtils.sendResponse(response, root, compress);
 		
-		final String publicKey = ServletUtils.getPublicKey(request);			
+		final String publicKey = QuarkHandlerUtil.getPublicKey(request);			
 		final IQuarkKey aes = QuarkSecurity.initWebKey(publicKey);
 		final String json = QuarkJson.stringify(root);			
 		final ByteBuffer buff = QuarkStream.wrap(json, aes, compress, root);
 		ServletUtils.sendResponse(response, buff, false);
+	}
+	
+	protected void build(final HttpServletRequest request, final HttpServletResponse response, final String uri) throws IOException {
+		build(request, response, Arrays.asList(uri));
 	}
 	
 	protected void services(final HttpServletRequest request, final HttpServletResponse response) {
@@ -114,7 +122,7 @@ public class QuarkAPIServlet extends QuarkServlet {
 	 */
 	@Override
 	protected void onGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
-		build(request, response, null);
+		build(request, response, Collections.emptyList());
 	}
 
 	/**

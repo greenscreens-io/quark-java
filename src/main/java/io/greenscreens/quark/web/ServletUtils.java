@@ -9,15 +9,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
-import java.util.Scanner;
 import java.util.zip.GZIPOutputStream;
 
 import org.slf4j.Logger;
@@ -36,7 +29,6 @@ import io.greenscreens.quark.utils.QuarkUtil;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -104,17 +96,9 @@ public enum ServletUtils {
 		final String attr = ServletStorage.get(session, QuarkConstants.HTTP_SEESION_STATUS);
 		return Boolean.TRUE.toString().equalsIgnoreCase(attr);
 	}
-	
-	public static String getPublicKey(final HttpServletRequest request) {
-		String publicKey = request.getHeader(QuarkConstants.WEB_KEY);		
-		if (QuarkUtil.isEmpty(publicKey)) {
-			publicKey = ServletUtils.getCookie(request, QuarkConstants.WEB_KEY);
-		}	
-		return publicKey;
-	}
-	
+		
 	/**
-	 * Convert post request data to string
+	 * Convert request data to string
 	 * 
 	 * @param request
 	 * @return
@@ -157,7 +141,6 @@ public enum ServletUtils {
 		final String val1 = QuarkUtil.normalize(request.getHeader(key));
 		return val1.indexOf("gzip") != -1;
 	}
-	
 	
 	/**
 	 * Set browser no caching flags
@@ -204,9 +187,16 @@ public enum ServletUtils {
 		}
 		return part;
 	}
+	
+
+
+	public static <T> void sendResponse(final HttpServletRequest req, final HttpServletResponse resp, final T obj) {
+		final boolean compress = supportGzip(req);
+		sendResponse(resp, obj, compress);		
+	}
 
 	public static <T> void sendResponse(final HttpServletResponse response, final T obj, final boolean compress) {
-		
+
 		String json = null;
 
 		try {
@@ -215,8 +205,7 @@ public enum ServletUtils {
 			writeResponse(response, json, compress);
 		} catch (JsonProcessingException e) {
 			LOG.error("Failed to encode messages as JSON: {}", json, e);
-			final String msg = QuarkUtil.toMessage(e);
-			final ObjectNode jsonObject = QuarkHandlerUtil.getResponse(false, msg);
+			final ObjectNode jsonObject = QuarkHandlerUtil.getResponse(false, e.getMessage());
 			sendResponse(response, jsonObject, compress);
 		}
 	}
@@ -224,6 +213,11 @@ public enum ServletUtils {
 	/**
 	 * Set json response data
 	 */
+	public static void sendResponse(final HttpServletRequest req, final HttpServletResponse resp, final JsonNode json) {
+		final boolean compress = supportGzip(req);
+		sendResponse(resp, json, compress);
+	}
+	
 	public static void sendResponse(final HttpServletResponse resp, final JsonNode json, final boolean compress) {
 		resp.setContentType("application/json;charset=utf-8");
 		writeResponse(resp, json.toString(), compress);
@@ -234,6 +228,22 @@ public enum ServletUtils {
 	 * @param resp
 	 * @param message
 	 */
+	
+	public static void sendResponse(final HttpServletRequest req, final HttpServletResponse resp, final String message) {
+		final boolean compress = supportGzip(req);
+		sendResponse(resp, message, compress);
+	}
+
+	public static void sendResponse(final HttpServletRequest req, final HttpServletResponse resp, final ByteBuffer message) {
+		final boolean compress = supportGzip(req);
+		sendResponse(resp, message, compress);
+	}
+
+	public static void sendResponse(final HttpServletRequest req, final HttpServletResponse resp, final byte[] message) {
+		final boolean compress = supportGzip(req);
+		sendResponse(resp, message, compress);
+	}
+	
 	public static void sendResponse(final HttpServletResponse resp, final String message, final boolean compress) {
 		resp.setContentType("text/plain;charset=utf-8");
 		writeResponse(resp, message, compress);
@@ -248,7 +258,7 @@ public enum ServletUtils {
 		resp.setContentType("application/octet-stream");
 		writeResponse(resp, message, compress);
 	}
-	
+		
 	/**
 	 * Generic string write
 	 * @param resp
@@ -444,55 +454,7 @@ public enum ServletUtils {
 		
 		return root;
 	}
-	
-
-	public static String getCookie(final HttpServletRequest request, final String key) {
-		if (QuarkUtil.nonEmpty(key) && Objects.nonNull(request.getCookies())) {
-			final List<Cookie> cookies = Arrays.asList(request.getCookies());
-			final Optional<Cookie> cookie = cookies.stream().filter(c -> key.equals(c.getName())).findFirst();
-			if (cookie.isPresent()) return cookie.get().getValue();
-		}
-		return null;
-	}	
-
-	/**
-	 * Parse browser received cookie strings
-	 * 
-	 * @param cookies
-	 * @return
-	 */
-	public static Map<String, String> parseCookies(final List<String> cookies) {
-
-
-		if (Objects.isNull(cookies)) return Collections.emptyMap();
-
-		final Map<String, String> map = new HashMap<>();
-		Scanner scan = null;
-		String[] pair = null;
-
-		for (String cookie : cookies) {
-
-			try {
-
-				scan = new Scanner(cookie);
-				scan.useDelimiter(";");
-
-				while (scan.hasNext()) {
-					pair = scan.next().split("=");
-					if (pair.length > 1) {
-						map.put(QuarkUtil.normalize(pair[0]), pair[1]);
-					}
-				}
-
-			} finally {
-				QuarkUtil.close(scan);
-			}
-
-		}
-
-		return Collections.unmodifiableMap(map);
-	}
-	
+		
 	@SuppressWarnings("unchecked")
 	public static <T extends ServletRequest> T wrap(final ServletRequest request) {
 		return (T) request;

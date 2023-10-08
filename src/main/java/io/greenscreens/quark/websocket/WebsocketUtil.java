@@ -18,7 +18,7 @@ import io.greenscreens.quark.internal.QuarkConstants;
 import io.greenscreens.quark.security.IQuarkKey;
 import io.greenscreens.quark.utils.QuarkJson;
 import io.greenscreens.quark.utils.QuarkUtil;
-import io.greenscreens.quark.web.ServletUtils;
+import io.greenscreens.quark.web.QuarkCookieUtil;
 import io.greenscreens.quark.websocket.data.IWebSocketResponse;
 import io.greenscreens.quark.websocket.data.WebSocketRequest;
 
@@ -83,7 +83,7 @@ public enum WebsocketUtil {
 	 * @return
 	 */
 	public static Map<String, String> parseCookies(final List<String> cookies) {
-		return ServletUtils.parseCookies(cookies);
+		return QuarkCookieUtil.parseCookies(cookies);
 	}
 
 	/**

@@ -25,9 +25,9 @@ public interface IQuarkBean {
 
 	String[] paths();
 
-	boolean accept(String url);
+	boolean accept(final String url);
 
-	boolean accept(String[] url);
+	boolean accept(final Collection<String> url);
 
 	Collection<IQuarkHandle> handles();
 	

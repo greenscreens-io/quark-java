@@ -57,6 +57,8 @@ final class QuarkHandle implements IQuarkHandle {
 	@Override
 	public MethodHandle methodHandle() throws NoSuchMethodException, IllegalAccessException {
 		if (Objects.isNull(methodHandle)) {
+			// Java 8
+			//methodHandle = QuarkMapper.toHandle(method).asSpreader(Object[].class, method.getParameterCount());
 			methodHandle = QuarkMapper.toHandle(method).asSpreader(1, Object[].class, method.getParameterCount());
 		}
 		return methodHandle;
