@@ -58,7 +58,7 @@ public enum QuarkMapper {
 	 * @param handle
 	 * @return
 	 */
-	public static IQuarkHandle get(final int handle) {
+	public static IQuarkHandle get(final long handle) {
 		return methods.get(handle);
 	}
 	

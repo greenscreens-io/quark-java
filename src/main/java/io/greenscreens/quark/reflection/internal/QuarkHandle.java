@@ -7,7 +7,6 @@ import java.lang.invoke.MethodHandle;
 import java.lang.reflect.Method;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import io.greenscreens.quark.QuarkEngine;
 import io.greenscreens.quark.cdi.BeanManagerUtil;
@@ -24,9 +23,7 @@ import jakarta.enterprise.inject.spi.Bean;
  */
 final class QuarkHandle implements IQuarkHandle {
 
-	private final static AtomicInteger counter = new AtomicInteger(); 
-	
-	final int id = counter.incrementAndGet();
+	final long id;
 	final Bean<?> bean;
 	final Method method;
 	AnnotatedMethod<AnnotatedParameter<?>> anothatedMethod; 
@@ -37,10 +34,11 @@ final class QuarkHandle implements IQuarkHandle {
 		super();
 		this.bean = bean;
 		this.method = method;
+		this.id = Integer.toUnsignedLong(method.toString().hashCode());
 	}
 
 	@Override
-	public int id() {
+	public long id() {
 		return id;
 	}
 

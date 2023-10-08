@@ -20,7 +20,7 @@ public interface IQuarkHandle {
 	 * Unique method id, used at the front to reference a call
 	 * @return
 	 */
-	int id();
+	long id();
 	
 	/**
 	 * CDI Bean - owner of this mapping

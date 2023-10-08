@@ -11,7 +11,7 @@ import io.greenscreens.quark.reflection.IQuarkHandle;
  * A collection of mapped Bean MEthods with a reflection MethodHandle
  * Used as a cache for fast retrieval.
  */
-final class QuarkHandleCollection extends ConcurrentHashMap<Integer, IQuarkHandle> {
+final class QuarkHandleCollection extends ConcurrentHashMap<Long, IQuarkHandle> {
 
 	private static final long serialVersionUID = 1L;
 	
