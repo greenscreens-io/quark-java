@@ -55,6 +55,12 @@ public interface IQuarkHandle {
 	 * @return
 	 */
 	boolean isAsync();
+	
+	/**
+	 * Does async code execute in virtual thread
+	 * @return
+	 */
+	boolean isVirtual();
 
 	/**
 	 * Is any of method parameters async

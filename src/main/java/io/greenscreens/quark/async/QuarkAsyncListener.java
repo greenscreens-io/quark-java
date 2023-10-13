@@ -11,7 +11,6 @@ import jakarta.servlet.AsyncListener;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
-import io.greenscreens.quark.QuarkProducer;
 import io.greenscreens.quark.ext.ExtJSResponse;
 import io.greenscreens.quark.internal.QuarkErrors;
 import io.greenscreens.quark.internal.QuarkHandlerUtil;
@@ -25,7 +24,7 @@ final class QuarkAsyncListener implements AsyncListener {
 
 	@Override
 	public void onComplete(final AsyncEvent event) throws IOException {
-		QuarkProducer.releaseAsync();
+		// not used
 	}
 
 	@Override
@@ -37,12 +36,11 @@ final class QuarkAsyncListener implements AsyncListener {
 			final ExtJSResponse result = QuarkHandlerUtil.getError(QuarkErrors.E7777);
 			ServletUtils.sendResponse(ServletUtils.wrap(response), result, compress);			
 		}
-		QuarkProducer.releaseAsync();
 	}
 
 	@Override
 	public void onError(final AsyncEvent event) throws IOException {
-		QuarkProducer.releaseAsync();
+		// not used
 	}
 
 	@Override

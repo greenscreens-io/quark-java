@@ -80,7 +80,12 @@ final class QuarkHandle implements IQuarkHandle {
 	
 	@Override
 	public boolean isAsync() {
-		return ReflectionUtil.isAsync(method);
+		return ReflectionUtil.isAsync(method) || ReflectionUtil.isAsync(method.getDeclaringClass());
+	}
+	
+	@Override
+	public boolean isVirtual() {
+		return ReflectionUtil.isVirtual(method) || ReflectionUtil.isVirtual(method.getDeclaringClass());
 	}
 		
 	@Override
@@ -114,6 +119,11 @@ final class QuarkHandle implements IQuarkHandle {
 	private boolean hasAsyncResponse() {
 		if (!isAsync()) return false;
 		return ReflectionUtil.isAsyncResponder(bean().getBeanClass().getDeclaredFields());
+	}
+
+	@Override
+	public String toString() {
+		return String.format("%s@%s.%s", name(), bean.getBeanClass().getName(), method.getName());
 	}
 	
 }

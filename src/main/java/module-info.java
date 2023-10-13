@@ -4,6 +4,7 @@
 module io.greenscreens.quark{
 	
 	requires java.base;
+	requires transitive jdk.unsupported;
 	requires transitive org.slf4j;
 	requires transitive org.bouncycastle.provider;
 	requires transitive com.fasterxml.jackson.databind;
@@ -12,7 +13,7 @@ module io.greenscreens.quark{
 	requires transitive jakarta.validation;
 	requires transitive jakarta.websocket.client;
 	requires transitive jakarta.websocket;
-		
+
 	exports io.greenscreens.quark;
 	exports io.greenscreens.quark.annotations;
 	exports io.greenscreens.quark.async;

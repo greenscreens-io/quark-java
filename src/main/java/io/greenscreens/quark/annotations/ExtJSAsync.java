@@ -4,6 +4,7 @@
 package io.greenscreens.quark.annotations;
 
 import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.ElementType.TYPE;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -16,12 +17,14 @@ import jakarta.enterprise.util.Nonbinding;
  * incoming ExtJS.Direct call
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ METHOD })
-public @interface ExtJSMethod {
-
-	String value();
-
+@Target({ METHOD, TYPE })
+public @interface ExtJSAsync {
+	
+	/**
+	 * Run async code in virtual thread 
+	 * @return
+	 */
 	@Nonbinding
-	boolean validate() default false;
+	boolean virtual() default true;
 
 }

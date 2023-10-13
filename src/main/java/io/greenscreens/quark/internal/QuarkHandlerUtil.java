@@ -144,7 +144,7 @@ public enum QuarkHandlerUtil {
 	}
 	
 	/**
-	 * Send public key and server timestamp
+	 * Send public key and server time stamp
 	 * 
 	 * @param sts
 	 * @param err

@@ -3,6 +3,7 @@
  */
 package io.greenscreens.quark.internal;
 
+import java.lang.ScopedValue.Carrier;
 import java.lang.invoke.MethodHandle;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -38,11 +39,18 @@ public class QuarkBeanCaller implements Runnable {
 		this.isVoid = handle.isVoid();
 	}
 	
-	public void call() {
-		
-		if (isAsync) {
-			handler.getContext();
+	private void callAsync(){
+		handler.getContext();
+		if (beanHandle.isVirtual()) {
+			Thread.ofVirtual().name(beanHandle.toString()).start(this);
+		} else {	
 			CompletableFuture.runAsync(this);
+		}
+	}
+	
+	public void call() {
+		if (isAsync) {
+			callAsync();
 		} else {
 			run();
 		}
@@ -50,54 +58,39 @@ public class QuarkBeanCaller implements Runnable {
 
 	@Override
 	public void run() {
-			
-		IDestructibleBeanInstance<?> di = null;
 		
-		try {
-			attach();
-			di = beanHandle.instance();
-			handler.response = call(di);
-		} catch (Throwable e) {
-			handler.response = new ExtJSResponse(e, QuarkUtil.toMessage(e));
-			QuarkUtil.printError(e);
-		} finally {
-			release(di);
-			handler.send();
-			deattach();
-		}
+		final Carrier carrier = attach();
+		carrier.run(() -> {
+			IDestructibleBeanInstance<?> di = null;
+			try {
+				di = beanHandle.instance();
+				handler.response = call(di);
+			} catch (Throwable e) {
+				handler.response = new ExtJSResponse(e, QuarkUtil.toMessage(e));
+				QuarkUtil.printError(e);
+			} finally {
+				release(di);
+				handler.send();		
+			}			
+		});
 
 	}
 	
 	/**
 	 * Attach WebSOcket or Servlet context to current thread before controller execution 
 	 */
-	protected void attach() {
+	protected Carrier attach() {
 					
 		if (Objects.nonNull(handler.getWsSession())) {
-			QuarkProducer.attachSession(handler.getWsSession());
+			return QuarkProducer.attachSession(handler.getWsSession());
 		} else if (asAsync()) {
-			QuarkProducer.attachAsync(new QuarkAsyncContext(handler));
+			return QuarkProducer.attachAsync(new QuarkAsyncContext(handler));
 		} else {
-			QuarkProducer.attachRequest(QuarkContext.create(handler.getHttpRequest(), handler.getHttpResponse()));
+			return QuarkProducer.attachRequest(QuarkContext.create(handler.getHttpRequest(), handler.getHttpResponse()));
 		}
 
 	}
 
-	/**
-	 * Release thread context
-	 */
-	protected void deattach() {
-		
-		if (Objects.nonNull(handler.getWsSession())) {
-			QuarkProducer.releaseSession();			
-		} else if (asAsync()) {
-			QuarkProducer.releaseAsync();
-		} else {
-			QuarkProducer.releaseRequest();
-		}
-
-	}
-	
 	
 	private boolean asAsync() {
 		return beanHandle.isAsyncArgs() && isVoid;

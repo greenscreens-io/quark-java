@@ -135,7 +135,7 @@ public enum WebsocketUtil {
 		if (Objects.nonNull(data)) {
 			data = data.split(";")[0];
 			data = data.split(",")[0];
-			locale = new Locale(data);
+			locale = Locale.of(data);
 		}
 
 		return locale;

@@ -17,6 +17,7 @@ import java.util.Optional;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import io.greenscreens.quark.annotations.ExtJSAsync;
 import io.greenscreens.quark.annotations.ExtJSDirect;
 import io.greenscreens.quark.annotations.ExtJSMethod;
 import io.greenscreens.quark.async.QuarkAsyncContext;
@@ -81,8 +82,20 @@ public enum ReflectionUtil {
 		return Collection.class.isAssignableFrom((Class<?>) type);
 	}
 
+	public static boolean isAsync(final Class<?> clazz) {
+		return Optional.ofNullable(clazz).map(m -> m.getAnnotation(ExtJSAsync.class)).isPresent();
+	}
+	
+	public static boolean isVirtual(final Class<?> clazz) {
+		return Optional.ofNullable(clazz).map(m -> m.getAnnotation(ExtJSAsync.class)).map(a -> a.virtual()).orElse(false);
+	}
+	
 	public static boolean isAsync(final Method method) {
-		return extAnnotation(method).map(a -> a.async()).orElse(false);
+		return Optional.ofNullable(method).map(m -> m.getAnnotation(ExtJSAsync.class)).isPresent();
+	}
+	
+	public static boolean isVirtual(final Method method) {
+		return Optional.ofNullable(method).map(m -> m.getAnnotation(ExtJSAsync.class)).map(a -> a.virtual()).orElse(false);
 	}
 
 	public static boolean isValidate(final Method method) {

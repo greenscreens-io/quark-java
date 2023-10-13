@@ -119,9 +119,6 @@ public class WebSocketEndpoint {
 			if (Objects.nonNull(wsession)) {
 				wsession.sendResponse(getErrorResponse(e), true);
 			}
-
-		} finally {
-			QuarkProducer.releaseSession();
 		}
 	}
 
@@ -173,8 +170,6 @@ public class WebSocketEndpoint {
 			final String msg = QuarkUtil.toMessage(e);
 			LOG.error(msg);
 			LOG.debug(msg, e);
-		} finally {
-			QuarkProducer.releaseSession();
 		}
 
 	}
@@ -191,8 +186,6 @@ public class WebSocketEndpoint {
 			webSocketEvent.fire(event);
 
 		} finally {
-
-			QuarkProducer.releaseSession();
 			updateSessions(wsession);
 		}
 
@@ -206,14 +199,8 @@ public class WebSocketEndpoint {
 
 		LOG.error("WebSocket error for session : {},  Message: {}", wsession, msg);
 
-		try {
-
-			QuarkProducer.attachSession(wsession);
-			webSocketEvent.fire(new WebsocketEvent(wsession, WebSocketEventStatus.ERROR, throwable));
-
-		} finally {
-			QuarkProducer.releaseSession();
-		}
+		QuarkProducer.attachSession(wsession);
+		webSocketEvent.fire(new WebsocketEvent(wsession, WebSocketEventStatus.ERROR, throwable));
 	}
 
 	/*

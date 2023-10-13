@@ -3,6 +3,7 @@
  */
 package io.greenscreens.quark;
 
+import java.lang.ScopedValue.Carrier;
 import java.util.Objects;
 
 import jakarta.enterprise.context.ApplicationScoped;
@@ -20,23 +21,24 @@ import io.greenscreens.quark.websocket.WebSocketSession;
 @ApplicationScoped
 public class QuarkProducer {
 
-	private static final ThreadLocal<WebSocketSession> websocketContextThreadLocal = new ThreadLocal<>();
-	private static final ThreadLocal<QuarkAsyncContext> asyncContextThreadLocal = new ThreadLocal<>();
-	private static final ThreadLocal<QuarkContext> httpThreadLocal = new ThreadLocal<>();
 
+	private static final ScopedValue<WebSocketSession> websocketContextScope = ScopedValue.newInstance();
+	private static final ScopedValue<QuarkAsyncContext> asyncContextScope = ScopedValue.newInstance();
+	private static final ScopedValue<QuarkContext> httpScope = ScopedValue.newInstance();
+	
 	@Produces
 	public static WebSocketSession getWebSocketSession() {
-		return websocketContextThreadLocal.get();
+		return websocketContextScope.get();
 	}
 
 	@Produces
 	public static QuarkAsyncContext getQuarkAsyncContext() {
-		return asyncContextThreadLocal.get();
+		return asyncContextScope.get();
 	}
 
 	@Produces
 	public static QuarkContext getQuarkContext() {
-		return httpThreadLocal.get();
+		return httpScope.get();
 	}
 
 	@Produces
@@ -50,15 +52,14 @@ public class QuarkProducer {
 	 * @param create
 	 * @return
 	 */
-	public static HttpSession getWebSession(final boolean create) {
-		
-		final QuarkContext ctx = httpThreadLocal.get();
+	public static HttpSession getWebSession(final boolean create) {		
+		final QuarkContext ctx = httpScope.get();
 		if (Objects.nonNull(ctx)) return ctx.getRequest().getSession(create);
 		
-		final WebSocketSession wss = websocketContextThreadLocal.get();
+		final WebSocketSession wss = websocketContextScope.get();
 		if (Objects.nonNull(wss)) return wss.getHttpSession(); 
 		
-		final QuarkAsyncContext ctxa = asyncContextThreadLocal.get();
+		final QuarkAsyncContext ctxa = asyncContextScope.get();
 		if (Objects.nonNull(ctxa)) ctxa.getRequest().getSession(create);
 		
 		return null;		
@@ -68,51 +69,24 @@ public class QuarkProducer {
 	 * Store servlet request/response instances to current thread context 
 	 * @param request
 	 */
-	public static void attachRequest(final QuarkContext request) {
-		if (Objects.nonNull(request)) {
-			httpThreadLocal.set(request);
-		}
-	}
-
-	/**
-	 * Remove servlet request/response instances from current thread context
-	 */
-	public static void releaseRequest() {
-		httpThreadLocal.remove();
+	public static Carrier attachRequest(final QuarkContext request) {
+		return Objects.nonNull(request) ? ScopedValue.where(httpScope, request) : null;
 	}
 
 	/**
 	 * Store current websocket instance to thread context
 	 * @param session
 	 */
-	public static void attachSession(final WebSocketSession session) {
-		if (Objects.nonNull(session)) {
-			websocketContextThreadLocal.set(session);
-		}
-	}
-
-	/**
-	 * Remove current websocket instance from thread context
-	 */
-	public static void releaseSession() {
-		websocketContextThreadLocal.remove();
+	public static Carrier attachSession(final WebSocketSession session) {
+		return Objects.nonNull(session)  ? ScopedValue.where(websocketContextScope, session) : null;
 	}
 
 	/**
 	 * Used from Async servlet to store for later injection for Async Controllers
 	 * @param session
 	 */
-	public static void attachAsync(final QuarkAsyncContext session) {
-		if (Objects.nonNull(session)) {
-			asyncContextThreadLocal.set(session);
-		}
-	}
-
-	/**
-	 * Release servlet aync from current thread context 
-	 */
-	public static void releaseAsync() {
-		asyncContextThreadLocal.remove();
+	public static Carrier attachAsync(final QuarkAsyncContext session) {
+		return Objects.nonNull(session)  ? ScopedValue.where(asyncContextScope, session) : null;
 	}
 
 }
