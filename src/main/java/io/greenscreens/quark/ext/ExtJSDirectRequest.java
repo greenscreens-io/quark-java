@@ -15,17 +15,17 @@ import jakarta.enterprise.inject.Vetoed;
 @Vetoed
 public class ExtJSDirectRequest<T> {
 
-	private int handle;
+	private long handle;
 	private String type;
 	private String tid;
 	private long ts;
 	private List<T> data;
 	
-	public int getHandle() {
+	public long getHandle() {
 		return handle;
 	}
 
-	public void setHandle(final int handle) {
+	public void setHandle(final long handle) {
 		this.handle = handle;
 	}
 

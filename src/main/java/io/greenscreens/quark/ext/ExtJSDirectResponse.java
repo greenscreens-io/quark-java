@@ -14,7 +14,7 @@ import jakarta.enterprise.inject.Vetoed;
 @Vetoed
 public class ExtJSDirectResponse<T> {
 
-	private Integer mid;
+	private Long mid;
 	private String type;
 	private String tid = "-1";
 	private Object result;
@@ -32,11 +32,11 @@ public class ExtJSDirectResponse<T> {
 
 	}
 
-	public Integer getMid() {
+	public Long getMid() {
 		return mid;
 	}
 
-	public void setMid(Integer mid) {
+	public void setMid(Long mid) {
 		this.mid = mid;
 	}
 
