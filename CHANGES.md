@@ -4,7 +4,7 @@
 ## v6.0.0. (2023.Q4)
  - Switch to Jakarta EE
  - Complete Quark code refactoring
- - Switch for reflection to InvokeDynamic
+ - Switch from reflection to InvokeDynamic
  - Performance improvements
  - Cached Bean prescanning
  - API format definition change
