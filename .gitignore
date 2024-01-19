@@ -1,3 +1,5 @@
+activate.bat
 target/
 .settings/
-activate.bat
+.gradle
+build
