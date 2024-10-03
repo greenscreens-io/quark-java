@@ -43,8 +43,8 @@ public enum HeartbeatService {
 
 	public static void terminate() {
 		LOG.info("Terminating Quark WebSocket Heartbeat service!");
-		mainService = safeTerminate(mainService);
-		workerService = safeTerminate(workerService);
+		mainService = QuarkUtil.safeTerminate(mainService);
+		workerService = QuarkUtil.safeTerminate(workerService);
 	}
 	
 	/**
@@ -64,24 +64,6 @@ public enum HeartbeatService {
 				Properties.WEBSOCKET_PING_SCHEDULED_TIME_IN_SECONDS, TimeUnit.SECONDS);
 	}
 
-	private static <T extends ExecutorService> T safeTerminate(final T service) {
-		try {
-			if (Objects.nonNull(service)) service.shutdown();
-			return null;
-		} catch (Exception e) {
-			final String msg = QuarkUtil.toMessage(e);
-			LOG.error(msg);
-			LOG.debug(msg, e);
-			return service;
-		}
-	} 
-	
-	private static HeartbeatSession getHeartbeat(final Session session) {
-		final HeartbeatSession heartbeat = sessionHeartbeats.getOrDefault(session, new HeartbeatSession(session));
-		if (!sessionHeartbeats.containsKey(session)) sessionHeartbeats.put(session, heartbeat);
-		return heartbeat;
-	}
-	
 	/**
 	 * Add session to the registry.
 	 * 
@@ -102,13 +84,15 @@ public enum HeartbeatService {
 	}
 	
 	public static void updateSession(final Session session) {
-		final HeartbeatSession heartbeat = getHeartbeat(session);
+		if (!sessionHeartbeats.containsKey(session)) return;
+		final HeartbeatSession heartbeat = sessionHeartbeats.get(session);
 		heartbeat.getLastMessageOnInMillis().set(System.currentTimeMillis());
 		heartbeat.getRetry().set(Properties.MAX_RETRY_COUNT);
 	}
 
 	public static void handlePong(final Session session) {
-		final HeartbeatSession heartbeat = getHeartbeat(session);
+		if (!sessionHeartbeats.containsKey(session)) return;
+		final HeartbeatSession heartbeat = sessionHeartbeats.get(session);
 		heartbeat.getLastPongReceived().set(System.currentTimeMillis());
 		heartbeat.getRetry().set(Properties.MAX_RETRY_COUNT);
 	}

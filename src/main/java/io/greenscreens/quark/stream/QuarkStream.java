@@ -228,7 +228,7 @@ public enum QuarkStream {
 		ByteBuffer data = data(buffer, isEncrypt);
 		
 		if (isEncrypt) {
-			if (Objects.isNull(key)) throw new IOException("No encryption key");
+		    if (Objects.isNull(key) || !key.isValid()) throw new IOException("No valid key");
 			final ByteBuffer iv = iv(buffer);	
 			data = key.decrypt(data, asBytes(iv));
 		} 
@@ -264,6 +264,7 @@ public enum QuarkStream {
 		}
 		
 		if (isEncrypt) {
+		    if (Objects.isNull(key) || !key.isValid()) throw new IOException("No valid key");
 			iv = ByteBuffer.wrap(QuarkSecurity.getRandom(IV_SIZE));
 			data = key.encrypt(data, asBytes(iv));
 			iv.rewind();
@@ -307,9 +308,4 @@ public enum QuarkStream {
 		//return node.get(key).asText().getBytes(StandardCharsets.UTF_8);	
 	}
 	
-	public static void main(String[] args) {
-		final String s = "p6mVhIiSgZQT2uAbRhouh2BoIcxsINcwBmzwSrVGNDF2WS9gUfYs9jVJrkYsxC1VQSMALlb9Xn9KxPW20OKO84JtGlTttkwRF5RA2yF4lipCTI24IUweLuLA8ADdJSq3";
-		final byte[] r = Base64.getDecoder().decode(s);
-		System.out.println(QuarkUtil.bytesToHex(r));
-	}
 }

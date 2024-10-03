@@ -3,6 +3,9 @@
  */
 package io.greenscreens.quark.utils;
 
+import java.util.Objects;
+import java.util.concurrent.ExecutorService;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -169,4 +172,16 @@ enum Util {
 		return Math.abs(stime - time);
 	}
 
+    public static <T extends ExecutorService> T safeTerminate(final T service) {
+        try {
+            if (Objects.nonNull(service))
+                service.shutdown();
+            return null;
+        } catch (Exception e) {
+            final String msg = QuarkUtil.toMessage(e);
+            LOG.error(msg);
+            LOG.debug(msg, e);
+            return service;
+        }
+    }
 }

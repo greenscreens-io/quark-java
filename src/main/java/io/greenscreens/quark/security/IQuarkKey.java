@@ -16,4 +16,6 @@ public interface IQuarkKey {
 
 	ByteBuffer encrypt(final ByteBuffer data, final byte[] iv) throws IOException;
 	ByteBuffer decrypt(final ByteBuffer data, final byte[] iv) throws IOException;
+	
+	boolean isValid();
 }

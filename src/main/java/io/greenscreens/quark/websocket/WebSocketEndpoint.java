@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 import jakarta.enterprise.event.Event;
@@ -14,6 +15,7 @@ import jakarta.inject.Inject;
 import jakarta.servlet.http.HttpSession;
 import jakarta.websocket.CloseReason;
 import jakarta.websocket.CloseReason.CloseCode;
+import jakarta.websocket.CloseReason.CloseCodes;
 import jakarta.websocket.EncodeException;
 import jakarta.websocket.EndpointConfig;
 import jakarta.websocket.Session;
@@ -65,18 +67,13 @@ public class WebSocketEndpoint {
 	 * @param message
 	 */
 	public static void broadcast(final IWebSocketResponse message) {
-
-		if (Objects.nonNull(sessions)) {
-
-			LOG.trace("Broadcasting message {}", message);
-
-			for (WebSocketSession session : sessions) {
-				session.sendResponse(message, true);
-				LOG.trace("  for {}", session);
-			}
-
-		}
-
+	    
+	    LOG.trace("Broadcasting message {}", message);
+	    
+	    for (WebSocketSession session : sessions) {
+	        session.sendResponse(message, true);
+	        LOG.trace("  for {}", session);
+	    }
 	}
 
 	/*
@@ -95,11 +92,12 @@ public class WebSocketEndpoint {
 
 			LOG.trace("Received message {} \n      for session : {}", message, session);
 			
-			wsession = new WebSocketSession(session);
+			wsession = toInstance(session);
+
 			QuarkProducer.attachSession(wsession);
 
 			final WebSocketInstruction cmd = message.getCmd();
-			if (cmd == null) {
+			if (Objects.isNull(cmd)) {
 				LOG.warn("No message instruction >> {}", message);	
 				return;
 			}
@@ -129,8 +127,8 @@ public class WebSocketEndpoint {
 			
 			LOG.trace("Openning new WebSocket connection : {} ", session);
 			
-			final HttpSession httpSession = WebSocketStorage.get(config, HttpSession.class);
-			final WebSocketSession wsession = new WebSocketSession(session, httpSession);
+            final WebSocketSession wsession = new WebSocketSession(session);
+            WebSocketStorage.store(session, wsession);
 
 			final Boolean requireSession = wsession.get(QuarkConstants.QUARK_SESSION);
 
@@ -156,8 +154,7 @@ public class WebSocketEndpoint {
 				webSocketEvent.fire(new WebsocketEvent(wsession, WebSocketEventStatus.START));
 			} else {
 				LOG.error(reason);
-				final CloseCode closeCode = new CloseCodeImpl();
-				session.close(new CloseReason(closeCode, ""));
+				session.close(new CloseReason(CloseCodes.PROTOCOL_ERROR, reason));
 			}
 
 			updateSessions(wsession);
@@ -176,7 +173,8 @@ public class WebSocketEndpoint {
 
 	public void onClose(final Session session, final CloseReason reason) {
 
-		final WebSocketSession wsession = new WebSocketSession(session);
+	    final WebSocketSession wsession = toInstance(session);
+		
 		LOG.warn("Closing WebSocket session with reason code : {}, Session: {}", reason.getCloseCode().getCode(), wsession);
 
 		try {
@@ -193,8 +191,7 @@ public class WebSocketEndpoint {
 
 	public void onError(final Session session, final Throwable throwable) {
 
-		final WebSocketSession wsession = new WebSocketSession(session);
-
+        final WebSocketSession wsession = toInstance(session);
 		final String msg = QuarkUtil.toMessage(throwable);
 
 		LOG.error("WebSocket error for session : {},  Message: {}", wsession, msg);
@@ -207,6 +204,11 @@ public class WebSocketEndpoint {
 	 * PRIVATE SECTION
 	 */
 
+	 private WebSocketSession toInstance(final Session session) {
+	     return Optional.ofNullable(WebSocketStorage.get(session, WebSocketSession.class))
+	             .orElse(new WebSocketSession(session));
+	 }
+	        
 	private void updateSessions(final WebSocketSession session) {
 
 		if (!session.isOpen()) {
@@ -245,16 +247,8 @@ public class WebSocketEndpoint {
 		final ArrayNode api = beanManagerUtil.getAPI();
 		final ObjectNode root = QuarkBuilder.buildAPI(api, challenge); 
 		wsResponse.setData(root);		
-		
-		try {
-			session.getBasicRemote().sendObject(wsResponse);
-		} catch (IOException | EncodeException e) {
-			final String msg = QuarkUtil.toMessage(e);
-			LOG.error(msg);
-			LOG.debug(msg, e);
-		}
-		
-		//session.sendResponse(wsResposne, true);
+			
+		session.sendResponse(wsResponse);
 		return true;
 	}
 
@@ -290,12 +284,5 @@ public class WebSocketEndpoint {
 			QuarkHandler.call(session, request);
 		}
 		
-	}
-
-	public static final class CloseCodeImpl implements CloseCode {
-		@Override
-		public int getCode() {
-			return 4000;
-		}
 	}
 }

@@ -4,6 +4,8 @@
 package io.greenscreens.quark.utils;
 
 import java.nio.ByteBuffer;
+import java.util.Objects;
+import java.util.concurrent.ExecutorService;
 
 import org.slf4j.Logger;
 
@@ -202,5 +204,8 @@ public enum QuarkUtil {
 	public static long timediff(final long ts) {
 		return Util.timediff(ts); 
 	}
-	
+
+    public static <T extends ExecutorService> T safeTerminate(final T service) {
+        return Util.safeTerminate(service);
+    }
 }

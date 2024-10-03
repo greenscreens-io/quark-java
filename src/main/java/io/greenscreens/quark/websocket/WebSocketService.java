@@ -51,7 +51,6 @@ public class WebSocketService {
 	@OnOpen
 	public void onOpen(final Session session, final EndpointConfig config) {
 
-		HeartbeatService.registerSession(session);
 		endpoint = Optional.ofNullable(endpoint).orElse(QuarkEngine.getBean(WebSocketEndpoint.class));
 
 		if (Objects.isNull(endpoint)) {

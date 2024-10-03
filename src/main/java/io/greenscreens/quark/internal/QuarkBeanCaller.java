@@ -100,34 +100,33 @@ public class QuarkBeanCaller implements Runnable {
 		return handler.isSupportAsync() && beanHandle.isAsync();
 	}
 	
-	
-	private MethodHandle methodHandle() throws NoSuchMethodException, IllegalAccessException {
-		return beanHandle.methodHandle();
-	}
-
-	/**
-	 * Safe controller bean destruction
-	 * @param bean
-	 */
-	private void release(final IDestructibleBeanInstance<?> bean) {
-		if (Objects.nonNull(bean)) bean.release();
-	}
-	
-	/**
-	 * Execute Controller bean and get response for requester
-	 * @param bean
-	 * @return
-	 * @throws Throwable 
-	 * @throws NoSuchMethodException 
-	 */
-	private ExtJSResponse call(final IDestructibleBeanInstance<?> bean) throws NoSuchMethodException, Throwable {
-		final Object beanInstance = bean.getInstance();
-		QuarkValidator.validateParameters(beanHandle, beanInstance, params); 
-		final Object obj = methodHandle().invoke(beanInstance, params);
-		if (asAsync()) return null;
-		return QuarkHandlerUtil.toResponse(obj, beanHandle);		
-	}
-	
+    /**
+     * Safe controller bean destruction
+     * @param bean
+     */
+    private void release(final IDestructibleBeanInstance<?> bean) {
+        if (Objects.nonNull(bean)) bean.release();
+    }
+    
+    /**
+     * Execute Controller bean and get response for requester
+     * @param bean
+     * @return
+     * @throws Throwable 
+     * @throws NoSuchMethodException 
+     */
+    private ExtJSResponse call(final IDestructibleBeanInstance<?> bean) throws NoSuchMethodException, Throwable {
+        final Object beanInstance = bean.getInstance();
+        QuarkValidator.validateParameters(beanHandle, beanInstance, params); 
+        final Object obj = methodHandle().invoke(beanInstance, params);
+        if (asAsync()) return null;
+        return QuarkHandlerUtil.toResponse(obj, beanHandle);        
+    }
+    
+    private MethodHandle methodHandle() throws NoSuchMethodException, IllegalAccessException {
+        return beanHandle.methodHandle();
+    }
+    
 	/**
 	 * Public controller initializer
 	 * @param handler
