@@ -29,11 +29,12 @@ enum Util {
 			return false;
 		}
 
-		if (Boolean.TRUE.toString().equals(value.trim().toLowerCase())) {
+		final String trimmedValue = StringUtil.trim(value);
+		if (Boolean.TRUE.toString().equals(trimmedValue)) {
 			return true;
 		}
 
-		if (Boolean.FALSE.toString().equals(value.trim().toLowerCase())) {
+		if (Boolean.FALSE.toString().equals(trimmedValue)) {
 			return false;
 		}
 
@@ -54,7 +55,7 @@ enum Util {
 			val = Integer.parseInt(StringUtil.normalize(value, "0").trim());
 		} catch (Exception e) {
 			final String msg = toMessage(e);
-			LOG.error(msg);
+			LOG.error("Error parsing int: {}", msg);
 			LOG.debug(msg, e);
 		}
 
@@ -74,8 +75,9 @@ enum Util {
 		try {
 			val = Long.parseLong(StringUtil.normalize(value, "0").trim());
 		} catch (Exception e) {
-			LOG.error(e.getMessage());
-			LOG.debug(e.getMessage(), e);
+			final String msg = toMessage(e);
+			LOG.error("Error parsing long: {}", msg);
+			LOG.debug(msg, e);
 		}
 
 		return val;

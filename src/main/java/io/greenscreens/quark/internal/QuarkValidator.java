@@ -51,6 +51,11 @@ public enum QuarkValidator {
 			LOG.warn("Validation factory not initialized! Unable to validate Quark Engine call parameters.");
 			return;
 		}
+
+		if (Objects.isNull(handle.method())) {
+			LOG.warn("Handle method is null! Unable to validate Quark Engine call parameters.");
+			return;
+		}
 		
 		final ExecutableValidator validator = factory.getValidator().forExecutables();
 		final Set<ConstraintViolation<Object>> violations = validator.validateParameters(instance, handle.method(), params);
@@ -95,6 +100,9 @@ public enum QuarkValidator {
 	 * @param node
 	 */
 	public static void describeNode(final IQuarkHandle handle, final StringBuilder builder, final Node node) {
+		if (Objects.isNull(handle.method())) {
+			return;
+		}
 		final Parameter [] parameters = handle.method().getParameters();
 		if (node.getKind() == ElementKind.PARAMETER) {						
 			final ParameterNode pNode = (ParameterNode) node;

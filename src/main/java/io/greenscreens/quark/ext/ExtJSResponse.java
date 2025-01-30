@@ -147,6 +147,11 @@ public class ExtJSResponse implements Serializable {
         	return this;
         }
 
+        public Builder setType(final Type type) {
+        	this.type = type;
+        	return this;
+        }
+
         public ExtJSResponse build() {
         	final ExtJSResponse resp = new ExtJSResponse(success, msg);
         	resp.setCode(code);

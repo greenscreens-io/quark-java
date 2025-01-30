@@ -20,6 +20,16 @@ enum StringUtil {
 	}
 
 	/**
+	 * Prevent null string while triming 
+	 *
+	 * @param data
+	 * @return
+	 */
+	public static String trim(final String data) {
+		return normalize(data, "").trim();
+	}
+
+	/**
 	 * Prevent null string
 	 *
 	 * @param data

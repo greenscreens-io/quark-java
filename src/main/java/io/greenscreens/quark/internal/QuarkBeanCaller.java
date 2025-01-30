@@ -124,7 +124,11 @@ public class QuarkBeanCaller implements Runnable {
     }
     
     private MethodHandle methodHandle() throws NoSuchMethodException, IllegalAccessException {
-        return beanHandle.methodHandle();
+        final MethodHandle handle = beanHandle.methodHandle();
+        if (Objects.isNull(handle)) {
+            throw new NoSuchMethodException("Method handle is null");
+        }
+        return handle;
     }
     
 	/**

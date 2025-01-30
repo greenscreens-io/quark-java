@@ -26,7 +26,7 @@ final class QuarkHandle implements IQuarkHandle {
 	final long id;
 	final Bean<?> bean;
 	final Method method;
-	AnnotatedMethod<AnnotatedParameter<?>> anothatedMethod; 
+	AnnotatedMethod<AnnotatedParameter<?>> annotatedMethod; 
 	MethodHandle methodHandle;
 	Boolean asyncResponder = null;
 	
@@ -65,12 +65,12 @@ final class QuarkHandle implements IQuarkHandle {
 	@SuppressWarnings({ "rawtypes", "unchecked" })	
 	@Override
 	public AnnotatedMethod<AnnotatedParameter<?>> annotatedMethod(){
-		if (Objects.isNull(anothatedMethod)) {
+		if (Objects.isNull(annotatedMethod)) {
 			final AnnotatedType annType = QuarkEngine.getBeanManager().createAnnotatedType(bean.getBeanClass());
 			final Set<AnnotatedMethod<AnnotatedParameter<?>>> aMethods = annType.getMethods();
-			anothatedMethod = aMethods.stream().filter(m -> m.getJavaMember().equals(method)).findFirst().orElse(null);
+			annotatedMethod = aMethods.stream().filter(m -> m.getJavaMember().equals(method)).findFirst().orElse(null);
 		}
-		return anothatedMethod;
+		return annotatedMethod;
 	}
 	
 	@Override

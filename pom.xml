@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>io.greenscreens</groupId>
   <artifactId>quark</artifactId>
-  <version>7.0.1</version>
+  <version>7.0.2</version>
   <name>Green Screens Quark Engine</name>
   <url>https://www.greenscreens.io/quark</url>
 

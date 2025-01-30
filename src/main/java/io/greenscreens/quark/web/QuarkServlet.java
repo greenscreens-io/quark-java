@@ -26,7 +26,7 @@ public class QuarkServlet extends HttpServlet {
 	}
 
 	protected void updateHeaders(final HttpServletResponse response) {
-		response.setHeader("X-Content-Type-Options", "'nosniff'");
+		response.setHeader("X-Content-Type-Options", "nosniff");
 	}
 
 	@Override

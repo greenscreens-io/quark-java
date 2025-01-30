@@ -100,6 +100,11 @@ public class ExtJSResponseList<T> extends ExtJSResponse {
         	return this;
         }        
         
+        public Builder<T> setType(final Type type) {
+        	this.type = type;
+        	return this;
+        }
+        
         public ExtJSResponseList<T> build() {
         	final ExtJSResponseList<T> resp = new ExtJSResponseList<>(success, msg);
         	resp.setCode(code);

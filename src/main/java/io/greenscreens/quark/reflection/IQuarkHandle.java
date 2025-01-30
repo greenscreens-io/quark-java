@@ -42,6 +42,10 @@ public interface IQuarkHandle {
 	 */
 	MethodHandle methodHandle() throws NoSuchMethodException, IllegalAccessException;
 	
+	/**
+	 * Annotated method with parameters
+	 * @return
+	 */
 	AnnotatedMethod<AnnotatedParameter<?>> annotatedMethod();
 	
 	/**
@@ -86,7 +90,10 @@ public interface IQuarkHandle {
 	 */
 	String[] paths();
 	
-	
+	/**
+	 * Instance of the destructible bean
+	 * @return
+	 */
 	IDestructibleBeanInstance<?> instance();
 	
 }
