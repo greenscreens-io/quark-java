@@ -150,6 +150,8 @@ public enum HeartbeatService {
 			final String msg = QuarkUtil.toMessage(e);
 			LOG.error(msg);
 			LOG.debug(msg, e);
-		}
+        } finally {
+            deregisterSession(session);
+        }
 	}
 }
