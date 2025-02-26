@@ -28,11 +28,11 @@ import io.greenscreens.quark.websocket.data.WebSocketRequest;
 public enum WebsocketUtil {
 	;
 	
-	final static IQuarkKey key(final EndpointConfig config) throws IOException {
+	final static IQuarkKey key(final EndpointConfig config) {
 		return WebSocketStorage.get(config, QuarkConstants.ENCRYPT_ENGINE, null);		
 	}
 	
-	final static boolean isCompression(final EndpointConfig config) throws IOException {
+	final static boolean isCompression(final EndpointConfig config) {
 		return WebSocketStorage.get(config, QuarkConstants.QUARK_COMPRESSION, false);		
 	}
 	

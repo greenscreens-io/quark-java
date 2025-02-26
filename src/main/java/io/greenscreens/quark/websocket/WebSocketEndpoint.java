@@ -10,16 +10,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentSkipListSet;
 
-import jakarta.enterprise.event.Event;
-import jakarta.inject.Inject;
-import jakarta.servlet.http.HttpSession;
-import jakarta.websocket.CloseReason;
-import jakarta.websocket.CloseReason.CloseCode;
-import jakarta.websocket.CloseReason.CloseCodes;
-import jakarta.websocket.EncodeException;
-import jakarta.websocket.EndpointConfig;
-import jakarta.websocket.Session;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,6 +29,12 @@ import io.greenscreens.quark.websocket.data.IWebSocketResponse;
 import io.greenscreens.quark.websocket.data.WebSocketInstruction;
 import io.greenscreens.quark.websocket.data.WebSocketRequest;
 import io.greenscreens.quark.websocket.data.WebSocketResponse;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
+import jakarta.websocket.CloseReason;
+import jakarta.websocket.CloseReason.CloseCodes;
+import jakarta.websocket.EndpointConfig;
+import jakarta.websocket.Session;
 
 /**
  * Internal CDI injectable object used by WebSocket endpoint instance. Used to
@@ -219,10 +215,11 @@ public class WebSocketEndpoint {
 	}
 
 	private IWebSocketResponse getErrorResponse(final Exception exception) {
-		final ExtJSResponse response = new ExtJSResponse(exception, exception.getMessage());
+	    final String msg = QuarkUtil.toMessage(exception);
+		final ExtJSResponse response = new ExtJSResponse(exception, msg);
 		final IWebSocketResponse wsResponse = WebSocketResponse.asError();
 		wsResponse.setData(response);
-		wsResponse.setErrMsg(exception.getMessage());
+		wsResponse.setErrMsg(msg);
 		return wsResponse;
 	}
 	
