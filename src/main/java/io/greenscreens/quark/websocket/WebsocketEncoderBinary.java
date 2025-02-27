@@ -30,16 +30,19 @@ public class WebsocketEncoderBinary implements Encoder.Binary<WebSocketResponse>
 
 	private static final Logger LOG = LoggerFactory.getLogger(WebsocketEncoderBinary.class);
 
-	EndpointConfig config = null;
+    IQuarkKey key = null;
+    boolean compression = false;        
 
 	@Override
-	public void init(final EndpointConfig cfg) {
-		config = cfg;
+	public void init(final EndpointConfig config) {
+        key = WebsocketUtil.key(config);
+        compression = WebsocketUtil.isCompression(config);        
 	}
 
 	@Override
 	public void destroy() {
-		config = null;
+	    key = null;
+	    compression = false;
 	}
 	
 	@Override
@@ -51,8 +54,6 @@ public class WebsocketEncoderBinary implements Encoder.Binary<WebSocketResponse>
 		try {
 			final boolean isAPI = data.getCmd() == WebSocketInstruction.API ;			
 			final String wsmsg = WebsocketUtil.encode(data);
-			final IQuarkKey key = WebsocketUtil.key(config);
-			final boolean compression = WebsocketUtil.isCompression(config);		
 			if (isAPI) node = (ObjectNode) data.getData();
 			buff = QuarkStream.wrap(wsmsg, key, compression, node);
 		} catch (IOException e) {

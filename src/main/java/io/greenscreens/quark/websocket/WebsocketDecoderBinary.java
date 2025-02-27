@@ -26,16 +26,17 @@ import io.greenscreens.quark.websocket.data.WebSocketRequest;
 public class WebsocketDecoderBinary implements Decoder.Binary<WebSocketRequest> {
 
 	private static final Logger LOG = LoggerFactory.getLogger(WebsocketDecoderBinary.class);
-	EndpointConfig config = null;
+	
+	IQuarkKey key = null;
 
 	@Override
-	public void init(final EndpointConfig cfg) {
-		config = cfg;
+	public void init(final EndpointConfig config) {		
+		key = WebsocketUtil.key(config);
 	}
 
 	@Override
 	public void destroy() {
-		config = null;
+	    key = null;
 	}
 
 	@Override
@@ -46,7 +47,6 @@ public class WebsocketDecoderBinary implements Decoder.Binary<WebSocketRequest> 
 	@Override
 	public WebSocketRequest decode(final ByteBuffer buffer) throws DecodeException {		
 		try {
-			final IQuarkKey key = WebsocketUtil.key(config);
 			final ByteBuffer data = QuarkStream.unwrap(buffer, key);
 			final String message = QuarkStream.asString(data);
 			return WebsocketUtil.decode(message);
