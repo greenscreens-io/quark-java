@@ -1,19 +1,25 @@
 /*
  * Copyright (C) 2015, 2023 Green Screens Ltd.
  */
-package io.greenscreens.quark.utils;
+package io.greenscreens.quark.util.override;
+
+import java.util.Objects;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ThreadPoolExecutor;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.greenscreens.quark.util.QuarkUtil;
+
 /**
  * Simple util class for string handling
  */
-enum Util {
+public enum Util {
 	;
 
 	private static final Logger LOG = LoggerFactory.getLogger(Util.class);
-
+	
 	/**
 	 * Internal text to boolean conversion
 	 *
@@ -97,14 +103,16 @@ enum Util {
 	 * 
 	 * @param closeable
 	 */
-	public static void close(final AutoCloseable closeable) {
-		if (closeable != null) {
+	public static boolean close(final AutoCloseable closeable) {
+	    if (Objects.nonNull(closeable)) {
 			try {
 				closeable.close();
+				return true;
 			} catch (Exception e) {
 				// ignored
 			}
 		}
+	    return false;
 	}
 	
 	/**
@@ -138,10 +146,6 @@ enum Util {
 	 * Print exception trace in a safe manner
 	 * @param e
 	 */
-	public static void printError(final Throwable e) {
-		printError(e, LOG);
-	}
-	
 	public static void printError(final Throwable e, final Logger log) {
 		final String error = QuarkUtil.normalize(e.getMessage());
 		final String msg = error.replace("\n", "; ");
@@ -168,5 +172,34 @@ enum Util {
 		final long stime = System.currentTimeMillis();
 		return Math.abs(stime - time);
 	}
+    
+    /**
+     * Safely terminate executor
+     * @param <T>
+     * @param service
+     * @return
+     */
+    public static <T extends ExecutorService> T safeTerminate(final T service, final boolean forced) {
+        if (Objects.isNull(service)) return service; 
+        try {
+            if (forced) {
+                if (service instanceof ThreadPoolExecutor) {
+                    ((ThreadPoolExecutor) service).purge();
+                }
+                service.shutdownNow();
+            } else {
+                service.shutdown();
+            }
+        } catch (Exception e) {
+            final String msg = toMessage(e);
+            LOG.error(msg);
+            LOG.debug(msg, e);
+        }
+        return service;
+    }
+    
+    public static <T extends ExecutorService> T safeTerminate(final T service) {
+        return safeTerminate(service, false);
+    }     
 
 }

@@ -5,6 +5,9 @@ package io.greenscreens.quark.ext;
 
 import java.io.Serializable;
 import java.util.Objects;
+import java.util.Optional;
+
+import io.greenscreens.quark.util.QuarkUtil;
 import jakarta.enterprise.inject.Vetoed;
 
 /**
@@ -75,29 +78,33 @@ public class ExtJSResponse implements Serializable {
 		return exception;
 	}
 
-	public final void setException(final Throwable exception) {
+    public final void setException(final Throwable exception) {
 
-		if (exception == null) {
-			return;
-		}
+        if (Objects.isNull(exception)) return;
 
-		if (EXPOSE_ERROR) {
-			this.exception = exception;
+        success = false;
+        msg = QuarkUtil.toMessage(exception);
+        if (exception instanceof ExtJSError) {
+            code = ((ExtJSError) exception).code;
+        }
+        
+        if (EXPOSE_ERROR) {
+            this.exception = exception;
 
-			if (exception instanceof RuntimeException && exception.getCause() != null) {
-				this.exception = exception.getCause();
-			} 
-		}
+            if (exception instanceof RuntimeException) {
+                Optional.ofNullable(exception.getCause()).ifPresent(ex -> this.exception = ex);
+            } 
+        }
 
-	}
+    }
 
-	public final void setError(final Throwable exception, final String message) {
-		if (Objects.nonNull(message)) {
-			success = false;
-			msg = message;
-		}
-		// setException(exception);
-	}
+    public final void setError(final Throwable exception, final String message) {
+        setException(exception);
+        if (Objects.nonNull(message)) {
+            success = false;
+            msg = message;
+        }
+    }
 
 	public String getCode() {
 		return code;
@@ -108,7 +115,7 @@ public class ExtJSResponse implements Serializable {
 	}
 
 	public boolean isException() {
-		return exception != null;
+	    return Objects.nonNull(exception);
 	}
 
 	public Type getType() {

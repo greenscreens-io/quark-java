@@ -21,7 +21,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.greenscreens.quark.internal.QuarkBuilder;
 import io.greenscreens.quark.security.IQuarkKey;
 import io.greenscreens.quark.security.QuarkSecurity;
-import io.greenscreens.quark.utils.QuarkUtil;
+import io.greenscreens.quark.util.QuarkUtil;
 import jakarta.enterprise.inject.Vetoed;
 
 /**
@@ -186,6 +186,14 @@ public enum QuarkStream {
 		return QuarkDecompression.asBuffer(input, true);
 	}
 	
+    public static ByteBuffer decompress(final ByteBuffer input) throws IOException {
+        return QuarkDecompression.asBuffer(input);
+    }
+
+    public static ByteBuffer compress(final ByteBuffer input) throws IOException {
+        return QuarkCompression.asBuffer(input);
+    }
+	
 	public static long compress(final InputStream input, final OutputStream output) throws IOException {
 		return QuarkCompression.stream(input, output, false);
 	}
@@ -228,9 +236,9 @@ public enum QuarkStream {
 		ByteBuffer data = data(buffer, isEncrypt);
 		
 		if (isEncrypt) {
-			if (Objects.isNull(key)) throw new IOException("No encryption key");
+			if (Objects.isNull(key) || !key.isValid()) throw new IOException("No valid key");
 			final ByteBuffer iv = iv(buffer);	
-			data = key.decrypt(data, asBytes(iv));
+			data = key.decrypt(data, iv);
 		} 
 		
 		if (isCompress) {
@@ -264,8 +272,9 @@ public enum QuarkStream {
 		}
 		
 		if (isEncrypt) {
+		    if (Objects.isNull(key) || !key.isValid()) throw new IOException("No valid key");
 			iv = ByteBuffer.wrap(QuarkSecurity.getRandom(IV_SIZE));
-			data = key.encrypt(data, asBytes(iv));
+			data = key.encrypt(data, iv);
 			iv.rewind();
 			data.rewind();
 			type = (byte) (type | FLAG_ENCRYPT);
@@ -307,9 +316,4 @@ public enum QuarkStream {
 		//return node.get(key).asText().getBytes(StandardCharsets.UTF_8);	
 	}
 	
-	public static void main(String[] args) {
-		final String s = "p6mVhIiSgZQT2uAbRhouh2BoIcxsINcwBmzwSrVGNDF2WS9gUfYs9jVJrkYsxC1VQSMALlb9Xn9KxPW20OKO84JtGlTttkwRF5RA2yF4lipCTI24IUweLuLA8ADdJSq3";
-		final byte[] r = Base64.getDecoder().decode(s);
-		System.out.println(QuarkUtil.bytesToHex(r));
-	}
 }

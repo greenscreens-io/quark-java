@@ -84,13 +84,6 @@ public enum QuarkMapper {
 	 */
 	static MethodHandle toHandle(final Method method) throws NoSuchMethodException, IllegalAccessException {
 		return lookup.unreflect(method);
-		/*
-		final Class<?> clazz = method.getDeclaringClass();
-		final Class<?> rType = method.getReturnType();
-		final Class<?>[] pType = method.getParameterTypes();
-		final MethodType mt = MethodType.methodType(rType, pType); 
-		return lookup.findVirtual(clazz, method.getName(), mt);
-		*/
 	}
 
 	/**

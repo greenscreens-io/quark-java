@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2015, 2023 Green Screens Ltd.
  */
-package io.greenscreens.quark.utils;
+package io.greenscreens.quark.util.override;
 
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;

@@ -39,6 +39,7 @@ public class BeanManagerUtil {
 		}
 		return api;
 	}
+
 	/** 
 	 * Wraps CDI bean into custom destructible instance
 	 * 

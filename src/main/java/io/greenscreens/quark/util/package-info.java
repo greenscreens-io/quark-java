@@ -5,4 +5,4 @@
 /**
  * A generic utilty classes
  */
-package io.greenscreens.quark.utils;
+package io.greenscreens.quark.util;

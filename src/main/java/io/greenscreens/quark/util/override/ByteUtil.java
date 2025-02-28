@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2015, 2023 Green Screens Ltd.
  */
-package io.greenscreens.quark.utils;
+package io.greenscreens.quark.util.override;
 
 import java.nio.ByteBuffer;
 import java.util.Objects;
@@ -9,7 +9,7 @@ import java.util.Objects;
 /**
  * Helper class to work with byte arrays and ByteBuffers
  */
-enum ByteUtil {
+public enum ByteUtil {
 ;
 	protected static final char[] HEX_ARRAY = "0123456789ABCDEF".toCharArray();
 
@@ -78,7 +78,7 @@ enum ByteUtil {
 	 * @param s
 	 * @return
 	 */
-	public static byte[] hexStringToByteArray(final String s) {
+	public static byte[] fromHexAsBytes(final String s) {
 
 		final int len = s.length();
 		final byte[] data = new byte[len / 2];
@@ -104,5 +104,16 @@ enum ByteUtil {
 		clone.flip();
 		return clone;
 	}
-	
+
+    public static byte[] toBytes(final ByteBuffer buffer) {
+        return getBytesFrom(buffer, 0, buffer.limit());
+    }
+    
+    public static byte[] getBytesFrom(final ByteBuffer buffer, final int position, final int len) {
+        final byte[] data = new byte[len];
+        buffer.rewind();
+        buffer.position(position);
+        buffer.get(data);
+        return data;
+    }	
 }

@@ -10,12 +10,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReentrantLock;
 
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.http.HttpSession;
 import jakarta.websocket.CloseReason;
 import jakarta.websocket.CloseReason.CloseCodes;
-import jakarta.websocket.EncodeException;
 import jakarta.websocket.Extension;
 import jakarta.websocket.MessageHandler;
 import jakarta.websocket.MessageHandler.Partial;
@@ -28,8 +33,9 @@ import jakarta.websocket.WebSocketContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.greenscreens.quark.internal.QuarkConstants;
-import io.greenscreens.quark.utils.QuarkUtil;
+import io.greenscreens.quark.util.ConcurrentFuture;
+import io.greenscreens.quark.util.QuarkUtil;
+import io.greenscreens.quark.web.ServletUtils;
 import io.greenscreens.quark.websocket.data.IWebSocketResponse;
 import io.greenscreens.quark.websocket.data.WebSocketInstruction;
 import io.greenscreens.quark.websocket.data.WebSocketResponse;
@@ -42,106 +48,198 @@ public class WebSocketSession implements Session, Comparable<WebSocketSession> {
 
 	private static final Logger LOG = LoggerFactory.getLogger(WebSocketSession.class);
 
-	private final Session session;
+    private static final String ASYNC_KEY = UUID.randomUUID().toString();
+
+    private final int unique;
+    private final Session session;
+    private final ReentrantLock lock = new ReentrantLock();
+    private final AtomicBoolean isActive = new AtomicBoolean(true);
 
 	public WebSocketSession(final Session session) {
-		super();
-		this.session = session;
+        super();
+        this.session = session;
+        this.unique = session.hashCode();
+        init();
 	}
 
 	public WebSocketSession(final Session session, final HttpSession httpSession) {
-
-		this.session = session;
-
-		if (Objects.nonNull(httpSession)) {
-			WebSocketStorage.store(session, httpSession);
-		}
+        super();
+        this.session = session;
+        this.unique = session.hashCode();
+        init();
 	}
 
+    private void init() {
+        final Set<ConcurrentFuture<Void>> set =  new ConcurrentSkipListSet<>();
+        WebSocketStorage.store(session, ASYNC_KEY, set);
+        final HttpSession httpSession = WebSocketStorage.get(session, HttpSession.class);
+        if (Objects.nonNull(httpSession)) {
+            WebSocketStorage.store(session, httpSession);
+        }
+    }
+    
 	@Override
 	public final void addMessageHandler(final MessageHandler arg0) {
 		session.addMessageHandler(arg0);
 	}
 
-	@Override
-	public final void close() throws IOException {
+    @Override
+    public final void close() throws IOException {
+        close(new CloseReason(CloseCodes.NORMAL_CLOSURE, "")); 
+    }
 
-		if (session.isOpen()) {
+    @Override
+    public final void close(final CloseReason arg0) throws IOException {
+        cleanup(true);
+        
+        try {
+            if (isOpen()) {
+                LOG.warn("Closing WebSocket session {}, {}: {}", session.getId(), arg0.getCloseCode(), arg0.getCloseCode());
+                final WebSocketResponse response = new WebSocketResponse(WebSocketInstruction.BYE);
+                sendResponse(response);
+                isActive.set(false);
+                session.close(arg0);
+            }
+        } catch (Exception e) {
+          QuarkUtil.close(session);
+        }
+    }
 
-			final IWebSocketResponse response = new WebSocketResponse(WebSocketInstruction.BYE);
+    private void cleanup(final boolean all) {
+        final Set<ConcurrentFuture<Void>>  set = getAsyncRequests();
+        if (all) {
+            set.stream().filter(f -> !f.isCancelled()).forEach(f -> f.cancel(true));
+            set.clear();
+        } else {
+            set.stream().filter(f -> f.isDone()).forEach(f -> set.remove(f));           
+        }
+    }
 
-			try {
-				session.getBasicRemote().sendObject(response);
-			} catch (EncodeException e) {
-				final String msg = QuarkUtil.toMessage(e);
-				LOG.error(msg);
-				LOG.debug(msg, e);
-			}
-			close(new CloseReason(CloseCodes.NORMAL_CLOSURE, ""));
-		}
-	}
+    public Set<ConcurrentFuture<Void>> getAsyncRequests() {
+        return WebSocketStorage.get(this, ASYNC_KEY);
+    }
+    
+    public final ServletContext getContext() {
+        ServletContext ctx = WebSocketStorage.get(this, ServletContext.class);
+        if (Objects.isNull(ctx)) {
+            final HttpSession httpSession = getHttpSession();
+            if (Objects.nonNull(httpSession)) {
+                ctx = httpSession.getServletContext();
+            }
+        }
+        return ctx;
+    }
+        
+    public final boolean sendResponse(final IWebSocketResponse wsResponse) {
+         return sendResponse(wsResponse, false);
+    }
+    
+    public final boolean sendResponse(final IWebSocketResponse wsResponse, final boolean async) {
+        return sendObject(wsResponse, async);
+    }
+    
+    public final boolean sendObject(final Object object) {
+        return sendObject(object, false);
+    }
+    
+    public final boolean sendObject(final Object object, final boolean async) {
 
-	@Override
-	public final void close(final CloseReason arg0) throws IOException {
-		if (session.isOpen()) {
-			session.close(arg0);
-		}
-	}
+        cleanup(false);
+        
+        if (Objects.isNull(object)) {
+            return false;
+        }
 
-	public final ServletContext getContext() {
-		ServletContext ctx = WebSocketStorage.get(this, ServletContext.class);
-		if (Objects.isNull(ctx)) {
-			final HttpSession httpSession = getHttpSession();
-			if (Objects.nonNull(httpSession)) {
-				ctx = httpSession.getServletContext();
-			}
-		}
-		return ctx;
-	}
+        if(!isOpen()) {
+          LOG.warn("Websocket response not sent, session is closed for {}!", this);
+          return false; 
+        }
+         
+        boolean success = true;
+        
+        try { 
+            
+            if (async) {
+                Future<Void> future = session.getAsyncRemote().sendObject(object);
+                if (!future.isDone()) getAsyncRequests().add(ConcurrentFuture.create(future));
+            } else {
+                success = lock.tryLock() || lock.tryLock(5, TimeUnit.SECONDS);
+                if (success) {                  
+                    session.getBasicRemote().sendObject(object);
+                }
+            }
 
-	/**
-	 * Send response to a client
-	 * @param wsResponse
-	 * @param async
-	 * @return
-	 */
-	public final boolean sendResponse(final IWebSocketResponse wsResponse, final boolean async) {
+        } catch (IllegalStateException e) {
+            // session invalidated
+            final String msg = QuarkUtil.toMessage(e);
+            LOG.error(msg);
+            LOG.debug(msg, e);
+            success = false;
+        } catch (Exception e) {
+            success = false;
+            final String msg = QuarkUtil.toMessage(e);
+            LOG.error(msg);
+            LOG.debug(msg, e);
+        } finally {
+            if (success && lock.isLocked() && lock.isHeldByCurrentThread()) {
+                lock.unlock();
+            }
+        }
 
-		if (Objects.isNull(wsResponse)) return false;
+        return success;
+    }
+    
+    public final boolean sendText(final String object) {
+        return sendText(object, false);
+    }
+    
+    public final boolean sendText(final String object, final boolean async) {
 
-		if (!session.isOpen()) {
-			LOG.warn("Websocket response not sent, session is closed for {}!", this);
-			try {
-				close(new CloseReason(CloseCodes.CANNOT_ACCEPT, ""));
-			} catch (IOException e) {
-				LOG.warn(e.getMessage());
-				LOG.debug(e.getMessage(), e);
-			}
-			return false;
-		}
+        cleanup(false);
+        
+        if (QuarkUtil.isEmpty(object)) {
+            return false;
+        }
 
-		boolean success = true;
+        if(!isOpen()) {
+          LOG.warn("Websocket response not sent, session is closed for {}!", this);
+          return false; 
+        }
+         
+        boolean success = true;
+        
+        try { 
+            
+            if (async) {
+                Future<Void> future = session.getAsyncRemote().sendText(object);
+                if (!future.isDone()) getAsyncRequests().add(ConcurrentFuture.create(future));
+            } else {
+                success = lock.tryLock() || lock.tryLock(5, TimeUnit.SECONDS);
+                if (success) {                  
+                    session.getBasicRemote().sendText(object);
+                }
+            }
 
-		try {		
-			if (async) {
-				session.getAsyncRemote().sendObject(wsResponse);
-			} else {
-				session.getBasicRemote().sendObject(wsResponse);
-			}
-		} catch (IllegalStateException e) {
-			// session invalidated
-			LOG.warn(e.getMessage());
-			LOG.debug(e.getMessage(), e);
-			success = false;
-		} catch (Exception e) {
-			success = false;
-			final String msg = QuarkUtil.toMessage(e);
-			LOG.error(msg);
-			LOG.debug(msg, e);
-		}
+        } catch (IllegalStateException e) {
+            // session invalidated
+            final String msg = QuarkUtil.toMessage(e);
+            LOG.error(msg);
+            LOG.debug(msg, e);
+            success = false;
+        } catch (Exception e) {
+            success = false;
+            final String msg = QuarkUtil.toMessage(e);
+            LOG.error(msg);
+            LOG.debug(msg, e);
+        } finally {
+            if (success && lock.isLocked() && lock.isHeldByCurrentThread()) {
+                lock.unlock();
+            }
+        }
 
-		return success;
-	}
+        return success;
+    }
+
 
 	@Override
 	public final WebSocketContainer getContainer() {
@@ -298,64 +396,54 @@ public class WebSocketSession implements Session, Comparable<WebSocketSession> {
 	}
 
 	public final boolean isValidHttpSession() {
-
-		final HttpSession httpSession = getHttpSession();
-
-		if (Objects.isNull(httpSession)) return false;
-
-		try {
-			final String attr = (String) httpSession.getAttribute(QuarkConstants.HTTP_SEESION_STATUS);
-			return Boolean.TRUE.toString().equals(attr);
-		} catch (Exception e) {
-			LOG.debug(e.getMessage(), e);
-			return false;
-		}
-
+        final HttpSession httpSession = getHttpSession();
+        return ServletUtils.isValidHttpSession(httpSession);
 	}
 
-	@Override
-	public final boolean equals(final Object obj) {
+    @Override
+    public final Async getAsyncRemote() {
+        return session.getAsyncRemote();
+    }
 
-		boolean status = false;
+    @Override
+    public final Basic getBasicRemote() {
+        return session.getBasicRemote();
+    }
 
-		if (obj instanceof WebSocketSession) {
-			status = ((WebSocketSession) obj).hashCode() == hashCode(); 			
-		}
+    @Override
+    public <T> void addMessageHandler(final Class<T> arg0, final Whole<T> arg1) {
+        session.addMessageHandler(arg0, arg1);
+    }
 
-		return status;
-	}
+    @Override
+    public <T> void addMessageHandler(final Class<T> arg0, final Partial<T> arg1) {
+        session.addMessageHandler(arg0, arg1);
+    }
 
-	@Override
-	public final int hashCode() {
-		return session.hashCode();
-	}
 
-	@Override
-	public final Async getAsyncRemote() {
-		return session.getAsyncRemote();
-	}
+    @Override
+    public final int hashCode() {
+        return unique;
+    }
+    
+    @Override
+    public final boolean equals(final Object obj) {
 
-	@Override
-	public final Basic getBasicRemote() {
-		return session.getBasicRemote();
-	}
+        boolean status = false;
 
-	@Override
-	public <T> void addMessageHandler(final Class<T> arg0, final Whole<T> arg1) {
-		// not used
-	}
+        if (obj instanceof WebSocketSession) {
+            status = ((WebSocketSession) obj).hashCode() == hashCode();             
+        }
 
-	@Override
-	public <T> void addMessageHandler(final Class<T> arg0, final Partial<T> arg1) {
-		// not used
-	}
-
-	@Override
-	public int compareTo(final WebSocketSession o) {
-		if (Objects.isNull(o)) return 1;
-		final int lh = hashCode();
-		final int rh = o.hashCode();
-		if (lh == rh) return 0;
-		return (lh > rh) ? 1 : -1;
-	}
+        return status;
+    }
+    
+    @Override
+    public int compareTo(final WebSocketSession o) {
+        if (Objects.isNull(o)) return 1;
+        final int lh = hashCode();
+        final int rh = o.hashCode();
+        if (lh == rh) return 0;
+        return (lh > rh) ? 1 : -1;
+    }
 }

@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2015, 2023 Green Screens Ltd.
  */
-package io.greenscreens.quark.security;
+package io.greenscreens.quark.security.override;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -25,7 +25,7 @@ import org.bouncycastle.jce.spec.ECNamedCurveParameterSpec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.greenscreens.quark.utils.QuarkUtil;
+import io.greenscreens.quark.util.QuarkUtil;
 
 
 /**
@@ -378,7 +378,7 @@ enum AsyncKey {
 	static boolean verifyHex(final String data, final String signature)
 			throws InvalidKeyException, NoSuchAlgorithmException, SignatureException, NoSuchProviderException, InvalidAlgorithmParameterException {
 		final byte[] dataBin = data.getBytes();
-		final byte[] signatureBin = QuarkUtil.hexStringToByteArray(signature);
+		final byte[] signatureBin = QuarkUtil.fromHexAsBytes(signature);
 		return verify(dataBin, signatureBin);
 	}
 

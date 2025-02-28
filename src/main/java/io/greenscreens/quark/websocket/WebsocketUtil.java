@@ -9,15 +9,15 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
+import java.util.Optional;
 
 import jakarta.websocket.EncodeException;
 import jakarta.websocket.EndpointConfig;
 import jakarta.websocket.server.HandshakeRequest;
 import io.greenscreens.quark.internal.QuarkConstants;
 import io.greenscreens.quark.security.IQuarkKey;
-import io.greenscreens.quark.utils.QuarkJson;
-import io.greenscreens.quark.utils.QuarkUtil;
+import io.greenscreens.quark.util.QuarkJson;
+import io.greenscreens.quark.util.QuarkUtil;
 import io.greenscreens.quark.web.QuarkCookieUtil;
 import io.greenscreens.quark.websocket.data.IWebSocketResponse;
 import io.greenscreens.quark.websocket.data.WebSocketRequest;
@@ -26,119 +26,118 @@ import io.greenscreens.quark.websocket.data.WebSocketRequest;
  * Internal encoder for WebSocket ExtJS response
  */
 public enum WebsocketUtil {
-	;
-	
-	final static IQuarkKey key(final EndpointConfig config) throws IOException {
-		return WebSocketStorage.get(config, QuarkConstants.ENCRYPT_ENGINE, null);		
-	}
-	
-	final static boolean isCompression(final EndpointConfig config) throws IOException {
-		return WebSocketStorage.get(config, QuarkConstants.QUARK_COMPRESSION, false);		
-	}
-	
-	final static WebSocketRequest decode(final ByteBuffer buffer) throws IOException {
-		final String message = new String(buffer.array(), StandardCharsets.UTF_8);
-		return decode(message);
-	}
-	
-	final static WebSocketRequest decode(final String message) throws IOException {
-		return QuarkJson.parse(WebSocketRequest.class, message);
-	}
-	
-	/**
-	 * Encrypt message for websocket response
-	 * 
-	 * @param data
-	 * @return
-	 * @throws EncodeException
-	 */
-	static String encode(final IWebSocketResponse data) throws EncodeException {
+    ;
 
-		String response = null;
+    final static IQuarkKey key(final EndpointConfig config) {
+        return WebSocketStorage.get(config, QuarkConstants.ENCRYPT_ENGINE, null);
+    }
 
-		try {
-			response = QuarkJson.stringify(data);
-		} catch (Exception e) {
-			throw new EncodeException(data, e.getMessage(), e);
-		}
+    final static boolean isCompression(final EndpointConfig config) {
+        return WebSocketStorage.get(config, QuarkConstants.QUARK_COMPRESSION, false);
+    }
 
-		return QuarkUtil.normalize(response);
-	}
+    final static WebSocketRequest decode(final ByteBuffer buffer) throws IOException {
+        final String message = new String(buffer.array(), StandardCharsets.UTF_8);
+        return decode(message);
+    }
 
-	static boolean isJson(final String message) {
+    final static WebSocketRequest decode(final String message) throws IOException {
+        return QuarkJson.parse(WebSocketRequest.class, message);
+    }
 
-		boolean sts = false;
+    /**
+     * Encrypt message for websocket response
+     * 
+     * @param data
+     * @return
+     * @throws EncodeException
+     */
+    static String encode(final IWebSocketResponse data) throws EncodeException {
 
-		if (QuarkUtil.nonEmpty(message)) {
-			sts = message.trim().startsWith("{") && message.trim().endsWith("}");
-		}
+        String response = null;
 
-		return sts;
-	}
+        try {
+            response = QuarkJson.stringify(data);
+        } catch (Exception e) {
+            throw new EncodeException(data, e.getMessage(), e);
+        }
 
-	/**
-	 * Parse browser received cookie strings
-	 * 
-	 * @param cookies
-	 * @return
-	 */
-	public static Map<String, String> parseCookies(final List<String> cookies) {
-		return QuarkCookieUtil.parseCookies(cookies);
-	}
+        return QuarkUtil.normalize(response);
+    }
 
-	/**
-	 * Get request header from websocket
-	 * 
-	 * @param request
-	 * @param key
-	 * @return
-	 */
-	public static String findHeader(final HandshakeRequest request, final String key) {
+    static boolean isJson(final String message) {
 
-		final Map<String, List<String>> map = request.getHeaders();
-		final List<String> params = map.get(key);
+        boolean sts = false;
 
-		if (Objects.nonNull(params) && !params.isEmpty()) {
-			return params.get(0);
-		}
+        if (QuarkUtil.nonEmpty(message)) {
+            sts = message.trim().startsWith("{") && message.trim().endsWith("}");
+        }
 
-		return null;
-	}
+        return sts;
+    }
 
-	/**
-	 * Generic method to find URL query parameter
-	 * @param request
-	 * @param name
-	 * @return
-	 */
-	public static String findQuery(final HandshakeRequest request, final String name) {
-		final List<String> list = request.getParameterMap().get(name);
-		if (Objects.isNull(list) || list.isEmpty()) {
-			return null;
-		}
-		return list.get(0);
-	}
+    /**
+     * Parse browser received cookie strings
+     * 
+     * @param cookies
+     * @return
+     */
+    public static Map<String, String> parseCookies(final List<String> cookies) {
+        return QuarkCookieUtil.parseCookies(cookies);
+    }
 
-	/**
-	 * Store current browser locale
-	 * 
-	 * Accept-Language:hr,en-US;q=0.8,en;q=0.6
-	 * 
-	 * @param request
-	 * @return
-	 */
-	public static Locale getLocale(final HandshakeRequest request) {
+    /**
+     * Get request header from websocket
+     * 
+     * @param request
+     * @param key
+     * @return
+     */
+    public static Optional<String> findHeader(final HandshakeRequest request, final String key) {
+        return firstList(request.getHeaders(), key);
+    }
 
-		String data = WebsocketUtil.findHeader(request, "Accept-Language");
-		Locale locale = Locale.ENGLISH;
+    /**
+     * Generic method to find URL query parameter
+     * 
+     * @param request
+     * @param name
+     * @return
+     */
+    public static Optional<String> findQuery(final HandshakeRequest request, final String key) {
+        return firstList(request.getParameterMap(), key);
+    }
 
-		if (Objects.nonNull(data)) {
-			data = data.split(";")[0];
-			data = data.split(",")[0];
-			locale = new Locale(data);
-		}
+    static Optional<List<String>> parameterMap(final HandshakeRequest request, final String key) {
+        return mapList(request.getParameterMap(), key);
+    }
 
-		return locale;
-	}
+    static Optional<List<String>> mapList(final Map<String, List<String>> store, final String key) {
+        return Optional.ofNullable(store).map(m -> m.get(key));
+    }
+
+    static Optional<String> firstList(final Map<String, List<String>> store, final String key) {
+        return mapList(store, key).map(list -> firstList(list).orElse(null));
+    }
+
+    static Optional<String> firstList(final List<String> store) {
+        return Optional.ofNullable(store).map(l -> l.stream()).map(l -> l.findFirst().orElse(null));
+    }
+
+    /**
+     * Store current browser locale
+     * 
+     * Accept-Language:hr,en-US;q=0.8,en;q=0.6
+     * 
+     * @param request
+     * @return
+     */
+    public static Locale getLocale(final HandshakeRequest request) {
+        return WebsocketUtil.findHeader(request, "Accept-Language")
+                .map(v -> v.split(";")[0])
+                .map(v -> v.split(",")[0])
+                .map(v -> new Locale(v))
+                .orElse(Locale.ENGLISH);
+    }
 
 }

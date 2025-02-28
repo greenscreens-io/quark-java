@@ -68,6 +68,12 @@ public interface IQuarkHandle {
 	 */
 	boolean isValidate();
 	
+    /**
+     * Check if access to the exposed methods are enabled
+     * @return
+     */
+    boolean isProtected();
+	
 	/**
 	 * Method mapped name for front
 	 * @return

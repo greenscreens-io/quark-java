@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.lang.reflect.Parameter;
 import java.util.Iterator;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -14,7 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import io.greenscreens.quark.annotations.ExtName;
 import io.greenscreens.quark.reflection.IQuarkHandle;
-import io.greenscreens.quark.utils.QuarkUtil;
+import io.greenscreens.quark.util.QuarkUtil;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ElementKind;
 import jakarta.validation.Path.Node;
@@ -52,6 +53,11 @@ public enum QuarkValidator {
 			return;
 		}
 		
+        if (Objects.isNull(handle.method())) {
+            LOG.warn("Handle method is null! Unable to validate Quark Engine call parameters.");
+            return;
+        }
+        
 		final ExecutableValidator validator = factory.getValidator().forExecutables();
 		final Set<ConstraintViolation<Object>> violations = validator.validateParameters(instance, handle.method(), params);
 
@@ -95,7 +101,9 @@ public enum QuarkValidator {
 	 * @param node
 	 */
 	public static void describeNode(final IQuarkHandle handle, final StringBuilder builder, final Node node) {
-		final Parameter [] parameters = handle.method().getParameters();
+	      // 2025 CodePilot
+        if (Objects.isNull(handle.method())) return;
+        final Parameter [] parameters = handle.method().getParameters();
 		if (node.getKind() == ElementKind.PARAMETER) {						
 			final ParameterNode pNode = (ParameterNode) node;
 			final int index = pNode.getParameterIndex();
@@ -114,10 +122,8 @@ public enum QuarkValidator {
 	 * Close data validatior engine
 	 */
 	public static void releaseValidator() {
-		if (Objects.nonNull(factory)) {
-			factory.close();
-			factory = null;
-		}
+        Optional.ofNullable(factory).ifPresent(f -> f.close());
+        factory = null;
 	}
 	
 	/**

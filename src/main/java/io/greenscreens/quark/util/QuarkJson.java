@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2015, 2023 Green Screens Ltd.
  */
-package io.greenscreens.quark.utils;
+package io.greenscreens.quark.util;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.ParameterizedType;
@@ -11,10 +11,30 @@ import java.util.Collection;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import io.greenscreens.quark.util.override.JsonDecoder;
+import io.greenscreens.quark.util.override.JsonViews;
 
 public enum QuarkJson {
 ;
 	
+    public static ObjectNode node() {
+        return JsonDecoder.createObjectNode();
+    }
+
+    public static String asStr(final JsonNode node, final String key) {
+        return JsonDecoder.getStr(node, key);
+    }
+    
+    public static int asInt(final JsonNode node, final String key) {
+        return JsonDecoder.getInt(node, key);
+    }
+    
+    public static long asLong(final JsonNode node, final String key) {
+        return JsonDecoder.getLong(node, key);
+    }
+    
 	public static <T> ArrayNode convert(T [] args) {
 		return JsonDecoder.convert(args);
 	}
@@ -31,6 +51,10 @@ public enum QuarkJson {
 		return JsonDecoder.stringify(object);
 	}
 	
+    public static String stringifyQuark(final Object object) throws JsonProcessingException {
+        return JsonDecoder.stringifyAs(object, JsonViews.Quark.class);
+    }
+	
 	public static JsonNode parse(final String data) throws JsonProcessingException {
 		return JsonDecoder.parse(data);
 	}
@@ -39,6 +63,14 @@ public enum QuarkJson {
 		return JsonDecoder.parse(type, json);
 	}
 	
+    public static JsonNode parseQuark(final String data) throws JsonProcessingException {
+        return JsonDecoder.parseAs(data, JsonViews.Quark.class);
+    }
+
+    public static <T> T parseQuark(final String data, final Class<T> clazz) throws JsonProcessingException {
+        return JsonDecoder.parseAs(data, clazz, JsonViews.Quark.class);
+    }
+    
 	public static Collection<Object> toCollection(final ParameterizedType ptype, final JsonNode node) throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, JsonProcessingException {
 
 		final Type rtype = ptype.getRawType();

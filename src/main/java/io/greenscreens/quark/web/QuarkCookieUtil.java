@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Scanner;
 
-import io.greenscreens.quark.utils.QuarkUtil;
+import io.greenscreens.quark.util.QuarkUtil;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.Cookie;

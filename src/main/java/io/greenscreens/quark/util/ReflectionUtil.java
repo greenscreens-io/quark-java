@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2015, 2023 Green Screens Ltd.
  */
-package io.greenscreens.quark.utils;
+package io.greenscreens.quark.util;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -17,8 +17,10 @@ import java.util.Optional;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import io.greenscreens.quark.annotations.ExtJSAsync;
 import io.greenscreens.quark.annotations.ExtJSDirect;
 import io.greenscreens.quark.annotations.ExtJSMethod;
+import io.greenscreens.quark.annotations.ExtJSProtected;
 import io.greenscreens.quark.async.QuarkAsyncContext;
 import io.greenscreens.quark.cdi.Required;
 import jakarta.enterprise.inject.spi.AnnotatedParameter;
@@ -81,14 +83,34 @@ public enum ReflectionUtil {
 		return Collection.class.isAssignableFrom((Class<?>) type);
 	}
 
-	public static boolean isAsync(final Method method) {
-		return extAnnotation(method).map(a -> a.async()).orElse(false);
-	}
+    public static boolean isAsync(final Class<?> clazz) {
+        return Optional.ofNullable(clazz).map(m -> m.getAnnotation(ExtJSAsync.class)).isPresent();
+    }
+	
+    public static boolean isAsync(final Method method) {
+        return Optional.ofNullable(method).map(m -> m.getAnnotation(ExtJSAsync.class)).isPresent();
+    }
+    
+    public static boolean isVirtual(final Class<?> clazz) {
+        return Optional.ofNullable(clazz).map(m -> m.getAnnotation(ExtJSAsync.class)).map(a -> a.virtual()).orElse(false);
+    }
+    
+    public static boolean isVirtual(final Method method) {
+        return Optional.ofNullable(method).map(m -> m.getAnnotation(ExtJSAsync.class)).map(a -> a.virtual()).orElse(false);
+    }    
 
 	public static boolean isValidate(final Method method) {
 		return extAnnotation(method).map(a -> a.validate()).orElse(false);
 	}
 	
+    public static boolean isProtected(final Class<?> clazz) {
+        return protectedAnnotation(clazz).isPresent();
+    }
+	
+    public static boolean isProtected(final Method method) {
+        return protectedAnnotation(method).isPresent();
+    }
+
 	public static String mappedName(final Method method) {
 		return extAnnotation(method).map(a -> a.value()).orElse(null);
 	}
@@ -104,7 +126,15 @@ public enum ReflectionUtil {
 	public static Optional<ExtJSDirect> extAnnotation(final Class<?> clazz) {
 		return Optional.ofNullable(clazz).map(c -> c.getAnnotation(ExtJSDirect.class));
 	}
-	
+
+    public static Optional<ExtJSProtected> protectedAnnotation(final Class<?> clazz) {
+        return Optional.ofNullable(clazz).map(c -> c.getAnnotation(ExtJSProtected.class));
+    }
+    
+    public static Optional<ExtJSProtected> protectedAnnotation(final Method method) {
+        return Optional.ofNullable(method).map(m -> m.getAnnotation(ExtJSProtected.class));
+    }
+    
 	public static boolean isVoid(final Method method) {
 		final Class<?> clz = method.getReturnType();
 		return (clz == void.class || clz == Void.class);		

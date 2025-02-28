@@ -21,11 +21,13 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import io.greenscreens.quark.annotations.ExtJSProtected;
 import io.greenscreens.quark.internal.QuarkConstants;
-import io.greenscreens.quark.internal.QuarkHandlerUtil;
+import io.greenscreens.quark.internal.QuarkErrors;
 import io.greenscreens.quark.stream.QuarkStream;
-import io.greenscreens.quark.utils.QuarkJson;
-import io.greenscreens.quark.utils.QuarkUtil;
+import io.greenscreens.quark.util.QuarkJson;
+import io.greenscreens.quark.util.QuarkUtil;
+import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
@@ -188,7 +190,53 @@ public enum ServletUtils {
 		return part;
 	}
 	
+    /**
+     * Send public key and server timestamp
+     * 
+     * @param sts
+     * @param err
+     * @return
+     */
+    public static ObjectNode getResponse() {
+        return getResponse(true, null, null);
+    }
 
+    /**
+     * Create JSON response in engine JSON format
+     * 
+     * @param sts
+     * @param error
+     * @return
+     */
+    public static ObjectNode getResponse(final boolean sts, final String error) {
+        return getResponse(sts, error, QuarkErrors.E9999.getCode());
+    }
+
+    /**
+     * Create JSON response in engine JSON format
+     * 
+     * @param sts
+     * @param err
+     * @param code
+     * @return
+     */
+    public static ObjectNode getResponse(final boolean sts, final String err, final String code) {
+
+        final JsonNodeFactory factory = JsonNodeFactory.instance;
+        final ObjectNode root = factory.objectNode();
+
+        root.put("success", sts);
+        root.put("ver", 0);
+        root.put("ts", System.currentTimeMillis());
+
+        if (!sts) {
+            root.put("error", err);
+            root.put("code", code);
+        }
+
+        return root;
+    }
+    
 
 	public static <T> void sendResponse(final HttpServletRequest req, final HttpServletResponse resp, final T obj) {
 		final boolean compress = supportGzip(req);
@@ -205,7 +253,7 @@ public enum ServletUtils {
 			writeResponse(response, json, compress);
 		} catch (JsonProcessingException e) {
 			LOG.error("Failed to encode messages as JSON: {}", json, e);
-			final ObjectNode jsonObject = QuarkHandlerUtil.getResponse(false, e.getMessage());
+			final ObjectNode jsonObject = getResponse(false, e.getMessage());
 			sendResponse(response, jsonObject, compress);
 		}
 	}
@@ -426,6 +474,27 @@ public enum ServletUtils {
 	public static boolean isSecure(final HttpServletRequest request) {
 		return request.isSecure() || "https".equalsIgnoreCase(request.getHeader("X-Forwarded-Proto"));
 	}
+	
+    /**
+     * Check if Quark API processing is disabled
+     * @param context
+     * @return
+     */
+    public static boolean isDisabled(final ServletContext context) {
+        final String key = ExtJSProtected.class.getCanonicalName();
+        final Boolean o1 = ServletStorage.get(context, key);
+        return Objects.nonNull(o1) && o1.booleanValue();
+    }
+    
+    /**
+     * Enable or disable Quark API Processsing
+     * @param context
+     * @param sts
+     */
+    public static void setDisabled(final ServletContext context, final boolean sts) {
+        final String key = ExtJSProtected.class.getCanonicalName();
+        context.setAttribute(key, sts ? Boolean.TRUE : Boolean.FALSE);
+    }	
 	
 	/**
 	 * List all HTTP headers into json

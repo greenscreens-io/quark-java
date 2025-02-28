@@ -12,14 +12,14 @@ import java.io.OutputStreamWriter;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
-import io.greenscreens.quark.utils.QuarkUtil;
+import io.greenscreens.quark.util.QuarkUtil;
 import jakarta.enterprise.inject.Vetoed;
 
 /**
  * Data compression
  */
 @Vetoed
-enum QuarkCompression {
+public enum QuarkCompression {
 	;
 
 	// GZIP Compression level - 3 is enough for text data
@@ -95,7 +95,9 @@ enum QuarkCompression {
 
         try {
         	gzip = new QuarkCompressionStream(outStream, LEVEL);
-        	transfered = inStream.transferTo(gzip);
+            // 02.01.2024. seems transferTo does not work properly
+            //transfered = inStream.transferTo(gzip);
+            transfered = QuarkStream.stream(inStream, gzip);
         	gzip.flush();
         } finally {
         	if (autoClose) close(gzip);

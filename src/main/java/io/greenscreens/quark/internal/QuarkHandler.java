@@ -24,10 +24,10 @@ import io.greenscreens.quark.reflection.internal.QuarkMapper;
 import io.greenscreens.quark.security.IQuarkKey;
 import io.greenscreens.quark.security.QuarkSecurity;
 import io.greenscreens.quark.stream.QuarkStream;
-import io.greenscreens.quark.utils.MIME;
-import io.greenscreens.quark.utils.QuarkJson;
-import io.greenscreens.quark.utils.QuarkUtil;
-import io.greenscreens.quark.utils.ReflectionUtil;
+import io.greenscreens.quark.util.QuarkJson;
+import io.greenscreens.quark.util.QuarkUtil;
+import io.greenscreens.quark.util.ReflectionUtil;
+import io.greenscreens.quark.util.override.MIME;
 import io.greenscreens.quark.web.ServletStorage;
 import io.greenscreens.quark.web.ServletUtils;
 import io.greenscreens.quark.web.data.WebRequest;
@@ -63,7 +63,7 @@ public class QuarkHandler {
 	private boolean compress = false;
 	private boolean sent = false;
 
-	private IQuarkKey aes;
+	private IQuarkKey quarkKey;
 	
 	private ExtJSDirectRequest<JsonNode> request;
 	public ExtJSResponse response;
@@ -78,7 +78,7 @@ public class QuarkHandler {
 		this.supportAsync = true;
 		this.ctx = wsSession.getContext();
 		this.requireSession = isSessionRequired();
-		this.aes = getAes();
+		this.quarkKey = getAes();
 	}
 
 	public QuarkHandler(final HttpServletRequest request, final HttpServletResponse response, final ExtJSDirectRequest<JsonNode> data, final String uri) {
@@ -92,7 +92,7 @@ public class QuarkHandler {
 		this.ctx = request.getServletContext();
 		this.requireSession = isSessionRequired();
 		this.httpResponse.setContentType("application/json");
-		this.aes = getAes();
+		this.quarkKey = getAes();
 	}
 		
 	public ServletContext getServletContext() {
@@ -118,7 +118,15 @@ public class QuarkHandler {
 	public boolean isSupportAsync() {
 		return supportAsync;
 	}
-
+   
+    /**
+     * Check if handler process request for WebSocket or Servlet
+     * @return
+     */
+    private boolean isWebSocket() {
+        return Objects.nonNull(wsSession);
+    }
+    
 	public ExtJSDirectRequest<JsonNode> getRequest() {
 		return request;
 	}
@@ -224,7 +232,7 @@ public class QuarkHandler {
 			ByteBuffer buffer = ServletUtils.getBodyAsBuffer(httpRequest);
 			final int type = QuarkStream.type(buffer);
 			compress = QuarkStream.isCompress(type);
-			buffer = QuarkStream.unwrap(buffer, aes);
+			buffer = QuarkStream.unwrap(buffer, quarkKey);
 			body = new String(buffer.array(), StandardCharsets.UTF_8);
 		} else {
 			compress = ServletUtils.supportGzip(httpRequest);
@@ -315,9 +323,9 @@ public class QuarkHandler {
 		
 		final ExtJSDirectResponse<JsonNode> result = getResult();
 	
-		if (Objects.nonNull(aes)) {
+		if (Objects.nonNull(quarkKey)) {
 			final String json = QuarkJson.stringify(result);			
-			final ByteBuffer buff = QuarkStream.wrap(json, aes, compress, null);
+			final ByteBuffer buff = QuarkStream.wrap(json, quarkKey, compress, null);
 			ServletUtils.sendResponse(httpResponse, buff, false);				
 		} else {		
 			ServletUtils.sendResponse(httpResponse, result, compress);
@@ -341,6 +349,14 @@ public class QuarkHandler {
 			return error;
 		}
 		
+        // if method is protected and disabled for use, prevent call 
+        if (handle.isProtected()) {
+            if (ServletUtils.isDisabled(ctx)) {
+                response = QuarkHandlerUtil.getError(QuarkErrors.E8888);
+                return true;                
+            }
+        }		
+		
 		final List<AnnotatedParameter<AnnotatedParameter<?>>> paramList = handle.annotatedMethod().getParameters();
 		final Object[] params = QuarkHandlerUtil.fillParams(request, paramList);
 		
@@ -362,13 +378,8 @@ public class QuarkHandler {
 	 * @throws IOException
 	 */
 	private IQuarkKey getAes() {
-		if (Objects.nonNull(aes)) return aes;
-		if (isWebSocket()) {
-			aes = getAesWs();
-		} else {
-			aes = getAesWeb();
-		}
-		return aes;
+		if (Objects.nonNull(quarkKey)) return quarkKey;
+		return isWebSocket() ? getAesWs() : getAesWeb();
 	}
 
 	/**
@@ -423,14 +434,6 @@ public class QuarkHandler {
 			return true;
 
 		return Objects.isNull(handle.annotatedMethod());
-	}
-	
-	/**
-	 * Check if handler process request for WebSocket or Servlet
-	 * @return
-	 */
-	private boolean isWebSocket() {
-		return Objects.nonNull(wsSession);
 	}
 
 	/**

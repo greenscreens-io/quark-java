@@ -5,14 +5,18 @@ package io.greenscreens.quark.internal;
 
 import java.lang.invoke.MethodHandle;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import io.greenscreens.quark.QuarkProducer;
 import io.greenscreens.quark.async.QuarkAsyncContext;
 import io.greenscreens.quark.cdi.IDestructibleBeanInstance;
 import io.greenscreens.quark.ext.ExtJSResponse;
 import io.greenscreens.quark.reflection.IQuarkHandle;
-import io.greenscreens.quark.utils.QuarkUtil;
+import io.greenscreens.quark.util.QuarkUtil;
 import io.greenscreens.quark.web.QuarkContext;
 import jakarta.enterprise.inject.Vetoed;
 
@@ -22,6 +26,8 @@ import jakarta.enterprise.inject.Vetoed;
 @Vetoed
 public class QuarkBeanCaller implements Runnable {
 
+    final static private Logger LOG = LoggerFactory.getLogger(QuarkBeanCaller.class); 
+    
 	final IQuarkHandle beanHandle;
 	final Object[] params;
 
@@ -59,7 +65,7 @@ public class QuarkBeanCaller implements Runnable {
 			handler.response = call(di);
 		} catch (Throwable e) {
 			handler.response = new ExtJSResponse(e, QuarkUtil.toMessage(e));
-			QuarkUtil.printError(e);
+			QuarkUtil.printError(e, LOG);
 		} finally {
 			release(di);
 			handler.send();
@@ -117,7 +123,7 @@ public class QuarkBeanCaller implements Runnable {
 	 * @param bean
 	 */
 	private void release(final IDestructibleBeanInstance<?> bean) {
-		if (Objects.nonNull(bean)) bean.release();
+	    Optional.ofNullable(bean).ifPresent(b -> b.release());
 	}
 	
 	/**

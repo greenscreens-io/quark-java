@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2015, 2023 Green Screens Ltd.
  */
-package io.greenscreens.quark.security;
+package io.greenscreens.quark.security.override;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -20,7 +20,7 @@ import jakarta.enterprise.inject.Vetoed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.greenscreens.quark.utils.QuarkUtil;
+import io.greenscreens.quark.util.QuarkUtil;
 
 /**
  * AEC encryption & Decryption utility
@@ -84,22 +84,26 @@ class AesCrypt implements IAesKey {
 
 	@Override
 	public byte[] encrypt(final byte[] data, final byte[] iv) throws IOException {
-		return encrypt(data, new IvParameterSpec(iv));
+	    final IvParameterSpec vector = AsyncKeyUtil.toVector(iv, null);
+		return encrypt(data, vector);
 	}
 
 	@Override
 	public byte[] decrypt(final byte[] data, final byte[] iv) throws IOException {
-		return decrypt(data, new IvParameterSpec(iv));
+	    final IvParameterSpec vector = AsyncKeyUtil.toVector(iv, null);
+	    return decrypt(data, vector);
 	}
 
 	@Override
-	public ByteBuffer encrypt(final ByteBuffer data, final byte[] iv) throws IOException {
-		return encrypt(data, new IvParameterSpec(iv));
+	public ByteBuffer encrypt(final ByteBuffer data, final ByteBuffer iv) throws IOException {
+	    final IvParameterSpec vector = AsyncKeyUtil.toVector(iv, null);
+		return encrypt(data, vector);
 	}
 
 	@Override
-	public ByteBuffer decrypt(final ByteBuffer data, final byte[] iv) throws IOException {
-		return decrypt(data, new IvParameterSpec(iv));
+	public ByteBuffer decrypt(final ByteBuffer data, final ByteBuffer iv) throws IOException {
+	    final IvParameterSpec vector = AsyncKeyUtil.toVector(iv, null);
+		return decrypt(data, vector);
 	}
 	
 	@Override

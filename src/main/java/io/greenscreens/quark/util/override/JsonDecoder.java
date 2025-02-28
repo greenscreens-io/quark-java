@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2015, 2023 Green Screens Ltd.
  */
-package io.greenscreens.quark.utils;
+package io.greenscreens.quark.util.override;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
@@ -27,16 +27,19 @@ import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
+import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 
+import io.greenscreens.quark.util.QuarkUtil;
+
 /**
  * Generic JSON decoder used internally
  */
 @Vetoed
-final class JsonDecoder<T> {
+public final class JsonDecoder<T> {
 
 	private T object;
 
@@ -72,6 +75,27 @@ final class JsonDecoder<T> {
 		OBJECT_MAPPER.enable(SerializationFeature.WRITE_ENUMS_USING_INDEX);
 
 	}
+	
+    public static ObjectWriter writerWith(final Class<?> view) {
+        return OBJECT_MAPPER.writerWithView(view);
+    }
+    
+    public static ObjectReader readerWith(final Class<?> view) {
+        return OBJECT_MAPPER.readerWithView(view);
+    }
+
+    public static ObjectMapper mapper() {
+        return OBJECT_MAPPER;
+    }
+    
+    public static ObjectNode createObjectNode() {
+        return OBJECT_MAPPER.createObjectNode();
+    }
+    
+    public static ArrayNode createArrayNode() {
+        return OBJECT_MAPPER.createArrayNode();
+    }
+    
 
 	/**
 	 * New Decoder instance for JSON data
@@ -255,6 +279,19 @@ final class JsonDecoder<T> {
 		return Objects.isNull(data) ? null : (K) OBJECT_MAPPER.readTree(data);
 	}
 
+    public static JsonNode parseAs(final String data, final Class<?> view) throws JsonProcessingException {
+        return data == null ? null : readerWith(view).readTree(data);
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <K extends JsonNode> K parseTypeAs(final String data, final Class<?> view) throws JsonProcessingException {
+        return data == null ? null : (K) readerWith(view).readTree(data);
+    }
+
+    public static <T> T parseAs(final String data, final Class<T> clazz, final Class<?> view) throws JsonProcessingException {
+        return convert(clazz, parseAs(data, view));
+    }
+	
 	/**
 	 * Convert object to json string
 	 * 
@@ -267,6 +304,17 @@ final class JsonDecoder<T> {
 		return Objects.isNull(object) ? null : OBJECT_MAPPER.writeValueAsString(object);
 	}
 
+    /**
+     * Stringify Object with specific view
+     * @param object
+     * @param view
+     * @return
+     * @throws JsonProcessingException
+     */
+    public static String stringifyAs(final Object object, final Class<?> view) throws JsonProcessingException {
+        return Objects.isNull(object) ? null : writerWith(view).writeValueAsString(object);
+    }
+    
 	/**
 	 * Check if node contains key
 	 * 

@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 import jakarta.enterprise.inject.Vetoed;
 import jakarta.servlet.ServletContext;
@@ -18,7 +19,7 @@ import jakarta.websocket.server.ServerEndpointConfig;
 import io.greenscreens.quark.internal.QuarkConstants;
 import io.greenscreens.quark.security.IQuarkKey;
 import io.greenscreens.quark.security.QuarkSecurity;
-import io.greenscreens.quark.utils.QuarkUtil;
+import io.greenscreens.quark.util.QuarkUtil;
 import io.greenscreens.quark.web.listener.QuarkWebSessionListener;
 
 /**
@@ -46,14 +47,18 @@ public class WebSocketConfigurator extends ServerEndpointConfig.Configurator {
 	 * @param request
 	 * @return
 	 */
-	String findChallenge(final HandshakeRequest request) {
+	Optional<String> findChallenge(final HandshakeRequest request) {
 		return WebsocketUtil.findQuery(request, "q");
 	}
 
-	String findCompression(final HandshakeRequest request) {
+	Optional<String> findCompression(final HandshakeRequest request) {
 		return WebsocketUtil.findQuery(request, "c");
 	}
 
+	boolean isCompression(final HandshakeRequest request) {	    
+	    return findCompression(request).map(c -> "true".equalsIgnoreCase(c)).orElse(false);
+	}
+	
 	/**
 	 * ECDH browser public key
 	 * @param request
@@ -75,7 +80,7 @@ public class WebSocketConfigurator extends ServerEndpointConfig.Configurator {
 
 		String val = map.get("X-Authorization");
 		if (QuarkUtil.nonEmpty(val)) {
-			val = WebsocketUtil.findQuery(request, "t");
+			val = WebsocketUtil.findQuery(request, "t").orElse("0");
 		}
 
 		return QuarkUtil.toInt(val);
@@ -111,24 +116,26 @@ public class WebSocketConfigurator extends ServerEndpointConfig.Configurator {
 	@Override
 	public void modifyHandshake(final ServerEndpointConfig sec, final HandshakeRequest request,	final HandshakeResponse response) {
 
-		final HttpSession httpSession = findSession(request);
-		final String challenge = findChallenge(request);
-		final String compression = findCompression(request);
+	    super.modifyHandshake(sec, request, response);
+
+	    final HttpSession httpSession = findSession(request);
+		final Optional<String> challenge = findChallenge(request);
 		final String publicKey = findWebKey(request);
 
 		final Locale locale = WebsocketUtil.getLocale(request);
-		final boolean isCompression = "true".equalsIgnoreCase(compression);
+		final boolean isCompression = isCompression(request);
 		final IQuarkKey aesKey = QuarkSecurity.initWebKey(publicKey);
 
-		super.modifyHandshake(sec, request, response);
 		response.getHeaders().put("Accept-Language", LANG);	
 		
-		WebSocketStorage.store(sec, QuarkConstants.ENCRYPT_ENGINE, aesKey);
-		WebSocketStorage.store(sec, QuarkConstants.QUARK_PATH, sec.getPath());
-		WebSocketStorage.store(sec, QuarkConstants.QUARK_CHALLENGE, challenge);
-		WebSocketStorage.store(sec, QuarkConstants.QUARK_COMPRESSION, isCompression);
 		WebSocketStorage.store(sec, Locale.class, locale);
 		WebSocketStorage.store(sec, HttpSession.class, httpSession);
+		WebSocketStorage.store(sec, QuarkConstants.ENCRYPT_ENGINE, aesKey);
+		WebSocketStorage.store(sec, QuarkConstants.QUARK_PATH, sec.getPath());
+		WebSocketStorage.store(sec, QuarkConstants.QUARK_COMPRESSION, isCompression);
+		if (challenge.isPresent()) {
+		    WebSocketStorage.store(sec, QuarkConstants.QUARK_CHALLENGE, challenge.get());
+		}
 		if (Objects.nonNull(httpSession)) {
 			WebSocketStorage.store(sec, ServletContext.class, httpSession.getServletContext());
 		}

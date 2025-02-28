@@ -8,6 +8,7 @@ import jakarta.servlet.AsyncContext;
 import jakarta.servlet.AsyncListener;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import io.greenscreens.quark.ext.ExtJSResponse;
 import io.greenscreens.quark.internal.QuarkHandler;
 
@@ -55,4 +56,8 @@ public final class QuarkAsyncContext {
 		if (Objects.isNull(asyncContext)) return null;
 		return (HttpServletResponse) asyncContext.getResponse();
 	}
+	
+    public HttpSession getSession() {
+        return quarkHandler.getSession();
+    }	
 }

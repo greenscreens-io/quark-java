@@ -1,11 +1,25 @@
 /*
  * Copyright (C) 2015, 2023 Green Screens Ltd.
  */
-package io.greenscreens.quark.utils;
+package io.greenscreens.quark.util;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ThreadFactory;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
+
+import io.greenscreens.quark.stream.QuarkStream;
+import io.greenscreens.quark.util.override.ByteUtil;
+import io.greenscreens.quark.util.override.NamedThreadFactory;
+import io.greenscreens.quark.util.override.StringUtil;
+import io.greenscreens.quark.util.override.Util;
 
 /**
  * Simple util class for string handling
@@ -41,9 +55,15 @@ public enum QuarkUtil {
 		return ByteUtil.charsToHex(bytes);
 	}
 
-	public static byte[] hexStringToByteArray(final String s) {
-		return ByteUtil.hexStringToByteArray(s);
-	}
+    /**
+     * Converts hex string into byte array
+     * 
+     * @param s
+     * @return
+     */
+    public static byte[] fromHexAsBytes(final String s) {
+        return ByteUtil.fromHexAsBytes(s);
+    }
 
 	/**
 	 * Internal text to boolean conversion
@@ -140,9 +160,35 @@ public enum QuarkUtil {
 	 * 
 	 * @param closeable
 	 */
-	public static void close(final AutoCloseable closeable) {
-		Util.close(closeable);
+	public static boolean close(final AutoCloseable closeable) {
+		return Util.close(closeable);
 	}
+	
+    /**
+     * Blank padding for AES algorithm
+     * 
+     * @param source
+     * @return
+     */
+    public static String padString(final String source, int size) {
+        return StringUtil.padString(source, size);
+    }
+
+    public static String decompressString(final ByteBuffer bytes) throws Exception {
+        return new String(decompress(bytes).array(), StandardCharsets.UTF_8);
+    }
+
+    public static ByteBuffer compressString(final String s) throws Exception {
+        return compress(ByteBuffer.wrap(s.getBytes(StandardCharsets.UTF_8)));
+    }
+
+    public static ByteBuffer compress(final ByteBuffer raw) throws Exception {
+        return QuarkStream.compress(raw);
+    }
+
+    public static ByteBuffer decompress(final ByteBuffer raw) throws Exception {
+        return QuarkStream.decompress(raw);
+    }	
 
 	/**
 	 * Null safe Exception error message
@@ -162,10 +208,6 @@ public enum QuarkUtil {
 	 */
 	public static String toMessage(final Throwable e, final String def) {
 		return Util.toMessage(e, def);
-	}
-	
-	public static void printError(final Throwable e) {
-		Util.printError(e);
 	}
 	
 	public static void printError(final Throwable e, final Logger log) {
@@ -202,5 +244,48 @@ public enum QuarkUtil {
 	public static long timediff(final long ts) {
 		return Util.timediff(ts); 
 	}
-	
+
+    public static <T extends ExecutorService> T safeTerminate(final T service, final boolean forced) {
+        return Util.safeTerminate(service, forced);
+    }
+    
+    public static final ThreadFactory getThreadFactory(final String name, final int priority) {
+        return NamedThreadFactory.get(name, priority);
+    }
+
+    public static boolean contains(final Map<String, Object> storage, final String key) {
+        final boolean isValid = Stream.of(storage, key).allMatch(o -> Objects.nonNull(o));
+        return isValid ? storage.containsKey(key) : isValid;
+    }
+    
+    public static Object remove(final Map<String, Object> storage, final String key) {
+        final boolean isValid = Stream.of(storage, key).allMatch(o -> Objects.nonNull(o));
+        return isValid ? storage.remove(key) : null;
+    }
+    
+    public static Object store(final Map<String, Object> storage, final String key, final Object value) {
+        final boolean isValid = Stream.of(storage, key, value).allMatch(o -> Objects.nonNull(o));
+        return isValid ? storage.put(key, value) : value;
+    }
+
+    public static Object load(final Map<String, Object> storage, final String key) {
+        final boolean isValid = Stream.of(storage, key).allMatch(o -> Objects.nonNull(o));
+        return isValid ? storage.get(key) : null;
+    }
+
+    public static void close(final Map<String, Object> storage) {
+        Optional.ofNullable(storage).map(s -> s.values()).ifPresent(QuarkUtil::close);
+    }
+    
+    public static void close(final Collection<Object> storage) {
+        Optional.ofNullable(storage).map(s -> s.stream()).ifPresent(QuarkUtil::close);
+    }
+    
+    public static void close(final Stream<Object> storage) {
+        Optional.ofNullable(storage).ifPresent(s -> 
+            s.filter( o -> o instanceof AutoCloseable)
+            .map(o -> (AutoCloseable)o)
+            .forEach(QuarkUtil::close)
+        );
+    }
 }

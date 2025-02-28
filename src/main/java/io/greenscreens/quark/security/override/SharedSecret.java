@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2015, 2023 Green Screens Ltd.
  */
-package io.greenscreens.quark.security;
+package io.greenscreens.quark.security.override;
 
 import java.math.BigInteger;
 import java.security.PublicKey;
@@ -25,7 +25,7 @@ import org.bouncycastle.jce.spec.ECPublicKeySpec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.greenscreens.quark.utils.QuarkUtil;
+import io.greenscreens.quark.util.QuarkUtil;
 
 import org.bouncycastle.jce.spec.ECPrivateKeySpec;
 
@@ -119,7 +119,7 @@ enum SharedSecret {
 	 * @return
 	 */
 	private static byte[] generateHex(final String data, final PrivateKey key) {
-		byte[] bin = QuarkUtil.hexStringToByteArray(data);
+		byte[] bin = QuarkUtil.fromHexAsBytes(data);
 		return generate(bin, key);
 	}
 	

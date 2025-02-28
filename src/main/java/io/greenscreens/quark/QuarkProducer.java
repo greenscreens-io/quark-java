@@ -4,6 +4,8 @@
 package io.greenscreens.quark;
 
 import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Produces;
@@ -41,27 +43,38 @@ public class QuarkProducer {
 
 	@Produces
 	public static HttpSession getWebSession() {
-		return getWebSession(true);
+		return getWebSession(true).orElse(null);
 	}	
 
+    public static Optional<WebSocketSession> getWebSocketSessionSafe() {
+        return Optional.ofNullable(websocketContextThreadLocal.get());
+    }
+
+    public static Optional<QuarkAsyncContext> getQuarkAsyncContextSafe() {
+        return Optional.ofNullable(asyncContextThreadLocal.get());
+    }
+
+    public static Optional<QuarkContext> getQuarkContextSafe() {
+        return Optional.ofNullable(httpThreadLocal.get());
+    }
+
+    public static Optional<HttpSession> getWebSessionSafe() {
+        return getWebSession(true);
+    }   
+    
 	/**
 	 * Determine if current context is from HTTP request or WebSocket
 	 * Based on that, returns session from proper thread context. 
 	 * @param create
 	 * @return
 	 */
-	public static HttpSession getWebSession(final boolean create) {
+	public static Optional<HttpSession> getWebSession(final boolean create) {
 		
-		final QuarkContext ctx = httpThreadLocal.get();
-		if (Objects.nonNull(ctx)) return ctx.getRequest().getSession(create);
-		
-		final WebSocketSession wss = websocketContextThreadLocal.get();
-		if (Objects.nonNull(wss)) return wss.getHttpSession(); 
-		
-		final QuarkAsyncContext ctxa = asyncContextThreadLocal.get();
-		if (Objects.nonNull(ctxa)) ctxa.getRequest().getSession(create);
-		
-		return null;		
+	    final Optional<HttpSession> s1 = getQuarkContextSafe().map(c -> c.getRequest().getSession(create));
+	    final Optional<HttpSession> s2 = getWebSocketSessionSafe().map(c -> c.getHttpSession());	    
+	    final Optional<HttpSession> s3 = getQuarkAsyncContextSafe().map(c -> c.getRequest().getSession(create));
+	    
+	    return Stream.of(s1, s2, s3).filter(Optional::isPresent).findFirst().map(Optional::get);
 	}
 	
 	/**

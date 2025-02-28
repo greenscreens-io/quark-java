@@ -9,24 +9,23 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import io.greenscreens.quark.ext.ExtJSDirectRequest;
 import io.greenscreens.quark.ext.ExtJSObjectResponse;
 import io.greenscreens.quark.ext.ExtJSResponse;
 import io.greenscreens.quark.reflection.IQuarkHandle;
-import io.greenscreens.quark.utils.QuarkJson;
-import io.greenscreens.quark.utils.QuarkUtil;
-import io.greenscreens.quark.utils.ReflectionUtil;
+import io.greenscreens.quark.util.QuarkJson;
+import io.greenscreens.quark.util.QuarkUtil;
+import io.greenscreens.quark.util.ReflectionUtil;
 import io.greenscreens.quark.web.QuarkCookieUtil;
+import io.greenscreens.quark.web.ServletUtils;
 import jakarta.enterprise.inject.spi.AnnotatedParameter;
+import jakarta.servlet.ServletContext;
 import jakarta.servlet.http.HttpServletRequest;
 
 /**
@@ -62,11 +61,12 @@ public enum QuarkHandlerUtil {
 
 				if (ReflectionUtil.isJsonNode(paramData)) {
 
-					final AnnotatedParameter<?> param = methodParams.get(i);
-					final JsonNode jnode = (JsonNode) paramData;
-					final Type type = param.getBaseType();
+				    final JsonNode jnode = (JsonNode) paramData;
 
-					Class<?> jType = null;
+				    final AnnotatedParameter<?> param = methodParams.get(i);
+					final Type type = param.getBaseType();
+					final  Class<?> jType = (Class<?>) type;
+
 					if (ReflectionUtil.isParameterized(type)) {
 						final ParameterizedType ptype = (ParameterizedType) type;
 						final Type rtype = ptype.getRawType();
@@ -74,12 +74,10 @@ public enum QuarkHandlerUtil {
 						if (ReflectionUtil.isCollection(rtype)) {
 							arg = toCollection(ptype, jnode);
 						} else {
-							jType = (Class<?>) param.getBaseType();
 							arg = QuarkJson.convert(jType, jnode);
 						}
 
 					} else {
-						jType = (Class<?>) param.getBaseType();
 						arg = QuarkJson.convert(jType, jnode);
 					}
 
@@ -104,18 +102,6 @@ public enum QuarkHandlerUtil {
 			LOG.debug(msg, e);
 		}
 		return collection;
-	}
-
-	
-	/**
-	 * Convert enum error to Error response for requester
-	 * @param error
-	 * @return
-	 */
-	public static ExtJSResponse getError(final QuarkErrors error) {
-		final ExtJSResponse response = new ExtJSResponse(false, error.getString());
-		response.setCode(error.getCode());
-		return response;
 	}
 	
 	/**
@@ -142,65 +128,18 @@ public enum QuarkHandlerUtil {
 		}
 		return response;
 	}
-	
-	/**
-	 * Send public key and server timestamp
-	 * 
-	 * @param sts
-	 * @param err
-	 * @return
-	 */
-	public static ObjectNode getResponse() {
-		return getResponse(true, null, null);
-	}
 
 	/**
-	 * Create JSON error response in engine JSON format
-	 * 
-	 * @param error
-	 * @return
-	 */
-	public static ObjectNode getResponse(final QuarkErrors error) {
-		if (Objects.isNull(error)) return getResponse();
-		return getResponse(false, error.getString(), error.getCode());
-	}
-
-	/**
-	 * Create JSON response in engine JSON format
-	 * 
-	 * @param sts
-	 * @param error
-	 * @return
-	 */
-	public static ObjectNode getResponse(final boolean sts, final String error) {
-		return getResponse(sts, error, QuarkErrors.E9999.getCode());
-	}
-
-	/**
-	 * Create JSON response in engine JSON format
-	 * 
-	 * @param sts
-	 * @param err
-	 * @param code
-	 * @return
-	 */
-	public static ObjectNode getResponse(final boolean sts, final String err, final String code) {
-
-		final JsonNodeFactory factory = JsonNodeFactory.instance;
-		final ObjectNode root = factory.objectNode();
-
-		root.put("success", sts);
-		root.put("ver", 0);
-		root.put("ts", System.currentTimeMillis());
-
-		if (!sts) {
-			root.put("error", err);
-			root.put("code", code);
-		}
-
-		return root;
-	}
-	
+     * Convert enum error to Error response for requester
+     * @param error
+     * @return
+     */
+    public static ExtJSResponse getError(final QuarkErrors error) {
+        final ExtJSResponse response = new ExtJSResponse(false, error.getString());
+        response.setCode(error.getCode());
+        return response;
+    }
+    
 	public static String getPublicKey(final HttpServletRequest request) {
 		String publicKey = request.getHeader(QuarkConstants.WEB_KEY);		
 		if (QuarkUtil.isEmpty(publicKey)) {
@@ -209,4 +148,24 @@ public enum QuarkHandlerUtil {
 		return publicKey;
 	}
 
+    /**
+     * Check if Quark API processing is disabled
+     * 
+     * @param context
+     * @return
+     */
+    public static boolean isDisabled(final ServletContext context) {
+        return ServletUtils.isDisabled(context);
+    }
+
+    /**
+     * Enable or disable Quark API Processsing
+     * 
+     * @param context
+     * @param sts
+     */
+    public static void setDisabled(final ServletContext context, final boolean sts) {
+        ServletUtils.setDisabled(context, sts);
+    }
+	
 }

@@ -19,8 +19,8 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.greenscreens.quark.utils.NamedThreadFactory;
-import io.greenscreens.quark.utils.QuarkUtil;
+import io.greenscreens.quark.util.QuarkUtil;
+import io.greenscreens.quark.util.override.NamedThreadFactory;
 import jakarta.websocket.CloseReason;
 import jakarta.websocket.CloseReason.CloseCodes;
 import jakarta.websocket.Session;
@@ -43,15 +43,17 @@ public enum HeartbeatService {
 
 	public static void terminate() {
 		LOG.info("Terminating Quark WebSocket Heartbeat service!");
-		mainService = safeTerminate(mainService);
-		workerService = safeTerminate(workerService);
+        mainService = QuarkUtil.safeTerminate(mainService, false);
+        workerService = QuarkUtil.safeTerminate(workerService, false);
 	}
 	
 	/**
 	 * Invoke on application startup, for the scheduler to be initiated.
 	 */
 	public static void initialize() {
-		LOG.info("Initializing Quark WebSocket Heartbeat service!");
+		
+	    LOG.info("Initializing Quark WebSocket Heartbeat service!");
+	    
 		if (Objects.isNull(workerService)) {
 			final int cores = Runtime.getRuntime().availableProcessors();
 			workerService = Executors.newFixedThreadPool(cores, factory);
@@ -61,27 +63,10 @@ public enum HeartbeatService {
 		mainService = new ScheduledThreadPoolExecutor(1, factory);
 		mainService.scheduleAtFixedRate(HeartbeatService::pingClients,
 				Properties.WEBSOCKET_PING_SCHEDULED_TIME_IN_SECONDS,
-				Properties.WEBSOCKET_PING_SCHEDULED_TIME_IN_SECONDS, TimeUnit.SECONDS);
+				Properties.WEBSOCKET_PING_SCHEDULED_TIME_IN_SECONDS, 
+				TimeUnit.SECONDS);
 	}
 
-	private static <T extends ExecutorService> T safeTerminate(final T service) {
-		try {
-			if (Objects.nonNull(service)) service.shutdown();
-			return null;
-		} catch (Exception e) {
-			final String msg = QuarkUtil.toMessage(e);
-			LOG.error(msg);
-			LOG.debug(msg, e);
-			return service;
-		}
-	} 
-	
-	private static HeartbeatSession getHeartbeat(final Session session) {
-		final HeartbeatSession heartbeat = sessionHeartbeats.getOrDefault(session, new HeartbeatSession(session));
-		if (!sessionHeartbeats.containsKey(session)) sessionHeartbeats.put(session, heartbeat);
-		return heartbeat;
-	}
-	
 	/**
 	 * Add session to the registry.
 	 * 
@@ -101,17 +86,19 @@ public enum HeartbeatService {
 		sessionHeartbeats.remove(session);
 	}
 	
-	public static void updateSession(final Session session) {
-		final HeartbeatSession heartbeat = getHeartbeat(session);
-		heartbeat.getLastMessageOnInMillis().set(System.currentTimeMillis());
-		heartbeat.getRetry().set(Properties.MAX_RETRY_COUNT);
-	}
+    public static void updateSession(final Session session) {
+        if (!sessionHeartbeats.containsKey(session)) return;
+        final HeartbeatSession heartbeat = sessionHeartbeats.get(session);
+        heartbeat.getLastMessageOnInMillis().set(System.currentTimeMillis());
+        heartbeat.getRetry().set(Properties.MAX_RETRY_COUNT);
+    }
 
-	public static void handlePong(final Session session) {
-		final HeartbeatSession heartbeat = getHeartbeat(session);
-		heartbeat.getLastPongReceived().set(System.currentTimeMillis());
-		heartbeat.getRetry().set(Properties.MAX_RETRY_COUNT);
-	}
+    public static void handlePong(final Session session) {
+        if (!sessionHeartbeats.containsKey(session)) return;
+        final HeartbeatSession heartbeat = sessionHeartbeats.get(session);
+        heartbeat.getLastPongReceived().set(System.currentTimeMillis());
+        heartbeat.getRetry().set(Properties.MAX_RETRY_COUNT);
+    }
 
 	private static void pingClients() {
 		sessionHeartbeats.values().parallelStream().forEach(heartbeat -> {
@@ -166,6 +153,8 @@ public enum HeartbeatService {
 			final String msg = QuarkUtil.toMessage(e);
 			LOG.error(msg);
 			LOG.debug(msg, e);
-		}
+		} finally {
+            deregisterSession(session);
+        }
 	}
 }

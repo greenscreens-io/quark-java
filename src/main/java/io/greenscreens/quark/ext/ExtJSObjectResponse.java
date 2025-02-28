@@ -90,4 +90,7 @@ public class ExtJSObjectResponse<T> extends ExtJSResponse {
 
 	}
 
+    public static <T> ExtJSObjectResponse<T> newInstance() {
+        return new ExtJSObjectResponse<T>();
+    }	
 }

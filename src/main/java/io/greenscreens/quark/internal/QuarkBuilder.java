@@ -6,7 +6,11 @@ package io.greenscreens.quark.internal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -16,7 +20,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.greenscreens.quark.reflection.IQuarkBean;
 import io.greenscreens.quark.reflection.internal.QuarkMapper;
 import io.greenscreens.quark.security.QuarkSecurity;
-import io.greenscreens.quark.utils.QuarkJson;
+import io.greenscreens.quark.util.QuarkJson;
 import jakarta.enterprise.inject.spi.Bean;
 
 /**
@@ -25,6 +29,8 @@ import jakarta.enterprise.inject.spi.Bean;
 public enum QuarkBuilder {
 ;
 
+    private static final Map<Integer, ArrayNode> cache = new ConcurrentHashMap<>();
+    
 	public static final String KEY_ENC = "keyEnc";
 	public static final String KEY_VER = "keyVer";		
 	public static final String SIGNATURE = "signature";
@@ -38,7 +44,8 @@ public enum QuarkBuilder {
 	public static ObjectNode buildAPI(final ArrayNode api, final String challenge) {
 
 		final ObjectNode root = JsonNodeFactory.instance.objectNode();
-		root.set("api", api);
+	
+		if (Objects.nonNull(api)) root.set("api", api);
 
 		final String keyEnc = QuarkSecurity.getPublic();
 		final String keyVer = QuarkSecurity.getVerifier();
@@ -52,6 +59,10 @@ public enum QuarkBuilder {
 
 	}
 
+	public static ObjectNode buildAuth(final String challenge) {
+	    return buildAPI(null, challenge);
+	}
+	   
 	/**
 	 * Build meta structure for web
 	 * 
@@ -59,6 +70,9 @@ public enum QuarkBuilder {
 	 */
 	static public ArrayNode build(final Collection<String> uri) {
 
+        final int key =  Objects.isNull(uri) || uri.isEmpty() ? 0 : uri.stream().collect(Collectors.joining()).hashCode();
+        if (cache.containsKey(key)) return cache.get(key);
+        
 		final ArrayNode root = JsonNodeFactory.instance.arrayNode();
 		final Collection<IQuarkBean> handles = QuarkMapper.filter(uri);
 		
@@ -75,6 +89,8 @@ public enum QuarkBuilder {
 			root.add(objectNode);
 			
 		});
+		
+		cache.put(key, root);
 
 		return root;
 

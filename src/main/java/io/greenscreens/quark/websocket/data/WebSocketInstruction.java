@@ -10,33 +10,39 @@ import com.fasterxml.jackson.annotation.JsonValue;
  */
 public enum WebSocketInstruction {
 
-    WELCO("welco"), 
-    PING("ping"),
-    BYE("bye"), 
-    API("api"),
-    ERR("err"), 
-    INS("ins"), // internal instruction
-    DATA("data"),
-	;
+    WELCO("welco", true), 
+    PING("ping", true),
+    BYE("bye", true), 
+    API("api", true),
 
-	private final String text;
+    ERR("err", false),
+    INS("ins", false), // internal instruction
+    DATA("data", false),
+    
+    // OLD
+    ENC("enc", false)
+    ;
 
-	private WebSocketInstruction(final String text) {
-		this.text = text;
-	}
+    private final String text;
+    private final boolean simple;
 
-	@JsonValue
-	public String getText() {
-		return text;
-	}
+    private WebSocketInstruction(final String text, final boolean simple) {
+        this.text = text;
+        this.simple = simple;
+    }
 
-	@Override
-	public String toString() {
-		return text;
-	}
+    @JsonValue
+    public String getText() {
+        return text;
+    }
 
-	// fix for eclipse compiler - switch issue
-	public boolean isSimple() {
-		return this.ordinal() < ERR.ordinal();
-	}
+    @Override
+    public String toString() {
+        return text;
+    }
+
+    // fix for eclipse compiler - switch issue
+    public boolean isSimple() {
+        return this.simple;
+    }
 }

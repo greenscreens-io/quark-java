@@ -73,7 +73,6 @@ public class WebSocketRequest {
 		this.data = data;
 	}
 
-
 	@Override
 	public String toString() {
 		return "WebSocketRequest [type=" + type + ", cmd=" + cmd + ", timeout=" + timeout + ", errMsg=" + errMsg
