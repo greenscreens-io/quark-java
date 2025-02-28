@@ -4,7 +4,9 @@
 package io.greenscreens.quark.web;
 
 import java.io.IOException;
+import java.util.Optional;
 
+import io.greenscreens.quark.util.MultipartMap;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -21,9 +23,13 @@ public class QuarkServlet extends HttpServlet {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	protected Part getPart(final HttpServletRequest request, final String name) throws IOException {		
-		return ServletUtils.getPart(request, name);
-	}
+    protected Optional<Part> getPart(final HttpServletRequest request, final String name) throws IOException {      
+        return ServletUtils.getPart(request, name);
+    }
+    
+    protected Optional<MultipartMap> getMultipartMap(final HttpServletRequest request) throws IOException {
+        return ServletUtils.getPut(request);
+    }
 
 	protected void updateHeaders(final HttpServletResponse response) {
 		response.setHeader("X-Content-Type-Options", "'nosniff'");

@@ -20,6 +20,7 @@ module io.greenscreens.quark{
 	exports io.greenscreens.quark.cdi;
 	exports io.greenscreens.quark.ext;
 	exports io.greenscreens.quark.web;
+	exports io.greenscreens.quark.util;
 	exports io.greenscreens.quark.reflection;
 	exports io.greenscreens.quark.web.data;
 	exports io.greenscreens.quark.web.listener;
