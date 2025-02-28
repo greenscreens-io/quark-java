@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2015, 2023. Green Screens Ltd.
  */
-package io.greenscreens.quark.utils;
+package io.greenscreens.quark.util;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.ParameterizedType;
@@ -11,6 +11,8 @@ import java.util.Collection;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+
+import io.greenscreens.quark.util.override.JsonDecoder;
 
 public enum QuarkJson {
 ;

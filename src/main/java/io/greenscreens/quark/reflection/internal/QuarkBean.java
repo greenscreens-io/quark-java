@@ -19,8 +19,8 @@ import io.greenscreens.quark.cdi.BeanManagerUtil;
 import io.greenscreens.quark.cdi.IDestructibleBeanInstance;
 import io.greenscreens.quark.reflection.IQuarkBean;
 import io.greenscreens.quark.reflection.IQuarkHandle;
-import io.greenscreens.quark.utils.QuarkUtil;
-import io.greenscreens.quark.utils.ReflectionUtil;
+import io.greenscreens.quark.util.QuarkUtil;
+import io.greenscreens.quark.util.ReflectionUtil;
 import jakarta.enterprise.inject.spi.Bean;
 
 /**

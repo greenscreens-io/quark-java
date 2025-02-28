@@ -14,7 +14,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.zip.GZIPInputStream;
 
-import io.greenscreens.quark.utils.QuarkUtil;
+import io.greenscreens.quark.util.QuarkUtil;
 import jakarta.enterprise.inject.Vetoed;
 
 /**
@@ -93,17 +93,18 @@ enum QuarkDecompression {
 	
     public static void stream(final InputStream inStream, final OutputStream outStream, final boolean autoClose) throws IOException {
 
-    	InputStream gzip = null;
+        InputStream gzip = null;
 
         try {
-        	gzip = new GZIPInputStream(inStream);
-        	gzip.transferTo(outStream);
-        	outStream.flush();
+            gzip = new GZIPInputStream(inStream);
+            gzip.transferTo(outStream);
+            outStream.flush();
         } finally {
-        	if (autoClose) close(gzip);
-		}
+            if (autoClose) close(gzip);
+        }
     }
-	public static void close(final AutoCloseable closeable) {
+
+    public static void close(final AutoCloseable closeable) {
 		QuarkUtil.close(closeable);
 	}
 

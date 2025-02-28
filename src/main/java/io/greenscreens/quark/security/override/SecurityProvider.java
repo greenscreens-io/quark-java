@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2015, 2023. Green Screens Ltd.
  */
-package io.greenscreens.quark.security;
+package io.greenscreens.quark.security.override;
 
 import java.security.Provider;
 import java.security.Security;

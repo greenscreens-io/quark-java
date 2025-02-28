@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015, 2023. Green Screens Ltd.
+ * Copyright (C) 2015, 2023 Green Screens Ltd.
  */
 package io.greenscreens.quark.ext;
 
@@ -71,11 +71,6 @@ public class ExtJSObjectResponse<T> extends ExtJSResponse {
 			return this;
 		}
         
-        public Builder<T> setType(final Type type) {
-        	this.type = type;
-        	return this;
-        }
-        
         public ExtJSObjectResponse<T> build() {
         	final ExtJSObjectResponse<T> resp = new ExtJSObjectResponse<>(success, msg);
         	resp.setCode(code);
@@ -95,4 +90,7 @@ public class ExtJSObjectResponse<T> extends ExtJSResponse {
 
 	}
 
+    public static <T> ExtJSObjectResponse<T> newInstance() {
+        return new ExtJSObjectResponse<T>();
+    }	
 }

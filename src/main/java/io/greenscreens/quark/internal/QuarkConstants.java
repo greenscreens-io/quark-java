@@ -26,8 +26,6 @@ public enum QuarkConstants {
     
 	public static final String LOG_BROADCAST_INJECT = "Websocket broadcast event not injected in callback.";
 	public static final String LOG_RSA_ERROR = "Decryption error. Dynamic ecryption mode does not allow url reuse.";
-	public static final String LOG_URL_OVERLOAD = "URL request is too long";
-
 		
 }
 

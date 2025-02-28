@@ -19,8 +19,8 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.greenscreens.quark.utils.NamedThreadFactory;
-import io.greenscreens.quark.utils.QuarkUtil;
+import io.greenscreens.quark.util.QuarkUtil;
+import io.greenscreens.quark.util.override.NamedThreadFactory;
 import jakarta.websocket.CloseReason;
 import jakarta.websocket.CloseReason.CloseCodes;
 import jakarta.websocket.Session;
@@ -43,8 +43,8 @@ public enum HeartbeatService {
 
 	public static void terminate() {
 		LOG.info("Terminating Quark WebSocket Heartbeat service!");
-		mainService = QuarkUtil.safeTerminate(mainService);
-		workerService = QuarkUtil.safeTerminate(workerService);
+		mainService = QuarkUtil.safeTerminate(mainService, true);
+		workerService = QuarkUtil.safeTerminate(workerService, true);
 	}
 	
 	/**

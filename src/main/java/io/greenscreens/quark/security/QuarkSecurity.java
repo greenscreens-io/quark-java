@@ -3,6 +3,9 @@
  */
 package io.greenscreens.quark.security;
 
+import io.greenscreens.quark.security.override.Security;
+import io.greenscreens.quark.security.override.SecurityProvider;
+
 /**
  * Mediator between 2 libs - quark and security
  */
@@ -18,7 +21,7 @@ public enum QuarkSecurity {
 	}
 
 	public static IQuarkKey initWebKey(final String publicKey) {
-		return Security.initWebKey(publicKey);
+		return QuarkKey.create(Security.initWebKey(publicKey));
 	}
 	
 	/**

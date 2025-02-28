@@ -6,14 +6,18 @@ package io.greenscreens.quark.internal;
 import java.lang.ScopedValue.Carrier;
 import java.lang.invoke.MethodHandle;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import io.greenscreens.quark.QuarkProducer;
 import io.greenscreens.quark.async.QuarkAsyncContext;
 import io.greenscreens.quark.cdi.IDestructibleBeanInstance;
 import io.greenscreens.quark.ext.ExtJSResponse;
 import io.greenscreens.quark.reflection.IQuarkHandle;
-import io.greenscreens.quark.utils.QuarkUtil;
+import io.greenscreens.quark.util.QuarkUtil;
 import io.greenscreens.quark.web.QuarkContext;
 import jakarta.enterprise.inject.Vetoed;
 
@@ -23,6 +27,9 @@ import jakarta.enterprise.inject.Vetoed;
 @Vetoed
 public class QuarkBeanCaller implements Runnable {
 
+    
+    final static private Logger LOG = LoggerFactory.getLogger(QuarkBeanCaller.class);
+    
 	final IQuarkHandle beanHandle;
 	final Object[] params;
 
@@ -59,27 +66,27 @@ public class QuarkBeanCaller implements Runnable {
 	@Override
 	public void run() {
 		
-		final Carrier carrier = attach();
-		carrier.run(() -> {
-			IDestructibleBeanInstance<?> di = null;
-			try {
-				di = beanHandle.instance();
-				handler.response = call(di);
-			} catch (Throwable e) {
-				handler.response = new ExtJSResponse(e, QuarkUtil.toMessage(e));
-				QuarkUtil.printError(e);
-			} finally {
-				release(di);
-				handler.send();		
-			}			
-		});
+		final Optional<Carrier> carrier = attach();
+		carrier.ifPresent(scope -> scope.run(() -> {
+            IDestructibleBeanInstance<?> di = null;
+            try {
+                di = beanHandle.instance();
+                handler.response = call(di);
+            } catch (Throwable e) {
+                handler.response = new ExtJSResponse(e, QuarkUtil.toMessage(e));
+                QuarkUtil.printError(e, LOG);
+            } finally {
+                release(di);
+                handler.send();     
+            }           
+        }));
 
 	}
 	
 	/**
 	 * Attach WebSOcket or Servlet context to current thread before controller execution 
 	 */
-	protected Carrier attach() {
+	protected Optional<Carrier> attach() {
 					
 		if (Objects.nonNull(handler.getWsSession())) {
 			return QuarkProducer.attachSession(handler.getWsSession());
@@ -105,7 +112,7 @@ public class QuarkBeanCaller implements Runnable {
      * @param bean
      */
     private void release(final IDestructibleBeanInstance<?> bean) {
-        if (Objects.nonNull(bean)) bean.release();
+        Optional.ofNullable(bean).ifPresent(b -> b.release());
     }
     
     /**

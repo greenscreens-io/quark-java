@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015, 2023. Green Screens Ltd.
+ * Copyright (C) 2015, 2023 Green Screens Ltd.
  */
 package io.greenscreens.quark.ext;
 
@@ -99,11 +99,6 @@ public class ExtJSResponseList<T> extends ExtJSResponse {
         	this.page = page;
         	return this;
         }        
-        
-        public Builder<T> setType(final Type type) {
-        	this.type = type;
-        	return this;
-        }
         
         public ExtJSResponseList<T> build() {
         	final ExtJSResponseList<T> resp = new ExtJSResponseList<>(success, msg);

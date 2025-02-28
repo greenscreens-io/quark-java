@@ -3,7 +3,7 @@
  */
 package io.greenscreens.quark.cdi;
 
-import java.util.Objects;
+import java.util.Optional;
 
 import jakarta.enterprise.context.spi.CreationalContext;
 import jakarta.enterprise.inject.spi.Bean;
@@ -50,7 +50,7 @@ class DestructibleBeanInstance<T> implements IDestructibleBeanInstance<T> {
 	 */
 	@Override
 	public void release() {
-		if (Objects.nonNull(instance)) bean.destroy(instance, context);
+	    Optional.ofNullable(instance).ifPresent(obj -> bean.destroy(obj, context));
 	}
 
 	/**

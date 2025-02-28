@@ -12,7 +12,7 @@ import java.io.OutputStreamWriter;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
-import io.greenscreens.quark.utils.QuarkUtil;
+import io.greenscreens.quark.util.QuarkUtil;
 import jakarta.enterprise.inject.Vetoed;
 
 /**

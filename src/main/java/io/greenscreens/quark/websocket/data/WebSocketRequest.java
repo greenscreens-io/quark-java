@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015, 2023. Green Screens Ltd.
+ * Copyright (C) 2015, 2023 Green Screens Ltd.
  */
 package io.greenscreens.quark.websocket.data;
 
@@ -72,7 +72,6 @@ public class WebSocketRequest {
 	public final void setData(final List<ExtJSDirectRequest<JsonNode>> data) {
 		this.data = data;
 	}
-
 
 	@Override
 	public String toString() {

@@ -33,9 +33,9 @@ import jakarta.websocket.WebSocketContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.greenscreens.quark.internal.QuarkConstants;
-import io.greenscreens.quark.utils.ConcurrentFuture;
-import io.greenscreens.quark.utils.QuarkUtil;
+import io.greenscreens.quark.util.ConcurrentFuture;
+import io.greenscreens.quark.util.QuarkUtil;
+import io.greenscreens.quark.web.ServletUtils;
 import io.greenscreens.quark.websocket.data.IWebSocketResponse;
 import io.greenscreens.quark.websocket.data.WebSocketInstruction;
 import io.greenscreens.quark.websocket.data.WebSocketResponse;
@@ -400,20 +400,8 @@ public class WebSocketSession implements Session, Comparable<WebSocketSession> {
     }
 
     public final boolean isValidHttpSession() {
-
         final HttpSession httpSession = getHttpSession();
-
-        if (Objects.isNull(httpSession))
-            return false;
-
-        try {
-            final String attr = (String) httpSession.getAttribute(QuarkConstants.HTTP_SEESION_STATUS);
-            return Boolean.TRUE.toString().equals(attr);
-        } catch (Exception e) {
-            LOG.debug(e.getMessage(), e);
-            return false;
-        }
-
+        return ServletUtils.isValidHttpSession(httpSession);
     }
 
     @Override

@@ -1,4 +1,7 @@
-package io.greenscreens.quark.utils;
+/*
+ * Copyright (C) 2015, 2024 Green Screens Ltd.
+ */
+package io.greenscreens.quark.util;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;

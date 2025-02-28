@@ -14,8 +14,8 @@ import java.lang.annotation.Target;
  * Quark engine will automatically respond to a requester with error.
  * Prevents entry into a method if value is null. 
  */
-@Retention(RetentionPolicy.RUNTIME)
 @Target({ PARAMETER })
+@Retention(RetentionPolicy.RUNTIME)
 public @interface Required {
 
 }

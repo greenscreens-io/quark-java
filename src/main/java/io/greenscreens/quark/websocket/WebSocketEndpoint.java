@@ -24,7 +24,7 @@ import io.greenscreens.quark.ext.ExtJSResponse;
 import io.greenscreens.quark.internal.QuarkBuilder;
 import io.greenscreens.quark.internal.QuarkConstants;
 import io.greenscreens.quark.internal.QuarkHandler;
-import io.greenscreens.quark.utils.QuarkUtil;
+import io.greenscreens.quark.util.QuarkUtil;
 import io.greenscreens.quark.websocket.data.IWebSocketResponse;
 import io.greenscreens.quark.websocket.data.WebSocketInstruction;
 import io.greenscreens.quark.websocket.data.WebSocketRequest;

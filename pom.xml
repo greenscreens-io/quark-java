@@ -1,50 +1,56 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <groupId>io.greenscreens</groupId>
-  <artifactId>quark</artifactId>
-  <version>7.0.2</version>
-  <name>Green Screens Quark Engine</name>
-  <url>https://www.greenscreens.io/quark</url>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>io.greenscreens</groupId>
+	<artifactId>quark</artifactId>
+	<version>7.0.2</version>
+	<name>Green Screens Quark Engine</name>
+	<url>https://www.greenscreens.io/quark</url>
 
-  <organization>
-  	<name>Green Screens Ltd.</name>
-  	<url>https://www.greenscreens.io</url>
-  </organization>
+	<organization>
+		<name>Green Screens Ltd.</name>
+		<url>https://www.greenscreens.io</url>
+	</organization>
 
-  <description>Just as quarks are building blocks which glues subatom particles into atoms, Quark Engine is a small, lite and fast elementary building block between web and Java server side.</description>
+	<description>Just as quarks are building blocks which glues subatom
+		particles into atoms, Quark Engine is a small, lite and fast elementary
+		building block between web and Java server side.</description>
 
-    <licenses>
-        <license>
-            <name>MIT</name>
-            <url>https://github.com/greenscreens-io/quark-java/blob/master/LICENSE</url>
-            <distribution>repo</distribution>
-        </license>
-    </licenses>
+	<licenses>
+		<license>
+			<name>MIT</name>
+			<url>
+				https://github.com/greenscreens-io/quark-java/blob/master/LICENSE</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
 
-    <scm>
-        <connection>scm:git:git@github.com:greenscreens-io/quark-java.git</connection>
-        <developerConnection>scm:git:git@github.com:greenscreens-io/quark-java.git</developerConnection>
-        <url>https://github.com/greenscreens-io/quark-java</url>
-        <tag>HEAD</tag>
-    </scm>
+	<scm>
+		<connection>scm:git:git@github.com:greenscreens-io/quark-java.git</connection>
+		<developerConnection>
+			scm:git:git@github.com:greenscreens-io/quark-java.git</developerConnection>
+		<url>https://github.com/greenscreens-io/quark-java</url>
+		<tag>HEAD</tag>
+	</scm>
 
-    <issueManagement>
-        <system>Github</system>
-        <url>https://github.com/greenscreens-io/quark-java/issues</url>
-    </issueManagement>
+	<issueManagement>
+		<system>Github</system>
+		<url>https://github.com/greenscreens-io/quark-java/issues</url>
+	</issueManagement>
 
-    <distributionManagement>
-       <repository>
-         <id>github</id>
-         <name>GitHub greenscreens-io Apache Maven Packages</name>
-         <url>https://maven.pkg.github.com/greenscreens-io/quark-java</url>
-       </repository>
-    </distributionManagement>
+	<distributionManagement>
+		<repository>
+			<id>github</id>
+			<name>GitHub greenscreens-io Apache Maven Packages</name>
+			<url>https://maven.pkg.github.com/greenscreens-io/quark-java</url>
+		</repository>
+	</distributionManagement>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<maven.compiler.source>21</maven.compiler.source>
-		<maven.compiler.target>21</maven.compiler.target>
+		<maven.compiler.source>23</maven.compiler.source>
+		<maven.compiler.target>23</maven.compiler.target>
 		<maven.compiler.version>3.11.0</maven.compiler.version>
 		<maven.eclipse.plugin>2.10</maven.eclipse.plugin>
 		<maven.install.plugin>3.0.0-M1</maven.install.plugin>
@@ -54,6 +60,8 @@
 		<maven.proguard.version>2.3.1</maven.proguard.version>
 		<jackson.version>2.14.2</jackson.version>
 		<bcastle.version>1.76</bcastle.version>
+		<opentelemetry-api.version>1.45.0</opentelemetry-api.version>
+
 	</properties>
 
 	<build>
@@ -73,9 +81,9 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>${maven.compiler.version}</version>
-	            <configuration>
-	                <enablePreview>true</enablePreview>
-	            </configuration>				
+				<configuration>
+					<enablePreview>true</enablePreview>
+				</configuration>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -85,7 +93,7 @@
 
 		</plugins>
 	</build>
-	
+
 	<dependencies>
 		<dependency>
 			<groupId>jakarta.validation</groupId>
@@ -116,7 +124,7 @@
 			<artifactId>jakarta.enterprise.cdi-api</artifactId>
 			<version>4.0.1</version>
 			<scope>provided</scope>
-		</dependency>	
+		</dependency>
 
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
@@ -140,6 +148,11 @@
 			<version>1.7.30</version>
 		</dependency>
 
+		<dependency>
+			<groupId>io.opentelemetry</groupId>
+			<artifactId>opentelemetry-api</artifactId>
+			<version>${opentelemetry-api.version}</version>
+		</dependency>
 
 		<dependency>
 			<groupId>org.bouncycastle</groupId>
@@ -152,6 +165,6 @@
 			<version>${bcastle.version}</version>
 		</dependency>
 
-	</dependencies>  
+	</dependencies>
 
 </project>

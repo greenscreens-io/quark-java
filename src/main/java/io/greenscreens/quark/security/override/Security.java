@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2015, 2023. Green Screens Ltd.
  */
-package io.greenscreens.quark.security;
+package io.greenscreens.quark.security.override;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -15,7 +15,7 @@ import javax.crypto.spec.SecretKeySpec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.greenscreens.quark.utils.QuarkUtil;
+import io.greenscreens.quark.util.QuarkUtil;
 import jakarta.enterprise.inject.Vetoed;
 
 /**
@@ -27,7 +27,7 @@ import jakarta.enterprise.inject.Vetoed;
  * 
  */
 @Vetoed
-enum Security {
+public enum Security {
 	;
 
 	private static final Logger LOG = LoggerFactory.getLogger(Security.class);

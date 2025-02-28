@@ -13,6 +13,7 @@ module io.greenscreens.quark{
 	requires transitive jakarta.validation;
 	requires transitive jakarta.websocket.client;
 	requires transitive jakarta.websocket;
+    requires io.opentelemetry.api;
 
 	exports io.greenscreens.quark;
 	exports io.greenscreens.quark.annotations;

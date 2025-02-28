@@ -9,15 +9,15 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
+import java.util.Optional;
 
 import jakarta.websocket.EncodeException;
 import jakarta.websocket.EndpointConfig;
 import jakarta.websocket.server.HandshakeRequest;
 import io.greenscreens.quark.internal.QuarkConstants;
 import io.greenscreens.quark.security.IQuarkKey;
-import io.greenscreens.quark.utils.QuarkJson;
-import io.greenscreens.quark.utils.QuarkUtil;
+import io.greenscreens.quark.util.QuarkJson;
+import io.greenscreens.quark.util.QuarkUtil;
 import io.greenscreens.quark.web.QuarkCookieUtil;
 import io.greenscreens.quark.websocket.data.IWebSocketResponse;
 import io.greenscreens.quark.websocket.data.WebSocketRequest;
@@ -86,59 +86,58 @@ public enum WebsocketUtil {
 		return QuarkCookieUtil.parseCookies(cookies);
 	}
 
-	/**
-	 * Get request header from websocket
-	 * 
-	 * @param request
-	 * @param key
-	 * @return
-	 */
-	public static String findHeader(final HandshakeRequest request, final String key) {
+    /**
+     * Get request header from websocket
+     * 
+     * @param request
+     * @param key
+     * @return
+     */
+    public static Optional<String> findHeader(final HandshakeRequest request, final String key) {
+        return firstList(request.getHeaders(), key);
+    }
 
-		final Map<String, List<String>> map = request.getHeaders();
-		final List<String> params = map.get(key);
+    /**
+     * Generic method to find URL query parameter
+     * 
+     * @param request
+     * @param name
+     * @return
+     */
+    public static Optional<String> findQuery(final HandshakeRequest request, final String key) {
+        return firstList(request.getParameterMap(), key);
+    }
 
-		if (Objects.nonNull(params) && !params.isEmpty()) {
-			return params.get(0);
-		}
+    static Optional<List<String>> parameterMap(final HandshakeRequest request, final String key) {
+        return mapList(request.getParameterMap(), key);
+    }
 
-		return null;
-	}
+    static Optional<List<String>> mapList(final Map<String, List<String>> store, final String key) {
+        return Optional.ofNullable(store).map(m -> m.get(key));
+    }
 
-	/**
-	 * Generic method to find URL query parameter
-	 * @param request
-	 * @param name
-	 * @return
-	 */
-	public static String findQuery(final HandshakeRequest request, final String name) {
-		final List<String> list = request.getParameterMap().get(name);
-		if (Objects.isNull(list) || list.isEmpty()) {
-			return null;
-		}
-		return list.get(0);
-	}
+    static Optional<String> firstList(final Map<String, List<String>> store, final String key) {
+        return mapList(store, key).map(list -> firstList(list).orElse(null));
+    }
 
-	/**
-	 * Store current browser locale
-	 * 
-	 * Accept-Language:hr,en-US;q=0.8,en;q=0.6
-	 * 
-	 * @param request
-	 * @return
-	 */
-	public static Locale getLocale(final HandshakeRequest request) {
+    static Optional<String> firstList(final List<String> store) {
+        return Optional.ofNullable(store).map(l -> l.stream()).map(l -> l.findFirst().orElse(null));
+    }
 
-		String data = WebsocketUtil.findHeader(request, "Accept-Language");
-		Locale locale = Locale.ENGLISH;
-
-		if (Objects.nonNull(data)) {
-			data = data.split(";")[0];
-			data = data.split(",")[0];
-			locale = Locale.of(data);
-		}
-
-		return locale;
-	}
+    /**
+     * Store current browser locale
+     * 
+     * Accept-Language:hr,en-US;q=0.8,en;q=0.6
+     * 
+     * @param request
+     * @return
+     */
+    public static Locale getLocale(final HandshakeRequest request) {
+        return WebsocketUtil.findHeader(request, "Accept-Language")
+                .map(v -> v.split(";")[0])
+                .map(v -> v.split(",")[0])
+                .map(v -> Locale.of(v))
+                .orElse(Locale.ENGLISH);
+    }
 
 }

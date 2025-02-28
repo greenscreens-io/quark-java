@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory;
 
 import io.greenscreens.quark.security.IQuarkKey;
 import io.greenscreens.quark.stream.QuarkStream;
-import io.greenscreens.quark.utils.QuarkUtil;
+import io.greenscreens.quark.util.QuarkUtil;
 import io.greenscreens.quark.websocket.data.WebSocketRequest;
 
 /**

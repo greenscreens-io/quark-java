@@ -12,7 +12,7 @@ import io.greenscreens.quark.QuarkEngine;
 import io.greenscreens.quark.cdi.BeanManagerUtil;
 import io.greenscreens.quark.cdi.IDestructibleBeanInstance;
 import io.greenscreens.quark.reflection.IQuarkHandle;
-import io.greenscreens.quark.utils.ReflectionUtil;
+import io.greenscreens.quark.util.ReflectionUtil;
 import jakarta.enterprise.inject.spi.AnnotatedMethod;
 import jakarta.enterprise.inject.spi.AnnotatedParameter;
 import jakarta.enterprise.inject.spi.AnnotatedType;
@@ -59,6 +59,9 @@ final class QuarkHandle implements IQuarkHandle {
 			//methodHandle = QuarkMapper.toHandle(method).asSpreader(Object[].class, method.getParameterCount());
 			methodHandle = QuarkMapper.toHandle(method).asSpreader(1, Object[].class, method.getParameterCount());
 		}
+        if (Objects.isNull(methodHandle)) {
+            throw new NoSuchMethodException("Method handle is null");
+        }		
 		return methodHandle;
 	}
 
@@ -92,6 +95,11 @@ final class QuarkHandle implements IQuarkHandle {
 	public boolean isValidate() {
 		return ReflectionUtil.isValidate(method);
 	}
+	
+    @Override
+    public boolean isProtected() {
+        return ReflectionUtil.isProtected(method) || ReflectionUtil.isProtected(method.getDeclaringClass());
+    }
 	
 	@Override
 	public String name() {

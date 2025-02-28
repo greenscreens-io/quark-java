@@ -1,10 +1,11 @@
 /*
  * Copyright (C) 2015, 2023. Green Screens Ltd.
  */
-package io.greenscreens.quark.security;
+package io.greenscreens.quark.security.override;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.nio.ByteBuffer;
 import java.security.Key;
 import java.security.KeyFactory;
 import java.security.KeyPair;
@@ -17,10 +18,15 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.Objects;
 import java.util.regex.Pattern;
+
+import javax.crypto.spec.IvParameterSpec;
 
 import org.bouncycastle.util.io.pem.PemObject;
 import org.bouncycastle.util.io.pem.PemWriter;
+
+import io.greenscreens.quark.util.override.ByteUtil;
 
 /**
  * RSA utility to work with public and private keys
@@ -112,4 +118,12 @@ enum AsyncKeyUtil {
 		return toPrivatePem(key.getPrivate());
 	}
 
+    public static IvParameterSpec toVector(final ByteBuffer iv, final IvParameterSpec def) {
+        return toVector(ByteUtil.toBytes(iv), def);
+    }
+
+    public static IvParameterSpec toVector(final byte[] iv, final IvParameterSpec def) {
+        return Objects.isNull(iv) ? def : new IvParameterSpec(iv);
+    }
+	
 }

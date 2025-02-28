@@ -1,9 +1,11 @@
 /*
- * Copyright (C) 2015, 2023. Green Screens Ltd.
+ * Copyright (C) 2015, 2023 Green Screens Ltd.
  */
 package io.greenscreens.quark.ext;
 
 import java.util.List;
+import java.util.Objects;
+
 import jakarta.enterprise.inject.Vetoed;
 
 /**
@@ -65,7 +67,7 @@ public class ExtJSDirectRequest<T> {
 
 		T value = null;
 
-		if (data != null && !data.isEmpty()) {
+		if (Objects.nonNull(data) && !data.isEmpty()) {
 			value = data.get(index);
 		}
 

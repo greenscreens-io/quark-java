@@ -9,7 +9,8 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import io.greenscreens.quark.utils.NamedThreadFactory;
+import io.greenscreens.quark.util.QuarkUtil;
+import io.greenscreens.quark.web.ServletUtils;
 import jakarta.enterprise.inject.Vetoed;
 
 /**
@@ -19,6 +20,9 @@ import jakarta.enterprise.inject.Vetoed;
 @Vetoed
 public final class QuarkAsyncEngine {
 
+    static final int SC_TOO_MANY_REQUESTS = 429;    
+    static final String E429 = "Too many requests! Access temporary denied.";
+    
 	private final BlockingQueue<Runnable> queue =  new LinkedBlockingQueue<>();
 	private ThreadPoolExecutor service;
 	private int queueSize;
@@ -35,7 +39,7 @@ public final class QuarkAsyncEngine {
 
 	void create(final String name, final int parallelTasks, final int maxPool, final int priority, final int timeoutMinutes) {
 		this.queueSize = maxPool;		
-		final ThreadFactory factory = NamedThreadFactory.get(name, priority);
+		final ThreadFactory factory = QuarkUtil.getThreadFactory(name, priority);
 		this.service = new ThreadPoolExecutor(1, parallelTasks, timeoutMinutes, TimeUnit.SECONDS, queue, factory);
 		this.service.prestartCoreThread();
 	}
@@ -47,8 +51,12 @@ public final class QuarkAsyncEngine {
 	public void stop() {
 		queue.clear();
 		if (!isActive()) return;
-		service.shutdown();
+		QuarkUtil.safeTerminate(service, false);
 	}
+	
+    public boolean canRegister() {
+        return isActive() && (queueSize == 0 || queue.size() <= queueSize);
+    }	
 	
 	/**
 	 * Register async request to processing queue
@@ -58,13 +66,17 @@ public final class QuarkAsyncEngine {
 	 */
 	public boolean register(final QuarkAsyncTask task) {
  
-		final boolean state = isActive() && (queueSize == 0 || queue.size() <= queueSize);
+        final boolean state = canRegister();
 
-		if (state) {
-			service.execute(task);
-		}
+        if (state) {
+            service.execute(task);
+        } else {
+            ServletUtils.sendError(task.getContext().getResponse(), SC_TOO_MANY_REQUESTS, E429);
+            task.close();
+        }
 
-		return state;
+        return state;
+
 	}
 
 	/**

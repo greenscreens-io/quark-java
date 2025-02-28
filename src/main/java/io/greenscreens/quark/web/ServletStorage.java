@@ -14,6 +14,30 @@ import jakarta.servlet.http.HttpSession;
  */
 public enum ServletStorage {
 	;
+    
+    public static boolean contains(final HttpServletRequest request, final String key) {
+        return Objects.nonNull(get(request, key));
+    }
+    
+    public static <T> boolean contains(final HttpServletRequest request, final Class<T> type) {
+        return Objects.nonNull(get(request, type));
+    }
+
+    public static boolean contains(final HttpSession session, final String key) {
+        return Objects.nonNull(get(session, key));
+    }
+    
+    public static <T> boolean contains(final HttpSession session, final Class<T> type) {
+        return Objects.nonNull(get(session, type));
+    }
+
+    public static boolean contains(final ServletContext context, final String key) {
+        return Objects.nonNull(get(context, key));
+    }
+    
+    public static <T> boolean contains(final ServletContext context , final Class<T> type) {
+        return Objects.nonNull(get(context, type));
+    }    
 	
 	public static <T> T get(final HttpServletRequest request, final Class<T> clazz) {
 		if (Objects.nonNull(request) && Objects.nonNull(clazz)) {

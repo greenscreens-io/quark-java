@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015, 2023. Green Screens Ltd.
+ * Copyright (C) 2015, 2022 Green Screens Ltd.
  */
 package io.greenscreens.quark.annotations;
 
@@ -10,21 +10,16 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import jakarta.enterprise.util.Nonbinding;
+import io.greenscreens.quark.web.ServletUtils;
 
 /**
- * Used to define remotely available action method. Name must match name from
- * incoming ExtJS.Direct call
+ * Kill switch to disable sensitive functions on demand
+ * If set on Controller method, call will be disabled when 
+ * servletContext contains this class,
+ * @see ServletUtils
  */
 @Target({ METHOD, TYPE })
 @Retention(RetentionPolicy.RUNTIME)
-public @interface ExtJSAsync {
-	
-	/**
-	 * Run async code in virtual thread 
-	 * @return
-	 */
-	@Nonbinding
-	boolean virtual() default true;
+public @interface ExtJSProtected {
 
 }

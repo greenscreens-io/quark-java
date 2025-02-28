@@ -24,8 +24,8 @@ import io.greenscreens.quark.internal.QuarkHandlerUtil;
 import io.greenscreens.quark.security.IQuarkKey;
 import io.greenscreens.quark.security.QuarkSecurity;
 import io.greenscreens.quark.stream.QuarkStream;
-import io.greenscreens.quark.utils.QuarkJson;
-import io.greenscreens.quark.utils.QuarkUtil;
+import io.greenscreens.quark.util.QuarkJson;
+import io.greenscreens.quark.util.QuarkUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -98,7 +98,6 @@ public class QuarkAPIServlet extends QuarkServlet {
 		final String challenge = QuarkUtil.normalize(request.getHeader(QuarkConstants.CHALLENGE));
 		final ObjectNode root = QuarkBuilder.buildAPI(api, challenge);
 		final boolean compress = ServletUtils.supportGzip(request);
-		// ServletUtils.sendResponse(response, root, compress);
 		
 		final String publicKey = QuarkHandlerUtil.getPublicKey(request);			
 		final IQuarkKey aes = QuarkSecurity.initWebKey(publicKey);
@@ -110,6 +109,14 @@ public class QuarkAPIServlet extends QuarkServlet {
 	protected void build(final HttpServletRequest request, final HttpServletResponse response, final String uri) throws IOException {
 		build(request, response, Arrays.asList(uri));
 	}
+	
+    protected void keys(final HttpServletRequest request, final HttpServletResponse response) {
+        final String challenge = QuarkUtil.normalize(request.getHeader(QuarkConstants.CHALLENGE));
+        final ObjectNode root = QuarkBuilder.buildAuth(challenge);
+        final boolean compress = ServletUtils.supportGzip(request);
+        ServletUtils.setNoCache(response);
+        ServletUtils.sendResponse(response, root, compress);
+    }   	
 	
 	protected void services(final HttpServletRequest request, final HttpServletResponse response) {
 		final List<String> list = QuarkBuilder.services();

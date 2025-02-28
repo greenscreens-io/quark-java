@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2015, 2023. Green Screens Ltd.
  */
-package io.greenscreens.quark.utils;
+package io.greenscreens.quark.util.override;
 
 import java.util.Optional;
 import java.util.regex.Pattern;
@@ -9,7 +9,7 @@ import java.util.regex.Pattern;
 /**
  * General string helper class
  */
-enum StringUtil {
+public enum StringUtil {
 ;
 
 	private static final Pattern HEX = Pattern.compile("[0-9A-F]+", Pattern.CASE_INSENSITIVE);
@@ -73,4 +73,19 @@ enum StringUtil {
 		return normalize(val).isEmpty();
 	}
 	
+    public static String padString(final String source, int size) {
+
+        final char paddingChar = ' ';
+        final int x = source.length() % size;
+        final int padLength = size - x;
+
+        final StringBuilder sb = new StringBuilder(source);
+
+        for (int i = 0; i < padLength; i++) {
+            sb.append(paddingChar);
+        }
+
+        return sb.toString();
+    }
+    	
 }
