@@ -11,6 +11,7 @@ import jakarta.websocket.EndpointConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.greenscreens.quark.security.IQuarkKey;
 import io.greenscreens.quark.util.QuarkUtil;
 import io.greenscreens.quark.websocket.data.WebSocketRequest;
 
@@ -22,15 +23,17 @@ public class WebsocketDecoder implements Decoder.Text<WebSocketRequest> {
 
 	private static final Logger LOG = LoggerFactory.getLogger(WebsocketDecoder.class);
 	
-	@Override
-	public void init(final EndpointConfig arg0) {
-		// not used
-	}
+    IQuarkKey key = null;
+    
+    @Override
+    public void init(final EndpointConfig config) {
+        key = WebsocketUtil.key(config);
+    }
 
-	@Override
-	public void destroy() {
-		// not used
-	}
+    @Override
+    public void destroy() {
+        key = null; 
+    }
 
 	@Override
 	public final WebSocketRequest decode(final String message) throws DecodeException {

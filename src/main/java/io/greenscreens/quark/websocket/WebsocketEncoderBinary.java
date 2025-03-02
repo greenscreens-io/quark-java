@@ -53,7 +53,7 @@ public class WebsocketEncoderBinary implements Encoder.Binary<WebSocketResponse>
 		
 		try {
 			final boolean isAPI = data.getCmd() == WebSocketInstruction.API ;			
-			final String wsmsg = WebsocketUtil.encode(data);
+			final String wsmsg = WebsocketUtil.encode(data, null);
 			if (isAPI) node = (ObjectNode) data.getData();
 			buff = QuarkStream.wrap(wsmsg, key, compression, node);
 		} catch (IOException e) {

@@ -3,6 +3,8 @@
  */
 package io.greenscreens.quark.security;
 
+import java.io.IOException;
+
 import io.greenscreens.quark.security.override.Security;
 import io.greenscreens.quark.security.override.SecurityProvider;
 
@@ -52,5 +54,17 @@ public enum QuarkSecurity {
 		final String data = String.format("%s%s%s", challenge, keyEnc, keyVer);
 		return Security.sign(data, false);
 	}
-	
+
+    /**
+     * Decode Quark Web API encrypted request
+     * @param d - encrypted data 
+     * @param k - encrypted AES key by RSA public key
+     * @param crypt
+     * @param webCryptoAPI - when HTTPS is used 
+     * @return
+     * @throws IOException
+     */
+    public static String decryptRequest(final String d, final String k, final IQuarkKey crypt) throws IOException {
+        return Security.decrypt(d, k, ((QuarkKey)crypt).unwrap());
+    }	
 }

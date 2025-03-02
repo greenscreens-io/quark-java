@@ -5,6 +5,7 @@ package io.greenscreens.quark.security.override;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -16,6 +17,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.greenscreens.quark.util.QuarkUtil;
+import io.greenscreens.quark.util.override.ByteUtil;
+import io.greenscreens.quark.util.override.StringUtil;
 import jakarta.enterprise.inject.Vetoed;
 
 /**
@@ -242,4 +245,24 @@ public enum Security {
     	return MessageDigest.getInstance(QuarkUtil.normalize(type));
     }
 
+    /**
+     * Decode url encrypted request
+     * 
+     * @param d     - data encrypted with AES
+     * @param k     - AES IV encrypted with RSA, used to decrypt d
+     * @param crypt
+     * @return
+     * @throws Exception
+     */
+    public static String decrypt(final String d, final String k, final IAesKey crypt) throws IOException {
+        final byte[] raw = convert(d);
+        final byte[] iv = convert(k);
+        final byte[] decoded = crypt.decrypt(raw, iv);
+        return new String(decoded, StandardCharsets.UTF_8);
+    }
+
+    public static byte[] convert(final String data) {
+        final boolean isHex = StringUtil.isHex(data);
+        return isHex ? ByteUtil.fromHexAsBytes(data) : ByteUtil.fromBase64(data);
+    }    
 }

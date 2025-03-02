@@ -14,6 +14,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import io.greenscreens.quark.util.override.JsonDecoder;
+import io.greenscreens.quark.util.override.JsonViews;
 
 public enum QuarkJson {
 ;
@@ -46,6 +47,10 @@ public enum QuarkJson {
 		return JsonDecoder.parse(type, json);
 	}
 	
+    public static JsonNode parseQuark(final String data) throws JsonProcessingException {
+        return JsonDecoder.parseAs(data, JsonViews.Quark.class);
+    }
+    
 	public static Collection<Object> toCollection(final ParameterizedType ptype, final JsonNode node) throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, JsonProcessingException {
 
 		final Type rtype = ptype.getRawType();
@@ -68,4 +73,16 @@ public enum QuarkJson {
 		return collection;
 
 	}
+
+    public static boolean hasKey(final JsonNode node, final String key) {
+        return JsonDecoder.hasKey(node, key);
+    }
+    
+    public static boolean isEmpty(final JsonNode node, final String key) {
+        return JsonDecoder.isEmpty(node, key);
+    }
+    
+    public static boolean isNonEmpty(final JsonNode node, final String key) {
+        return JsonDecoder.isNonEmpty(node, key);
+    }   	
 }

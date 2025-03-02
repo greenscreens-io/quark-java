@@ -23,6 +23,11 @@ final class QuarkKey implements IQuarkKey {
 	}
 	
 	@Override
+    public int blockSize() {
+        return key.getBlockSize();
+    }
+
+    @Override
 	public boolean isValid() {
 		return Objects.nonNull(key) && key.isValid();
 	}

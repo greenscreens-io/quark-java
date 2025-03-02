@@ -51,6 +51,7 @@ public class WebsocketDecoderBinary implements Decoder.Binary<WebSocketRequest> 
 			final String message = QuarkStream.asString(data);
             final WebSocketRequest request = WebsocketUtil.decode(message);
             WebsocketUtil.decode(request, key);
+            return request;
 		} catch (IOException e) {
 			final String msg = QuarkUtil.toMessage(e);
 			LOG.error(msg);
