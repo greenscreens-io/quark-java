@@ -9,17 +9,27 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import jakarta.websocket.DecodeException;
 import jakarta.websocket.EncodeException;
 import jakarta.websocket.EndpointConfig;
 import jakarta.websocket.server.HandshakeRequest;
 import io.greenscreens.quark.internal.QuarkConstants;
+import io.greenscreens.quark.internal.QuarkDecoder;
 import io.greenscreens.quark.security.IQuarkKey;
+import io.greenscreens.quark.security.QuarkSecurity;
 import io.greenscreens.quark.util.QuarkJson;
 import io.greenscreens.quark.util.QuarkUtil;
 import io.greenscreens.quark.web.QuarkCookieUtil;
 import io.greenscreens.quark.websocket.data.IWebSocketResponse;
+import io.greenscreens.quark.websocket.data.WebSocketInstruction;
 import io.greenscreens.quark.websocket.data.WebSocketRequest;
 
 /**
@@ -27,7 +37,9 @@ import io.greenscreens.quark.websocket.data.WebSocketRequest;
  */
 public enum WebsocketUtil {
 	;
-	
+
+    private static final Logger LOG = LoggerFactory.getLogger(WebsocketUtil.class); 
+
 	final static IQuarkKey key(final EndpointConfig config) {
 		return WebSocketStorage.get(config, QuarkConstants.ENCRYPT_ENGINE, null);		
 	}
@@ -52,18 +64,34 @@ public enum WebsocketUtil {
 	 * @return
 	 * @throws EncodeException
 	 */
-	static String encode(final IWebSocketResponse data) throws EncodeException {
+	static String encode(final IWebSocketResponse data, final IQuarkKey key) throws EncodeException {
 
 		String response = null;
 
 		try {
 			response = QuarkJson.stringify(data);
+			response = encrypt(response, key);
 		} catch (Exception e) {
-			throw new EncodeException(data, e.getMessage(), e);
+		    final String msg = QuarkUtil.toMessage(e);
+            LOG.error(msg);
+            LOG.debug(msg, e);
+			throw new EncodeException(data, msg, e);
 		}
 
 		return QuarkUtil.normalize(response);
 	}
+	
+    
+    static void decode(final WebSocketRequest request, final IQuarkKey crypt) throws DecodeException {
+        try {
+            QuarkDecoder.decode(request, crypt);
+        } catch (IOException e) {
+            final String msg = QuarkUtil.toMessage(e);
+            LOG.error(msg);
+            LOG.debug(msg, e);
+            throw new DecodeException("", msg, e);
+        }   
+    } 	
 
 	static boolean isJson(final String message) {
 
@@ -140,4 +168,25 @@ public enum WebsocketUtil {
                 .orElse(Locale.ENGLISH);
     }
 
+    /**
+     * Encrypt data with AES for encrypted response
+     * 
+     * @param data
+     * @param crypt
+     * @return
+     * @throws Exception
+     */
+    private static String encrypt(final String data, final IQuarkKey crypt) throws IOException {
+
+        if (Objects.isNull(crypt) || !crypt.isValid()) return data;
+
+        final byte[] iv = QuarkSecurity.getRandom(crypt.blockSize());
+        final byte[] raw  = crypt.encrypt(data.getBytes(StandardCharsets.UTF_8), iv);
+        final ObjectNode node = QuarkJson.node();
+        node.put("iv", QuarkUtil.bytesToHex(iv));
+        node.put("d", QuarkUtil.bytesToHex(raw));
+        node.put("cmd", WebSocketInstruction.ENC.toString());
+        return QuarkJson.stringify(node);
+    }
+    
 }

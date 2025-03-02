@@ -18,4 +18,5 @@ public interface IQuarkKey {
     ByteBuffer decrypt(final ByteBuffer data, final ByteBuffer iv) throws IOException;
 	
 	boolean isValid();
+	int blockSize();
 }

@@ -20,7 +20,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.greenscreens.quark.QuarkProducer;
 import io.greenscreens.quark.cdi.BeanManagerUtil;
 import io.greenscreens.quark.ext.ExtJSDirectRequest;
-import io.greenscreens.quark.ext.ExtJSResponse;
 import io.greenscreens.quark.internal.QuarkBuilder;
 import io.greenscreens.quark.internal.QuarkConstants;
 import io.greenscreens.quark.internal.QuarkHandler;
@@ -111,7 +110,8 @@ public class WebSocketEndpoint {
 			LOG.debug(msg, e);
 
 			if (Objects.nonNull(wsession)) {
-				wsession.sendResponse(getErrorResponse(e), true);
+			    final IWebSocketResponse resp = WebSocketResponse.asError();
+				wsession.sendResponse(resp, true);
 			}
 		}
 	}
@@ -212,15 +212,6 @@ public class WebSocketEndpoint {
 		} else if (!sessions.contains(session)) {
 			sessions.add(session);
 		}
-	}
-
-	private IWebSocketResponse getErrorResponse(final Exception exception) {
-	    final String msg = QuarkUtil.toMessage(exception);
-		final ExtJSResponse response = new ExtJSResponse(exception, msg);
-		final IWebSocketResponse wsResponse = WebSocketResponse.asError();
-		wsResponse.setData(response);
-		wsResponse.setErrMsg(msg);
-		return wsResponse;
 	}
 	
 	/**

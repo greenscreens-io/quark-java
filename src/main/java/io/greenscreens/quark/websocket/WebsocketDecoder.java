@@ -40,6 +40,7 @@ public class WebsocketDecoder implements Decoder.Text<WebSocketRequest> {
 
 		try {
 			wsMessage = WebsocketUtil.decode(message);
+			WebsocketUtil.decode(wsMessage, key);
 		} catch (Exception e) {
 			final String msg = QuarkUtil.toMessage(e);
 			LOG.error(msg);

@@ -5,7 +5,9 @@ package io.greenscreens.quark.websocket.data;
 
 import java.io.Serializable;
 
+import io.greenscreens.quark.ext.ExtJSResponse;
 import io.greenscreens.quark.internal.QuarkConstants;
+import io.greenscreens.quark.util.QuarkUtil;
 import jakarta.enterprise.inject.Vetoed;
 
 /**
@@ -95,6 +97,15 @@ public class WebSocketResponse implements IWebSocketResponse, Serializable {
 	public static IWebSocketResponse asError() {
 		return create(WebSocketInstruction.ERR);
 	}
+
+    public static IWebSocketResponse asError(final Exception exception) {
+        final String msg = QuarkUtil.toMessage(exception);
+        final ExtJSResponse response = new ExtJSResponse(exception, msg);
+        final IWebSocketResponse wsResponse = asError();
+        wsResponse.setData(response);
+        wsResponse.setErrMsg(msg);
+        return wsResponse;
+    }
 	
 	public static IWebSocketResponse create(final WebSocketInstruction cmd) {
 		return new WebSocketResponse(cmd);

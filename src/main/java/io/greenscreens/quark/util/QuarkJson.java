@@ -11,12 +11,17 @@ import java.util.Collection;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import io.greenscreens.quark.util.override.JsonDecoder;
 
 public enum QuarkJson {
 ;
 	
+    public static ObjectNode node() {
+        return JsonDecoder.createObjectNode();
+    }
+    
 	public static <T> ArrayNode convert(T [] args) {
 		return JsonDecoder.convert(args);
 	}
