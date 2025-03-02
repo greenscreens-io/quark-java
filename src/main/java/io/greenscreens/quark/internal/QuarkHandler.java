@@ -271,6 +271,11 @@ public class QuarkHandler {
 		return send();
 	}
 	
+    public boolean send(final Throwable exception) {
+        final ExtJSResponse response = new ExtJSResponse(exception, QuarkUtil.toMessage(exception));
+        return send(response);
+    }
+
 	/**
 	 * Send response to requester. Determine is it for WebSocket or Servlet
 	 * @return
