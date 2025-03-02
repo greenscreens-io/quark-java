@@ -21,6 +21,7 @@ import io.greenscreens.quark.security.IQuarkKey;
 import io.greenscreens.quark.security.QuarkSecurity;
 import io.greenscreens.quark.util.QuarkJson;
 import io.greenscreens.quark.util.QuarkUtil;
+import io.greenscreens.quark.websocket.data.WebSocketInstruction;
 import io.greenscreens.quark.websocket.data.WebSocketRequest;
 
 /**
@@ -32,7 +33,9 @@ public enum QuarkDecoder {
 	private static final Logger LOG = LoggerFactory.getLogger(QuarkDecoder.class);
 
 	public static void decode(final WebSocketRequest request, final IQuarkKey crypt) throws IOException {
-		decodeDirect(request.getData(), crypt);
+	    if(WebSocketInstruction.ENC.equals(request.getCmd())) {
+	        decodeDirect(request.getData(), crypt);
+	    }
 	}
 
 	public static void decodeDirect(final List<ExtJSDirectRequest<JsonNode>> list, final IQuarkKey crypt) throws IOException {

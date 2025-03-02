@@ -9,9 +9,7 @@ import java.nio.ByteBuffer;
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 
-import io.greenscreens.quark.security.IQuarkKey;
-
-public interface IAesKey extends IQuarkKey {
+public interface IAesKey {
 
 	/**
 	 * If session stored key is valid

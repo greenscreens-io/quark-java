@@ -176,6 +176,7 @@ public class QuarkHandler {
         httpResponse = null;
         request = null;
         response = null;
+        sent = true;
     }
     
     /**
