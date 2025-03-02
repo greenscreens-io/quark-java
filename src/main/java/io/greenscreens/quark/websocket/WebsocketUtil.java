@@ -11,10 +11,15 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import jakarta.websocket.DecodeException;
 import jakarta.websocket.EncodeException;
 import jakarta.websocket.EndpointConfig;
 import jakarta.websocket.server.HandshakeRequest;
 import io.greenscreens.quark.internal.QuarkConstants;
+import io.greenscreens.quark.internal.QuarkDecoder;
 import io.greenscreens.quark.security.IQuarkKey;
 import io.greenscreens.quark.util.QuarkJson;
 import io.greenscreens.quark.util.QuarkUtil;
@@ -27,6 +32,8 @@ import io.greenscreens.quark.websocket.data.WebSocketRequest;
  */
 public enum WebsocketUtil {
     ;
+
+    private static final Logger LOG = LoggerFactory.getLogger(WebsocketUtil.class); 
 
     final static IQuarkKey key(final EndpointConfig config) {
         return WebSocketStorage.get(config, QuarkConstants.ENCRYPT_ENGINE, null);
@@ -44,6 +51,17 @@ public enum WebsocketUtil {
     final static WebSocketRequest decode(final String message) throws IOException {
         return QuarkJson.parse(WebSocketRequest.class, message);
     }
+    
+    static void decode(final WebSocketRequest request, final IQuarkKey crypt) throws DecodeException {
+        try {
+            QuarkDecoder.decode(request, crypt);
+        } catch (IOException e) {
+            final String msg = QuarkUtil.toMessage(e);
+            LOG.error(msg);
+            LOG.debug(msg, e);
+            throw new DecodeException("", msg, e);
+        }   
+    }    
 
     /**
      * Encrypt message for websocket response

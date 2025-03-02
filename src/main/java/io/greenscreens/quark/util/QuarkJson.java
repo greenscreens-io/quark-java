@@ -93,4 +93,16 @@ public enum QuarkJson {
 		return collection;
 
 	}
+    
+	public static boolean hasKey(final JsonNode node, final String key) {
+        return JsonDecoder.hasKey(node, key);
+    }
+    
+    public static boolean isEmpty(final JsonNode node, final String key) {
+        return JsonDecoder.isEmpty(node, key);
+    }
+    
+    public static boolean isNonEmpty(final JsonNode node, final String key) {
+        return JsonDecoder.isNonEmpty(node, key);
+    }	
 }

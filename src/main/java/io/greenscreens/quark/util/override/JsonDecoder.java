@@ -352,6 +352,10 @@ public final class JsonDecoder<T> {
 		
 		return false;
 	}
+	
+	public static boolean isNonEmpty(final JsonNode node, final String key) {
+	    return !isEmpty(node, key);
+	}
 
 	/**
 	 * Check if node property is of type array

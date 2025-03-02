@@ -4,6 +4,7 @@
 package io.greenscreens.quark.util.override;
 
 import java.nio.ByteBuffer;
+import java.util.Base64;
 import java.util.Objects;
 
 /**
@@ -115,5 +116,21 @@ public enum ByteUtil {
         buffer.position(position);
         buffer.get(data);
         return data;
-    }	
+    }
+    
+    public static byte[] fromBase64(final String data) {
+        return Base64.getDecoder().decode(data);
+    }
+
+    public static String toBase64(final byte[] data) {
+        return Base64.getEncoder().encodeToString(data);
+    }
+
+    public static byte[] fromBase64Url(final String data) {
+        return Base64.getUrlDecoder().decode(data);
+    }
+
+    public static String toBase64Url(final byte[] data) {       
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(data);
+    }    
 }
