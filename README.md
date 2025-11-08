@@ -41,4 +41,4 @@ To see how to use it, visit project web page [here](https://quark.greenscreens.l
 2. Use ```maven build clean install```
 3. Optionally, import demo and io.greenscreens.quark projects into Eclipse
 
-&copy; Green Screens Ltd. 2016 - 2024
+&copy; Green Screens Ltd. 2016 - 2025
