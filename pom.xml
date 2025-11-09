@@ -51,17 +51,18 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.source>11</maven.compiler.source>
 		<maven.compiler.target>11</maven.compiler.target>
-		<maven.compiler.version>3.8.1</maven.compiler.version>
+		
+		<maven.compiler.version>3.14.1</maven.compiler.version>
 		<maven.eclipse.plugin>2.10</maven.eclipse.plugin>
-		<maven.install.plugin>3.0.0-M1</maven.install.plugin>
-		<maven.recources.plugin>3.0.0</maven.recources.plugin>
+		<maven.install.plugin>3.1.4</maven.install.plugin>
+		<maven.recources.plugin>3.3.1</maven.recources.plugin>
 		<maven.jar.version>3.2.0</maven.jar.version>
 		<maven.war.version>3.3.1</maven.war.version>
 		<maven.proguard.version>2.3.1</maven.proguard.version>
-		<jackson.version>2.14.2</jackson.version>
-		<bcastle.version>1.76</bcastle.version>
-		<opentelemetry-api.version>1.45.0</opentelemetry-api.version>
-
+		<jackson.version>2.14.3</jackson.version>
+		<bcastle.version>1.82</bcastle.version>
+		<slf4j.version>1.7.36</slf4j.version>
+		<opentelemetry-api.version>1.56.0</opentelemetry-api.version>
 	</properties>
 
 	<build>
@@ -138,7 +139,7 @@
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
-			<version>1.7.30</version>
+			<version>${slf4j.version}</version>
 		</dependency>
 
 		<!--
