@@ -1,6 +1,9 @@
  
 # [Quark Engine Java ](https://quark.greenscreens.ltd/).
 
+## v7.0.0. (2026.Q2)
+ - Fixed async calls to use ManagedExecutorService
+ 
 ## v7.0.0. (Preview)
  - Add Java 21 support
  - Switch from ThreadLocal to JEP 429 Scoped Variables

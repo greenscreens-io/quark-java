@@ -12,6 +12,7 @@ import java.util.concurrent.CompletableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.greenscreens.quark.QuarkEngine;
 import io.greenscreens.quark.QuarkProducer;
 import io.greenscreens.quark.async.QuarkAsyncContext;
 import io.greenscreens.quark.cdi.IDestructibleBeanInstance;
@@ -19,6 +20,7 @@ import io.greenscreens.quark.ext.ExtJSResponse;
 import io.greenscreens.quark.reflection.IQuarkHandle;
 import io.greenscreens.quark.util.QuarkUtil;
 import io.greenscreens.quark.web.QuarkContext;
+import jakarta.enterprise.concurrent.ManagedExecutorService;
 import jakarta.enterprise.inject.Vetoed;
 import jakarta.servlet.AsyncContext;
 
@@ -62,19 +64,34 @@ public class QuarkBeanCaller implements Runnable {
     private void runAsync() {
         if (beanHandle.isVirtual()) {
             Thread.ofVirtual().name(beanHandle.toString()).start(this);
+            return;
+        } 
+
+        
+        final QuarkBeanCaller caller = this;
+        CompletableFuture<?> future = null;
+        
+        final ManagedExecutorService executor = QuarkEngine.of(ManagedExecutorService.class);
+        if (Objects.nonNull(executor)) {
+                //executor.submit(this);
+                future = executor.supplyAsync(() ->  {
+                    caller.run();
+                    return true;
+                });
         } else {
-            final QuarkBeanCaller caller = this;
-            CompletableFuture.runAsync(caller).handle((r, e) -> {
-                if (Objects.nonNull(e)) {
-                    final String msg = QuarkUtil.toMessage(e);
-                    LOG.error(msg);
-                }
-                // cleanup in case thread terminated
-                caller.release(di);
-                caller.release(context);
-                return r;
-            });
+                // throws "Unable to access CDI"
+                future = CompletableFuture.runAsync(caller);
         }
+        
+        future.handle((r, e)-> {
+            if (Objects.nonNull(e)) {
+                final String msg = QuarkUtil.toMessage(e);
+                    LOG.error(msg);
+            }
+            caller.release(di);
+            caller.release(context);
+            return r;
+        });
     }
 
     @Override

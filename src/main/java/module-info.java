@@ -4,6 +4,7 @@
 module io.greenscreens.quark{
 	
 	requires java.base;
+	requires java.naming;
 	requires transitive jdk.unsupported;
 	requires transitive org.slf4j;
 	requires transitive org.bouncycastle.provider;
@@ -13,6 +14,7 @@ module io.greenscreens.quark{
 	requires transitive jakarta.validation;
 	requires transitive jakarta.websocket.client;
 	requires transitive jakarta.websocket;
+	requires transitive jakarta.concurrency;
     requires io.opentelemetry.api;
 
 	exports io.greenscreens.quark;

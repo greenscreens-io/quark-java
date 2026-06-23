@@ -48,7 +48,7 @@ public abstract class QuarkFilter extends HttpFilter {
      * Used by extended classes. Return true if extended class sent a response to the client, otherwise return false. 
      * @param req
      * @param res
-     * @return Return true to indicate, processing is done, false to indicate default processing
+     * @return Return responseCode SC_OK to indicate processing is done, others to indicate default processing
      * @throws IOException
      */
     protected abstract boolean onFilter(final HttpServletRequest req, final HttpServletResponse res) throws IOException;
