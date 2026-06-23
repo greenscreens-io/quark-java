@@ -5,16 +5,16 @@ module io.greenscreens.quark{
 	
 	requires java.base;
 	requires java.naming;
-	requires transitive jdk.unsupported;
-	requires transitive org.slf4j;
-	requires transitive org.bouncycastle.provider;
-	requires transitive com.fasterxml.jackson.databind;
-	requires transitive jakarta.cdi;
-	requires transitive jakarta.servlet;
-	requires transitive jakarta.validation;
-	requires transitive jakarta.websocket.client;
-	requires transitive jakarta.websocket;
-	requires transitive jakarta.concurrency;
+	requires jdk.unsupported;
+	requires org.slf4j;
+	requires org.bouncycastle.provider;
+	requires com.fasterxml.jackson.databind;
+	requires jakarta.cdi;
+	requires jakarta.servlet;
+	requires jakarta.validation;
+	requires jakarta.websocket.client;
+	requires jakarta.websocket;
+	requires jakarta.concurrency;
     requires io.opentelemetry.api;
 
 	exports io.greenscreens.quark;
@@ -23,6 +23,7 @@ module io.greenscreens.quark{
 	exports io.greenscreens.quark.cdi;
 	exports io.greenscreens.quark.ext;
 	exports io.greenscreens.quark.web;
+	exports io.greenscreens.quark.util;
 	exports io.greenscreens.quark.reflection;
 	exports io.greenscreens.quark.web.data;
 	exports io.greenscreens.quark.web.listener;

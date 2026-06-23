@@ -32,7 +32,7 @@ dependencies {
 }
 
 group = 'io.greenscreens'
-version = '7.0.3'
+version = '7.0.4'
 description = 'Green Screens Quark Engine'
 
 java {
