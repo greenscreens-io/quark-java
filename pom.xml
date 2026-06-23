@@ -59,10 +59,12 @@
 		<maven.jar.version>3.2.0</maven.jar.version>
 		<maven.war.version>3.3.1</maven.war.version>
 		<maven.proguard.version>2.3.1</maven.proguard.version>
-		<jackson.version>2.14.3</jackson.version>
-		<bcastle.version>1.82</bcastle.version>
+		<jackson.version>2.22.0</jackson.version>
+		<jackson2.version>2.22</jackson2.version>
+		<bcastle.version>1.84</bcastle.version>
 		<slf4j.version>1.7.36</slf4j.version>
-		<opentelemetry-api.version>1.56.0</opentelemetry-api.version>
+		<jakarta.version>10.0.0</jakarta.version>
+		<opentelemetry-api.version>1.63.0</opentelemetry-api.version>
 	</properties>
 
 	<build>
@@ -89,35 +91,49 @@
 	</build>
 
 	<dependencies>
+
+		<!-- 
 		<dependency>
-			<groupId>jakarta.validation</groupId>
-			<artifactId>jakarta.validation-api</artifactId>
-			<version>3.0.2</version>
+			<groupId>jakarta.platform</groupId>
+			<artifactId>jakarta.jakartaee-api</artifactId>
+			<version>${jakarta.version}</version>
 			<scope>provided</scope>
-		</dependency>
+		</dependency>				
+		-->
 		<dependency>
-			<groupId>jakarta.servlet</groupId>
-			<artifactId>jakarta.servlet-api</artifactId>
-			<version>6.0.0</version>
-			<scope>provided</scope>
+			<groupId>jakarta.inject</groupId>
+			<artifactId>jakarta.inject-api</artifactId>
+			<version>2.0.1</version>
 		</dependency>
 		<dependency>
 			<groupId>jakarta.websocket</groupId>
 			<artifactId>jakarta.websocket-api</artifactId>
-			<version>2.1.1</version>
-			<scope>provided</scope>
+			<version>2.2.0</version>
 		</dependency>
 		<dependency>
 			<groupId>jakarta.websocket</groupId>
 			<artifactId>jakarta.websocket-client-api</artifactId>
-			<version>2.1.1</version>
-			<scope>provided</scope>
+			<version>2.2.0</version>
 		</dependency>
 		<dependency>
 			<groupId>jakarta.enterprise</groupId>
 			<artifactId>jakarta.enterprise.cdi-api</artifactId>
-			<version>4.0.1</version>
-			<scope>provided</scope>
+			<version>4.1.0</version>
+		</dependency>
+		<dependency>
+			<groupId>jakarta.servlet</groupId>
+			<artifactId>jakarta.servlet-api</artifactId>
+			<version>6.1.0</version>
+		</dependency>
+		<dependency>
+			<groupId>jakarta.validation</groupId>
+			<artifactId>jakarta.validation-api</artifactId>
+			<version>3.1.1</version>
+		</dependency>
+		<dependency>
+		    <groupId>jakarta.enterprise.concurrent</groupId>
+		    <artifactId>jakarta.enterprise.concurrent-api</artifactId>
+		    <version>3.1.1</version> 
 		</dependency>
 
 		<dependency>
@@ -128,7 +144,7 @@
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-annotations</artifactId>
-			<version>${jackson.version}</version>
+			<version>${jackson2.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
