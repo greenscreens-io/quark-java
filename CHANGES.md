@@ -1,6 +1,9 @@
  
 # [Quark Engine Java ](https://quark.greenscreens.ltd/).
 
+## v6.0.1. (2026.Q2)
+ - Fixed async calls to use ManagedExecutorService
+  
 ## v6.0.0. (2023.Q4)
  - Switch to Jakarta EE
  - Complete Quark code refactoring
